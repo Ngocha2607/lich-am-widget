@@ -60,6 +60,23 @@ class LunarCalendarTest {
     }
 
     @Test
+    fun tuanTrang() {
+        assertEquals("🌑", LunarCalendar.moonPhase(1))
+        assertEquals("🌓", LunarCalendar.moonPhase(8))
+        assertEquals("🌕", LunarCalendar.moonPhase(15))
+        assertEquals("🌗", LunarCalendar.moonPhase(22))
+    }
+
+    @Test
+    fun tetTiepTheo() {
+        assertEquals(LocalDate.of(2027, 2, 6), LunarCalendar.nextTet(LocalDate.of(2026, 11, 24)))
+        // Đúng ngày mùng 1 thì trả về chính nó
+        assertEquals(LocalDate.of(2027, 2, 6), LunarCalendar.nextTet(LocalDate.of(2027, 2, 6)))
+        // Qua mùng 1 một ngày thì là Tết năm sau
+        assertEquals(LunarCalendar.toSolar(1, 1, 2028), LunarCalendar.nextTet(LocalDate.of(2027, 2, 7)))
+    }
+
+    @Test
     fun gioHoangDaoCoSauGio() {
         val l = lunar(24, 11, 2026)
         assertEquals(6, LunarCalendar.gioHoangDao(l.jd).size)

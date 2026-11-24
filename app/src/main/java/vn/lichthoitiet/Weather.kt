@@ -128,12 +128,32 @@ object WeatherRepo {
         Prefs.get(ctx).edit().putString(KEY_JSON, data.toJson()).apply()
     }
 
-    /** Tải thời tiết rồi lưu vào bộ nhớ đệm. Gọi ở luồng nền. */
+    private fun keyFor(city: String) = "weather_city_" + city.trim().lowercase()
+
+    fun loadFor(ctx: Context, city: String): WeatherData? =
+        Prefs.get(ctx).getString(keyFor(city), null)?.let { WeatherData.fromJson(it) }
+
+    private fun saveFor(ctx: Context, data: WeatherData) {
+        Prefs.get(ctx).edit().putString(keyFor(data.city), data.toJson()).apply()
+    }
+
+    /** Tải thời tiết cho thành phố đang chọn (và các thành phố khác đã lưu), lưu đệm. Gọi ở luồng nền. */
     fun refresh(ctx: Context): WeatherData {
         val p = Prefs(ctx)
         val data = fetch(p.lat, p.lon, p.city)
         save(ctx, data)
+        saveFor(ctx, data)
+        p.cities.filter { it.name != p.city }.forEach { c ->
+            try { saveFor(ctx, fetch(c.lat, c.lon, c.name)) } catch (e: Exception) { }
+        }
         return data
+    }
+
+    /** Đổi thành phố đang chọn; dùng ngay dữ liệu đệm của thành phố đó nếu có. */
+    fun setActive(ctx: Context, c: CityPref) {
+        val p = Prefs(ctx)
+        p.city = c.name; p.lat = c.lat; p.lon = c.lon
+        loadFor(ctx, c.name)?.let { save(ctx, it) } ?: Prefs.get(ctx).edit().remove(KEY_JSON).apply()
     }
 
     fun fetch(lat: Double, lon: Double, city: String): WeatherData {

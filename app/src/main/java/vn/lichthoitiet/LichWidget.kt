@@ -6,20 +6,29 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.os.Bundle
+import android.view.View
 import android.widget.RemoteViews
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 
 class LichWidget : AppWidgetProvider() {
 
     override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
-        val views = WidgetRenderer.build(context)
-        ids.forEach { manager.updateAppWidget(it, views) }
+        ids.forEach { id ->
+            manager.updateAppWidget(id, WidgetRenderer.build(context, manager.getAppWidgetOptions(id)))
+        }
 
         WeatherWorker.schedule(context)
         val cached = WeatherRepo.load(context)
         if (cached == null || cached.isStale(2 * 60 * 60 * 1000L)) WeatherWorker.refreshNow(context)
+    }
+
+    /** Người dùng đổi kích thước widget: chọn lại bố cục 2×2 / 4×2 / 4×4. */
+    override fun onAppWidgetOptionsChanged(context: Context, manager: AppWidgetManager, id: Int, newOptions: Bundle) {
+        manager.updateAppWidget(id, WidgetRenderer.build(context, newOptions))
     }
 
     override fun onEnabled(context: Context) {
@@ -38,8 +47,9 @@ class LichWidget : AppWidgetProvider() {
             val manager = AppWidgetManager.getInstance(context)
             val ids = manager.getAppWidgetIds(ComponentName(context, LichWidget::class.java))
             if (ids.isEmpty()) return
-            val views = WidgetRenderer.build(context)
-            ids.forEach { manager.updateAppWidget(it, views) }
+            ids.forEach { id ->
+                manager.updateAppWidget(id, WidgetRenderer.build(context, manager.getAppWidgetOptions(id)))
+            }
         }
     }
 }
@@ -50,13 +60,37 @@ object WidgetRenderer {
         DayOfWeek.THURSDAY to "Thứ Năm", DayOfWeek.FRIDAY to "Thứ Sáu", DayOfWeek.SATURDAY to "Thứ Bảy",
         DayOfWeek.SUNDAY to "Chủ nhật",
     )
+    private val SHORT_DOW = listOf("T2", "T3", "T4", "T5", "T6", "T7", "CN")
 
     fun dayOfWeek(d: LocalDate): String = THU[d.dayOfWeek] ?: ""
 
     private val GOLD = 0xFFFFD966.toInt()
     private val SUB_WHITE = 0xC7FFFFFF.toInt()
 
-    fun build(context: Context): RemoteViews {
+    private enum class Size { SMALL, MEDIUM, LARGE }
+
+    /** Chọn bố cục theo kích thước ô widget (dp) mà launcher báo. */
+    private fun sizeOf(options: Bundle?): Size {
+        val w = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0) ?: 0
+        val h = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0) ?: 0
+        return when {
+            w in 1 until 200 -> Size.SMALL
+            h >= 230 -> Size.LARGE
+            else -> Size.MEDIUM
+        }
+    }
+
+    private fun openApp(context: Context, target: String?, code: Int): PendingIntent {
+        val intent = Intent(context, MainActivity::class.java).apply {
+            if (target != null) putExtra("target", target)
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+        }
+        return PendingIntent.getActivity(
+            context, code, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+        )
+    }
+
+    fun build(context: Context, options: Bundle? = null): RemoteViews {
         val prefs = Prefs(context)
         val today = LocalDate.now()
         val now = LocalDateTime.now()
@@ -65,46 +99,102 @@ object WidgetRenderer {
         val upcoming = EventStore.upcoming(EventStore.load(context), today)
         val tip = SuggestionEngine.build(today, now, weather, prefs.spiritual, upcoming).first()
 
-        val views = RemoteViews(context.packageName, R.layout.widget_4x2)
+        val size = sizeOf(options)
+        val layout = when (size) {
+            Size.SMALL -> R.layout.widget_2x2
+            Size.MEDIUM -> R.layout.widget_4x2
+            Size.LARGE -> R.layout.widget_4x4
+        }
+        val views = RemoteViews(context.packageName, layout)
 
-        // Dòng 1: thứ, ngày dương
-        views.setTextViewText(R.id.line_date, "${dayOfWeek(today)}, ${today.dayOfMonth}/${today.monthValue}")
+        // Dòng 1: thứ, ngày dương, tuần trăng
+        views.setTextViewText(
+            R.id.line_date,
+            "${dayOfWeek(today)}, ${today.dayOfMonth}/${today.monthValue}  ${LunarCalendar.moonPhase(lunar.day)}",
+        )
 
         // Dòng 2: ngày âm (dòng chính)
         val lunarText = StringBuilder("${lunar.day} tháng ${LunarCalendar.monthName(lunar.month)}")
         if (lunar.leap) lunarText.append(" nhuận")
         views.setTextViewText(R.id.line_lunar, lunarText.toString())
 
-        // Dòng 3: ngày đặc biệt (vàng) hoặc năm can chi + hoàng đạo + tiết khí
+        // Dòng 3: ngày đặc biệt (vàng), hoặc năm can chi + hoàng đạo + (đếm ngược Tết | tiết khí)
         val special = SuggestionEngine.specialDayName(lunar)
+        val daysToTet = ChronoUnit.DAYS.between(today, LunarCalendar.nextTet(today)).toInt()
         val parts = mutableListOf<String>()
         if (special != null) parts += "✦ $special" else parts += LunarCalendar.canChiYear(lunar.year)
         if (prefs.spiritual) parts += if (LunarCalendar.isHoangDao(lunar)) "Hoàng đạo" else "Hắc đạo"
-        if (special == null) parts += LunarCalendar.currentTietKhi(lunar.jd)
+        if (special == null) {
+            parts += if (daysToTet in 1..90) "Còn $daysToTet ngày đến Tết" else LunarCalendar.currentTietKhi(lunar.jd)
+        }
         views.setTextViewText(R.id.line_sub, parts.joinToString(" · "))
         views.setTextColor(R.id.line_sub, if (special != null) GOLD else SUB_WHITE)
 
-        // Bên phải: nhiệt độ + mô tả
+        // Bên phải: nhiệt độ (+ mô tả ở bản 4×2 và 4×4)
         if (weather != null) {
             views.setTextViewText(R.id.line_temp, "${WeatherText.icon(weather.codeNow)} ${weather.tempNow}°")
-            views.setTextViewText(R.id.line_wx, "${WeatherText.label(weather.codeNow)} · ${weather.city}")
         } else {
             views.setTextViewText(R.id.line_temp, "--°")
-            views.setTextViewText(R.id.line_wx, prefs.city)
+        }
+        if (size != Size.SMALL) {
+            views.setTextViewText(
+                R.id.line_wx,
+                if (weather != null) "${WeatherText.label(weather.codeNow)} · ${weather.city}" else prefs.city,
+            )
         }
 
         // Gợi ý
         views.setTextViewText(R.id.line_tip, tip.short)
 
+        // Bản 4×4: dự báo 3 ngày tới + sự kiện sắp tới
+        if (size == Size.LARGE) {
+            bindForecast(views, weather, today)
+            bindEvents(views, upcoming)
+        }
+
         // Nền theo thời điểm trong ngày và thời tiết
         views.setInt(R.id.root, "setBackgroundResource", background(now, weather))
 
-        val open = Intent(context, MainActivity::class.java)
-        val pending = PendingIntent.getActivity(
-            context, 0, open, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
-        )
-        views.setOnClickPendingIntent(R.id.root, pending)
+        // Vùng chạm: cả widget mở app; nhiệt độ/dự báo mở thẳng thẻ thời tiết
+        views.setOnClickPendingIntent(R.id.root, openApp(context, null, 0))
+        val toWeather = openApp(context, "weather", 1)
+        views.setOnClickPendingIntent(R.id.line_temp, toWeather)
+        if (size != Size.SMALL) views.setOnClickPendingIntent(R.id.line_wx, toWeather)
+        if (size == Size.LARGE) views.setOnClickPendingIntent(R.id.f_row, toWeather)
         return views
+    }
+
+    private fun bindForecast(views: RemoteViews, weather: WeatherData?, today: LocalDate) {
+        val days = weather?.daily?.drop(1)?.take(3).orEmpty()
+        if (days.size < 3) {
+            views.setViewVisibility(R.id.f_row, View.GONE)
+            return
+        }
+        views.setViewVisibility(R.id.f_row, View.VISIBLE)
+        val labelIds = intArrayOf(R.id.f1_label, R.id.f2_label, R.id.f3_label)
+        val iconIds = intArrayOf(R.id.f1_icon, R.id.f2_icon, R.id.f3_icon)
+        val tempIds = intArrayOf(R.id.f1_temp, R.id.f2_temp, R.id.f3_temp)
+        days.forEachIndexed { i, d ->
+            val date = try { LocalDate.parse(d.date) } catch (e: Exception) { today.plusDays(i + 1L) }
+            val label = if (i == 0) "Mai" else SHORT_DOW[date.dayOfWeek.value - 1]
+            views.setTextViewText(labelIds[i], label)
+            views.setTextViewText(iconIds[i], WeatherText.icon(d.code))
+            views.setTextViewText(tempIds[i], "${d.max}°/${d.min}°")
+        }
+    }
+
+    private fun bindEvents(views: RemoteViews, upcoming: List<Upcoming>) {
+        val next = upcoming.filter { it.daysLeft > 0 }.take(2)
+        val ids = intArrayOf(R.id.ev1, R.id.ev2)
+        ids.forEachIndexed { i, id ->
+            val u = next.getOrNull(i)
+            if (u == null) {
+                views.setViewVisibility(id, View.GONE)
+            } else {
+                views.setViewVisibility(id, View.VISIBLE)
+                views.setTextViewText(id, "${u.event.icon} Còn ${u.daysLeft} ngày · ${u.event.title}")
+            }
+        }
     }
 
     private fun toMinutes(hhmm: String): Int? {

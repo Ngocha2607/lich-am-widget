@@ -2,6 +2,10 @@ package vn.lichthoitiet
 
 import android.content.Context
 import android.content.SharedPreferences
+import org.json.JSONArray
+import org.json.JSONObject
+
+data class CityPref(val name: String, val lat: Double, val lon: Double)
 
 /** Cài đặt người dùng: vị trí và tùy chọn hiển thị. */
 class Prefs(ctx: Context) {
@@ -51,6 +55,38 @@ class Prefs(ctx: Context) {
     var notifyHour: Int
         get() = sp.getInt("notifyHour", 7)
         set(v) = sp.edit().putInt("notifyHour", v).apply()
+
+    var notifyWeather: Boolean
+        get() = bool("notifyWeather", true)
+        set(v) = put("notifyWeather", v)
+    var notifyWeatherHour: Int
+        get() = sp.getInt("notifyWeatherHour", 20)
+        set(v) = sp.edit().putInt("notifyWeatherHour", v).apply()
+
+    /** Năm sinh âm lịch để xét hợp/xung tuổi; 0 = chưa đặt. */
+    var birthYear: Int
+        get() = sp.getInt("birthYear", 0)
+        set(v) = sp.edit().putInt("birthYear", v).apply()
+
+    /** Các thành phố đã lưu; luôn chứa thành phố đang chọn ở đầu. */
+    var cities: List<CityPref>
+        get() {
+            val list = mutableListOf<CityPref>()
+            try {
+                val a = JSONArray(sp.getString("cities", "[]"))
+                for (i in 0 until a.length()) {
+                    val o = a.getJSONObject(i)
+                    list += CityPref(o.getString("name"), o.getDouble("lat"), o.getDouble("lon"))
+                }
+            } catch (e: Exception) { }
+            val active = CityPref(city, lat, lon)
+            return listOf(active) + list.filter { it.name != active.name }
+        }
+        set(v) {
+            val a = JSONArray()
+            v.forEach { a.put(JSONObject().put("name", it.name).put("lat", it.lat).put("lon", it.lon)) }
+            sp.edit().putString("cities", a.toString()).apply()
+        }
 
     /** Giao diện màn hình app: "system", "light" hoặc "dark". */
     var theme: String

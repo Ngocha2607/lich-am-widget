@@ -20,6 +20,7 @@ import org.json.JSONObject
 import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.YearMonth
+import java.time.temporal.ChronoUnit
 
 /**
  * Màn hình chính: giao diện là trang HTML trong assets/index.html,
@@ -29,6 +30,10 @@ class MainActivity : Activity() {
     private lateinit var web: WebView
     private lateinit var prefs: Prefs
     private var pageReady = false
+    /** Thẻ cần cuộn tới khi mở từ widget (ví dụ "weather"). */
+    private var pendingTarget: String? = null
+    /** Nội dung chờ ghi ra file khi người dùng chọn nơi lưu. */
+    private var pendingDoc: String? = null
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -44,14 +49,74 @@ class MainActivity : Activity() {
             override fun onPageFinished(view: WebView, url: String) {
                 pageReady = true
                 pushState()
+                applyTarget()
             }
         }
         setContentView(web)
         web.loadUrl("file:///android_asset/index.html")
+        pendingTarget = intent?.getStringExtra("target")
 
         if (WeatherRepo.load(this) == null) refreshWeather()
         Reminders.schedule(this)
-        if (prefs.notifyEvents || prefs.notifyLunar) ensureNotificationPermission()
+        if (prefs.notifyEvents || prefs.notifyLunar || prefs.notifyWeather) ensureNotificationPermission()
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        pendingTarget = intent.getStringExtra("target")
+        if (pageReady) applyTarget()
+    }
+
+    /** Cuộn trang tới thẻ tương ứng với vùng vừa chạm trên widget. */
+    private fun applyTarget() {
+        val card = when (pendingTarget) {
+            "weather" -> "wxCard"
+            "events" -> "evCard"
+            else -> null
+        }
+        pendingTarget = null
+        if (card != null) runOnUiThread { web.evaluateJavascript("window.scrollToCard && scrollToCard('$card')", null) }
+    }
+
+    private fun createDocument(mime: String, name: String, content: String) {
+        pendingDoc = content
+        val i = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = mime
+            putExtra(Intent.EXTRA_TITLE, name)
+        }
+        startActivityForResult(i, REQ_EXPORT)
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        val uri = data?.data
+        if (resultCode != RESULT_OK || uri == null) return
+        when (requestCode) {
+            REQ_EXPORT -> {
+                val content = pendingDoc ?: return
+                pendingDoc = null
+                try {
+                    contentResolver.openOutputStream(uri)?.use { it.write(content.toByteArray()) }
+                    status("Đã lưu file.")
+                } catch (e: Exception) {
+                    status("Không lưu được file: ${e.message}")
+                }
+            }
+            REQ_IMPORT -> {
+                try {
+                    val text = contentResolver.openInputStream(uri)?.bufferedReader()?.readText() ?: ""
+                    val n = EventStore.importJson(this, text)
+                    status("Đã nhập $n sự kiện.")
+                    LichWidget.updateAll(this)
+                    pushState()
+                } catch (e: Exception) {
+                    status("File không đúng định dạng sao lưu.")
+                }
+            }
+        }
     }
 
     /** Android 13+ cần xin quyền hiện thông báo. */
@@ -97,20 +162,37 @@ class MainActivity : Activity() {
         web.evaluateJavascript("window.onStatus && onStatus(${JSONObject.quote(msg)})", null)
     }
 
+    private fun birthLabel(): String {
+        val y = prefs.birthYear
+        if (y <= 0) return ""
+        return "${LunarCalendar.canChiYear(y)} ${CON_GIAP[Almanac.birthChi(y)]}"
+    }
+
     private fun stateJson(): String {
         val now = LocalDateTime.now()
+        val today = now.toLocalDate()
         val w = WeatherRepo.load(this)
+        val tet = LunarCalendar.nextTet(today)
         return JSONObject().apply {
             put("today", JSONObject().put("y", now.year).put("m", now.monthValue).put("d", now.dayOfMonth))
             put("hour", now.hour)
             put("minute", now.minute)
             put("dark", isDark())
             put("version", versionName())
+            put("tet", JSONObject()
+                .put("date", tet.toString())
+                .put("daysLeft", ChronoUnit.DAYS.between(today, tet))
+                .put("name", "Tết " + LunarCalendar.canChiYear(LunarCalendar.convert(tet).year)))
+            put("cities", JSONArray().apply {
+                prefs.cities.forEach { put(JSONObject().put("name", it.name).put("lat", it.lat).put("lon", it.lon)) }
+            })
             put("prefs", JSONObject()
                 .put("city", prefs.city).put("spiritual", prefs.spiritual).put("theme", prefs.theme)
                 .put("showAlmanac", prefs.showAlmanac).put("showLucDieu", prefs.showLucDieu)
                 .put("showHuong", prefs.showHuong).put("showGoodDays", prefs.showGoodDays)
-                .put("notifyEvents", prefs.notifyEvents).put("notifyLunar", prefs.notifyLunar).put("notifyHour", prefs.notifyHour))
+                .put("notifyEvents", prefs.notifyEvents).put("notifyLunar", prefs.notifyLunar).put("notifyHour", prefs.notifyHour)
+                .put("notifyWeather", prefs.notifyWeather).put("notifyWeatherHour", prefs.notifyWeatherHour)
+                .put("birthYear", prefs.birthYear).put("birthLabel", birthLabel()))
             put("weather", if (w == null) JSONObject.NULL else weatherJson(w))
         }.toString()
     }
@@ -140,6 +222,9 @@ class MainActivity : Activity() {
 
     private companion object {
         val SHORT_DOW = listOf("T2", "T3", "T4", "T5", "T6", "T7", "CN")
+        val CON_GIAP = listOf("🐭", "🐮", "🐯", "🐱", "🐲", "🐍", "🐴", "🐐", "🐵", "🐔", "🐶", "🐷")
+        const val REQ_EXPORT = 11
+        const val REQ_IMPORT = 12
     }
 
     private fun refreshWeather() {
@@ -199,6 +284,8 @@ class MainActivity : Activity() {
                 put("y", y); put("m", m); put("d", d)
                 put("weekday", WidgetRenderer.dayOfWeek(date))
                 put("ld", l.day); put("lm", l.month); put("ly", l.year); put("leap", l.leap)
+                put("moon", LunarCalendar.moonPhase(l.day))
+                put("tuoi", if (prefs.birthYear > 0) Almanac.tuoiRelation(LunarCalendar.dayChiIndex(l.jd), Almanac.birthChi(prefs.birthYear)) else JSONObject.NULL)
                 put("events", dayEvents)
                 val a = Almanac.of(l)
                 put("truc", a.truc); put("trucNen", JSONArray(a.nen)); put("trucKy", JSONArray(a.ky))
@@ -227,7 +314,8 @@ class MainActivity : Activity() {
         @JavascriptInterface
         fun goodDays(task: String, days: Int): String {
             val arr = JSONArray()
-            Almanac.goodDays(task, LocalDate.now(), days.coerceIn(7, 366)).forEach { g ->
+            val birthChi = if (prefs.birthYear > 0) Almanac.birthChi(prefs.birthYear) else null
+            Almanac.goodDays(task, LocalDate.now(), days.coerceIn(7, 366), birthChi = birthChi).forEach { g ->
                 val l = LunarCalendar.convert(g.date)
                 arr.put(JSONObject().apply {
                     put("date", g.date.toString())
@@ -263,6 +351,82 @@ class MainActivity : Activity() {
         fun testNotify() = runOnUiThread {
             ensureNotificationPermission()
             Reminders.test(this@MainActivity)
+        }
+
+        @JavascriptInterface
+        fun setNotifyWeather(on: Boolean, hour: Int) {
+            prefs.notifyWeather = on
+            prefs.notifyWeatherHour = hour.coerceIn(0, 23)
+            Reminders.schedule(this@MainActivity)
+            if (on) runOnUiThread { ensureNotificationPermission() }
+        }
+
+        // ---- Hồ sơ ----
+
+        @JavascriptInterface
+        fun setBirthYear(year: Int) {
+            prefs.birthYear = if (year in 1900..2100) year else 0
+            pushState()
+        }
+
+        // ---- Thành phố ----
+
+        @JavascriptInterface
+        fun addCity(lat: Double, lon: Double, name: String) {
+            val c = CityPref(name, lat, lon)
+            prefs.cities = prefs.cities.filter { it.name != name } + c
+            WeatherRepo.setActive(this@MainActivity, c)
+            pushState()
+            refreshWeather()
+        }
+
+        @JavascriptInterface
+        fun setActiveCity(name: String) {
+            val c = prefs.cities.find { it.name == name } ?: return
+            WeatherRepo.setActive(this@MainActivity, c)
+            pushState()
+            LichWidget.updateAll(this@MainActivity)
+            val cached = WeatherRepo.load(this@MainActivity)
+            if (cached == null || cached.isStale(60 * 60 * 1000L)) refreshWeather()
+        }
+
+        @JavascriptInterface
+        fun removeCity(name: String) {
+            if (name == prefs.city) return
+            prefs.cities = prefs.cities.filter { it.name != name }
+            pushState()
+        }
+
+        // ---- File: sao lưu, khôi phục, lịch Google ----
+
+        @JavascriptInterface
+        fun exportEvents() = runOnUiThread {
+            createDocument("application/json", "lich-su-kien-${LocalDate.now()}.json", EventStore.exportJson(EventStore.load(this@MainActivity)))
+        }
+
+        @JavascriptInterface
+        fun exportIcs() = runOnUiThread {
+            createDocument("text/calendar", "su-kien-am-lich.ics", EventStore.toIcs(EventStore.load(this@MainActivity), LocalDate.now()))
+        }
+
+        @JavascriptInterface
+        fun importEvents() = runOnUiThread {
+            val i = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "*/*"
+            }
+            startActivityForResult(i, REQ_IMPORT)
+        }
+
+        // ---- Chia sẻ ----
+
+        @JavascriptInterface
+        fun shareToday() = runOnUiThread {
+            try {
+                ShareCard.share(this@MainActivity)
+            } catch (e: Exception) {
+                status("Không tạo được ảnh: ${e.message}")
+            }
         }
 
         // ---- Sự kiện ----

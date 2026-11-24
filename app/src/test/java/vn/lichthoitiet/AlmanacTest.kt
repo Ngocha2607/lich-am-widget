@@ -39,6 +39,27 @@ class AlmanacTest {
     }
 
     @Test
+    fun chiTuoi() {
+        assertEquals(4, Almanac.birthChi(2000)) // Canh Thìn
+    }
+
+    @Test
+    fun hopXungTuoi() {
+        assertEquals(-1, Almanac.tuoiRelation(2, 8))  // Dần xung Thân
+        assertEquals(1, Almanac.tuoiRelation(2, 6))   // Dần – Ngọ tam hợp
+        assertEquals(1, Almanac.tuoiRelation(0, 1))   // Tý – Sửu lục hợp
+        assertEquals(0, Almanac.tuoiRelation(0, 2))   // Tý – Dần bình thường
+    }
+
+    @Test
+    fun chonNgayTotTranhNgayXungTuoi() {
+        // Tuổi Thân: không được gợi ý ngày Dần
+        val list = Almanac.goodDays("cuoi", LocalDate.of(2026, 11, 24), 60, 10, birthChi = 8)
+        assertTrue(list.isNotEmpty())
+        assertTrue(list.none { LunarCalendar.dayChiIndex(LunarCalendar.convert(it.date).jd) == 2 })
+    }
+
+    @Test
     fun chonNgayTotKhongChonTrucXau() {
         val list = Almanac.goodDays("cuoi", LocalDate.of(2026, 11, 24), 60)
         assertTrue(list.isNotEmpty())

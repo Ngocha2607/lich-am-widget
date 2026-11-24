@@ -91,6 +91,20 @@ object Almanac {
         GoodDayTask("cungle", "Cúng lễ, cầu an", "🙏", t("Mãn", "Nguy", "Trừ", "Thành", "Bình"), t("Phá", "Bế")),
     )
 
+    private val TAM_HOP = listOf(setOf(8, 0, 4), setOf(5, 9, 1), setOf(2, 6, 10), setOf(11, 3, 7))
+    private val LUC_HOP = mapOf(0 to 1, 1 to 0, 2 to 11, 11 to 2, 3 to 10, 10 to 3, 4 to 9, 9 to 4, 5 to 8, 8 to 5, 6 to 7, 7 to 6)
+
+    /** Chi của tuổi theo năm sinh âm lịch. */
+    fun birthChi(lunarYear: Int): Int = ((lunarYear + 8) % 12 + 12) % 12
+
+    /** Quan hệ chi ngày với chi tuổi: 1 hợp (tam hợp, lục hợp), -1 xung (lục xung), 0 bình thường. */
+    fun tuoiRelation(dayChi: Int, birthChi: Int): Int = when {
+        (dayChi + 6) % 12 == birthChi -> -1
+        LUC_HOP[dayChi] == birthChi -> 1
+        TAM_HOP.any { dayChi in it && birthChi in it } -> 1
+        else -> 0
+    }
+
     /** Trực của ngày: Kiến tại ngày có chi trùng chi tháng tiết khí. */
     fun trucIndex(l: LunarDate): Int =
         (LunarCalendar.dayChiIndex(l.jd) - LunarCalendar.tietMonthChi(l.jd) + 12) % 12
@@ -126,7 +140,7 @@ object Almanac {
     }
 
     /** Những ngày hợp với việc [taskKey] trong [horizon] ngày tới, điểm cao xếp trước. */
-    fun goodDays(taskKey: String, from: LocalDate, horizon: Int = 60, limit: Int = 10): List<GoodDay> {
+    fun goodDays(taskKey: String, from: LocalDate, horizon: Int = 60, limit: Int = 10, birthChi: Int? = null): List<GoodDay> {
         val task = TASKS.find { it.key == taskKey } ?: return emptyList()
         val out = mutableListOf<GoodDay>()
         for (i in 1..horizon) {
@@ -134,6 +148,8 @@ object Almanac {
             val l = LunarCalendar.convert(d)
             val t = trucIndex(l)
             if (t in task.bad) continue
+            val rel = birthChi?.let { tuoiRelation(LunarCalendar.dayChiIndex(l.jd), it) } ?: 0
+            if (rel < 0) continue
             val hd = LunarCalendar.isHoangDao(l)
             val ld = lucDieuDayIndex(l)
             var score = 0
@@ -141,6 +157,7 @@ object Almanac {
             if (hd) { score += 2; reasons += "Hoàng đạo" }
             if (t in task.good) { score += 2; reasons += "Trực ${TRUC[t]}" }
             if (ld in LUC_DIEU_GOOD) { score += 1; reasons += LUC_DIEU[ld] }
+            if (rel > 0) { score += 1; reasons += "Hợp tuổi" }
             if (score >= 3) out += GoodDay(d, score, reasons, TRUC[t], hd)
         }
         return out.sortedWith(compareByDescending<GoodDay> { it.score }.thenBy { it.date }).take(limit)

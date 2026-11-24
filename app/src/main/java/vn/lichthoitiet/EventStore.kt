@@ -79,6 +79,59 @@ object EventStore {
         save(ctx, load(ctx).filter { it.id != e.id } + e)
     }
 
+    /** Nội dung file sao lưu. */
+    fun exportJson(events: List<Event>): String =
+        JSONObject().put("app", "LichThoiTiet").put("version", 1)
+            .put("events", JSONArray().apply { events.forEach { put(it.toJson()) } })
+            .toString(2)
+
+    /** Nhập từ file sao lưu (hoặc mảng JSON thuần); trùng id thì ghi đè. Trả về số sự kiện đã nhập. */
+    fun importJson(ctx: Context, text: String): Int {
+        val trimmed = text.trim()
+        val arr = if (trimmed.startsWith("[")) JSONArray(trimmed) else JSONObject(trimmed).getJSONArray("events")
+        val incoming = List(arr.length()) { Event.fromJson(arr.getJSONObject(it)) }.filter { it.title.isNotBlank() }
+        val ids = incoming.map { it.id }.toSet()
+        save(ctx, load(ctx).filter { it.id !in ids } + incoming)
+        return incoming.size
+    }
+
+    private fun icsEscape(s: String) = s.replace("\\", "\\\\").replace(",", "\\,").replace(";", "\\;").replace("\n", "\\n")
+    private fun icsDate(d: LocalDate) = "%04d%02d%02d".format(d.year, d.monthValue, d.dayOfMonth)
+
+    /**
+     * File .ics cho Google Calendar: mỗi lần diễn ra trong [years] năm tới là một VEVENT
+     * (vì Google Calendar không lặp được theo âm lịch).
+     */
+    fun toIcs(events: List<Event>, from: LocalDate, years: Int = 5): String {
+        val sb = StringBuilder()
+        sb.append("BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//LichThoiTiet//VI\r\nCALSCALE:GREGORIAN\r\nX-WR-CALNAME:Sự kiện âm lịch\r\n")
+        val stamp = icsDate(from) + "T000000Z"
+        val end = from.plusYears(years.toLong())
+        var d = from
+        while (d.isBefore(end)) {
+            eventsOn(events, d).forEach { e ->
+                sb.append("BEGIN:VEVENT\r\n")
+                sb.append("UID:${e.id}-${icsDate(d)}@lichthoitiet\r\n")
+                sb.append("DTSTAMP:$stamp\r\n")
+                val t = e.time.split(":")
+                if (t.size == 2 && t[0].toIntOrNull() != null && t[1].toIntOrNull() != null) {
+                    val start = "${icsDate(d)}T%02d%02d00".format(t[0].toInt(), t[1].toInt())
+                    val endMin = (t[0].toInt() * 60 + t[1].toInt() + 60).coerceAtMost(23 * 60 + 59)
+                    sb.append("DTSTART:$start\r\nDTEND:${icsDate(d)}T%02d%02d00\r\n".format(endMin / 60, endMin % 60))
+                } else {
+                    sb.append("DTSTART;VALUE=DATE:${icsDate(d)}\r\nDTEND;VALUE=DATE:${icsDate(d.plusDays(1))}\r\n")
+                }
+                sb.append("SUMMARY:${icsEscape("${e.icon} ${e.title}")}\r\n")
+                val desc = listOf(e.dateLabel, e.note).filter { it.isNotBlank() }.joinToString(" · ")
+                sb.append("DESCRIPTION:${icsEscape(desc)}\r\n")
+                sb.append("END:VEVENT\r\n")
+            }
+            d = d.plusDays(1)
+        }
+        sb.append("END:VCALENDAR\r\n")
+        return sb.toString()
+    }
+
     fun delete(ctx: Context, id: String) {
         save(ctx, load(ctx).filter { it.id != id })
     }

@@ -27,6 +27,29 @@ class EventStoreTest {
     }
 
     @Test
+    fun xuatIcsCaNgay() {
+        val e = Event("x", "Giỗ, ông", "🕯️", true, 18, 10, null, true, "", "Về quê; sớm", 3)
+        val ics = EventStore.toIcs(listOf(e), LocalDate.of(2026, 11, 24), 1)
+        assertTrue(ics.startsWith("BEGIN:VCALENDAR"))
+        assertTrue(ics.contains("BEGIN:VEVENT"))
+        assertEquals(1, Regex("BEGIN:VEVENT").findAll(ics).count())
+        assertTrue(ics.contains("DTSTART;VALUE=DATE:20261126"))
+        assertTrue(ics.contains("DTEND;VALUE=DATE:20261127"))
+        assertTrue(ics.contains("SUMMARY:🕯️ Giỗ\\, ông"))
+        assertTrue(ics.contains("DESCRIPTION:"))
+        assertTrue(ics.contains("Về quê\\; sớm"))
+        assertTrue(ics.trimEnd().endsWith("END:VCALENDAR"))
+    }
+
+    @Test
+    fun xuatIcsCoGio() {
+        val e = Event("y", "Họp họ", "📌", true, 18, 10, null, true, "09:30", "", 1)
+        val ics = EventStore.toIcs(listOf(e), LocalDate.of(2026, 11, 24), 1)
+        assertTrue(ics.contains("DTSTART:20261126T093000"))
+        assertTrue(ics.contains("DTEND:20261126T103000"))
+    }
+
+    @Test
     fun sapToi() {
         val list = listOf(ev(lunar = true, d = 18, m = 10))
         val up = EventStore.upcoming(list, LocalDate.of(2026, 11, 24), 30)

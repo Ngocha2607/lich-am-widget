@@ -258,6 +258,27 @@ object LunarCalendar {
         return if (a != b) TIET_KHI[b] else null
     }
 
+    /** Tuần trăng theo ngày âm. */
+    fun moonPhase(lunarDay: Int): String = when (lunarDay) {
+        1, 2 -> "🌑"
+        in 3..6 -> "🌒"
+        in 7..9 -> "🌓"
+        in 10..13 -> "🌔"
+        in 14..16 -> "🌕"
+        in 17..20 -> "🌖"
+        in 21..23 -> "🌗"
+        in 24..27 -> "🌘"
+        else -> "🌑"
+    }
+
+    /** Ngày Tết Nguyên Đán tiếp theo tính từ [from] (nếu [from] là mùng 1 thì trả về chính nó). */
+    fun nextTet(from: LocalDate): LocalDate {
+        val ly = convert(from).year
+        val thisYear = toSolar(1, 1, ly)
+        if (thisYear != null && !thisYear.isBefore(from)) return thisYear
+        return toSolar(1, 1, ly + 1) ?: from
+    }
+
     fun monthName(m: Int): String = when (m) {
         1 -> "Giêng"
         12 -> "Chạp"
