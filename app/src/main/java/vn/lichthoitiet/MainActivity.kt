@@ -109,7 +109,7 @@ class MainActivity : Activity() {
         }
         sb.appendLine()
 
-        sb.appendLine("💡 Gợi ý hôm nay")
+        sb.appendLine(if (now.hour >= 18) "💡 Gợi ý cho ngày mai" else "💡 Gợi ý hôm nay")
         tips.forEach { sb.appendLine("• ${it.short}\n   ${it.detail}") }
 
         details.text = sb.toString()

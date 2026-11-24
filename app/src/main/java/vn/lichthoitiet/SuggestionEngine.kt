@@ -51,6 +51,12 @@ object SuggestionEngine {
                     "Ngày mai nắng nóng tới ${weather.tomorrowMax}°. Nên làm việc ngoài trời vào sáng sớm, uống đủ nước.",
                     Kind.WARN,
                 )
+                val tonight = weather.maxRain(hour, 23)
+                if (hour < 22 && tonight >= 60) out += Suggestion(
+                    "☔ Tối nay mưa, mang ô nếu ra ngoài",
+                    "Tối nay xác suất mưa $tonight%. Mang ô nếu còn ra ngoài.",
+                    Kind.WARN,
+                )
             } else {
                 val soon = weather.maxRain(hour, hour + 3)
                 val afternoon = weather.maxRain(12, 18)
@@ -130,30 +136,48 @@ object SuggestionEngine {
             out += Suggestion("🌿 Mai vào tiết $it", "Ngày mai bắt đầu tiết $it.", Kind.NORMAL)
         }
 
-        // 4. Hoàng đạo / hắc đạo (tùy chọn)
-        if (spiritual && !evening) {
-            val truc = LunarCalendar.trucThan(lunar)
-            val gio = LunarCalendar.gioHoangDao(lunar.jd).joinToString(", ")
-            if (LunarCalendar.isHoangDao(lunar)) out += Suggestion(
-                "✅ Ngày hoàng đạo, hợp việc lớn",
-                "Ngày hoàng đạo (trực $truc), hợp ký kết, khai trương, cưới hỏi. Giờ tốt: $gio.",
+        // 4. Hoàng đạo / hắc đạo (tùy chọn). Buổi tối nói về ngày mai để tiện lên kế hoạch.
+        if (spiritual) {
+            val truc = LunarCalendar.trucThan(target)
+            val gio = LunarCalendar.gioHoangDao(target.jd).joinToString(", ")
+            val ngay = if (evening) "Mai ngày" else "Ngày"
+            if (LunarCalendar.isHoangDao(target)) out += Suggestion(
+                "✅ $ngay hoàng đạo, hợp việc lớn",
+                "$ngay hoàng đạo (trực $truc), hợp ký kết, khai trương, cưới hỏi. Giờ tốt: $gio.",
                 Kind.NORMAL,
             ) else out += Suggestion(
-                "🔸 Ngày hắc đạo, tránh việc lớn",
-                "Ngày hắc đạo (trực $truc), nên tránh khởi sự việc lớn. Giờ tốt trong ngày: $gio.",
+                "🔸 $ngay hắc đạo, tránh việc lớn",
+                "$ngay hắc đạo (trực $truc), nên tránh khởi sự việc lớn. Giờ tốt trong ngày: $gio.",
                 Kind.NORMAL,
             )
         }
 
-        // 5. Mặc định
-        if (out.isEmpty()) {
-            out += when {
-                weather == null -> Suggestion("📅 Chúc bạn một ngày tốt lành", "Chưa có dữ liệu thời tiết. Mở app và bấm Làm mới.", Kind.NORMAL)
-                weather.todayCode <= 1 -> Suggestion("☀️ Trời đẹp, hợp ra ngoài đi dạo", "Hôm nay ${WeatherText.label(weather.todayCode)}, ${weather.todayMin}-${weather.todayMax}°.", Kind.NORMAL)
-                else -> Suggestion("🌤️ Ngày dễ chịu, ${weather.todayMin}-${weather.todayMax}°", "Hôm nay ${WeatherText.label(weather.todayCode)}, ${weather.todayMin}-${weather.todayMax}°.", Kind.NORMAL)
-            }
-        }
+        // 5. Mặc định: mô tả thời tiết của ngày đang nói tới
+        if (out.isEmpty()) out += defaultTip(weather, evening)
         return out
+    }
+
+    private fun defaultTip(w: WeatherData?, evening: Boolean): Suggestion {
+        if (w == null) return Suggestion(
+            "📅 Chúc bạn một ngày tốt lành",
+            "Chưa có dữ liệu thời tiết. Mở app và bấm Làm mới.",
+            Kind.NORMAL,
+        )
+        val day = if (evening) "Mai" else "Hôm nay"
+        val code = if (evening) w.tomorrowCode else w.todayCode
+        val min = if (evening) w.tomorrowMin else w.todayMin
+        val max = if (evening) w.tomorrowMax else w.todayMax
+        val rain = if (evening) w.tomorrowRain else w.todayRain
+        val icon = WeatherText.icon(code)
+        val label = WeatherText.label(code)
+        val short = when {
+            code >= 95 -> "$icon $day có dông, $min-$max°"
+            code >= 51 -> "$icon $day $label, mang ô phòng khi"
+            code >= 45 -> "$icon $day sương mù, đi xe cẩn thận"
+            code <= 1 -> "$icon $day trời đẹp, $min-$max°"
+            else -> "$icon $day $label, $min-$max°"
+        }
+        return Suggestion(short, "$day $label, $min-$max°, xác suất mưa $rain%.", Kind.NORMAL)
     }
 
     private fun templeHint(w: WeatherData?, evening: Boolean): String {
