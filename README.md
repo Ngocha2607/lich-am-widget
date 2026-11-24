@@ -8,6 +8,18 @@ Widget 4×2 cho màn hình chính Android, hiện cùng lúc:
 
 Lịch âm tính offline theo thuật toán Hồ Ngọc Đức. Thời tiết lấy từ Open-Meteo (miễn phí, không cần key).
 
+## Xem trước
+
+Widget 4×2 ở 5 trạng thái (đêm, sáng sớm ngày rằm, ban ngày, chiều tà, trời mưa):
+
+<img src="docs/widget.jpg" width="360" alt="Widget ở 5 trạng thái">
+
+Màn hình app (số liệu thời tiết là mẫu):
+
+| Màn hình chính | Thêm sự kiện | Cài đặt |
+|---|---|---|
+| <img src="docs/app-main.jpg" width="260" alt="Màn hình chính"> | <img src="docs/app-event.jpg" width="260" alt="Thêm sự kiện"> | <img src="docs/app-settings.jpg" width="260" alt="Cài đặt"> |
+
 ## Build APK bằng GitHub (không cần cài Android Studio)
 
 1. Tạo repo mới trên GitHub (Public hoặc Private đều được).
