@@ -24,6 +24,34 @@ class Prefs(ctx: Context) {
         get() = sp.getBoolean("spiritual", true)
         set(v) = sp.edit().putBoolean("spiritual", v).apply()
 
+    private fun bool(key: String, def: Boolean) = sp.getBoolean(key, def)
+    private fun put(key: String, v: Boolean) = sp.edit().putBoolean(key, v).apply()
+
+    // Các mục hiển thị trong app
+    var showAlmanac: Boolean
+        get() = bool("showAlmanac", true)
+        set(v) = put("showAlmanac", v)
+    var showLucDieu: Boolean
+        get() = bool("showLucDieu", true)
+        set(v) = put("showLucDieu", v)
+    var showHuong: Boolean
+        get() = bool("showHuong", true)
+        set(v) = put("showHuong", v)
+    var showGoodDays: Boolean
+        get() = bool("showGoodDays", true)
+        set(v) = put("showGoodDays", v)
+
+    // Thông báo
+    var notifyEvents: Boolean
+        get() = bool("notifyEvents", true)
+        set(v) = put("notifyEvents", v)
+    var notifyLunar: Boolean
+        get() = bool("notifyLunar", false)
+        set(v) = put("notifyLunar", v)
+    var notifyHour: Int
+        get() = sp.getInt("notifyHour", 7)
+        set(v) = sp.edit().putInt("notifyHour", v).apply()
+
     /** Giao diện màn hình app: "system", "light" hoặc "dark". */
     var theme: String
         get() = sp.getString("theme", "system") ?: "system"

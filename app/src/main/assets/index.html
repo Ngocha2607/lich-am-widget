@@ -9,20 +9,20 @@
   --bg: #EEF2F7; --card: #FFFFFF; --text: #1C1C1E; --muted: #6B7280; --line: #E5E7EB;
   --chip: #F3F4F6; --accent: #D7263D; --accent-soft: #FDECEF; --gold: #D4A017; --gold-soft: #FFF6DA;
   --blue: #2563EB; --blue-soft: #E8F0FF; --shadow: 0 1px 2px rgba(0,0,0,.05), 0 6px 20px rgba(20,30,60,.06);
-  --series-max: #eb6834; --series-min: #2a78d6;
+  --series-max: #eb6834; --series-min: #2a78d6; --good: #1E8E4A; --good-soft: #E6F4EA;
 }
 html.dark {
   --bg: #0F1115; --card: #1B1D23; --text: #F3F4F6; --muted: #9CA3AF; --line: #2A2D35;
   --chip: #262930; --accent: #FF5A6E; --accent-soft: #3A1F25; --gold: #F2C94C; --gold-soft: #3A3218;
   --blue: #7AA2FF; --blue-soft: #1E2A44; --shadow: none;
-  --series-max: #d95926; --series-min: #3987e5;
+  --series-max: #d95926; --series-min: #3987e5; --good: #4ADE80; --good-soft: #16331F;
 }
 @media (prefers-color-scheme: dark) {
   html:not(.light) {
     --bg: #0F1115; --card: #1B1D23; --text: #F3F4F6; --muted: #9CA3AF; --line: #2A2D35;
     --chip: #262930; --accent: #FF5A6E; --accent-soft: #3A1F25; --gold: #F2C94C; --gold-soft: #3A3218;
     --blue: #7AA2FF; --blue-soft: #1E2A44; --shadow: none;
-    --series-max: #d95926; --series-min: #3987e5;
+    --series-max: #d95926; --series-min: #3987e5; --good: #4ADE80; --good-soft: #16331F;
   }
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -113,6 +113,29 @@ h2 { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: u
 .sunbar .track { position: relative; height: 4px; border-radius: 4px; background: var(--line); margin: 10px 0 4px; }
 .sunbar .track .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--gold); }
 .sunbar .track .mk { position: absolute; top: 50%; transform: translate(-50%, -50%); font-size: 18px; line-height: 1; }
+
+/* Xem ngày */
+.kv { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13.5px; color: var(--muted); }
+.kv b { color: var(--text); font-weight: 600; }
+.lbl2 { font-size: 11.5px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--muted); margin: 12px 0 6px; }
+.chips2 { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips2 span { font-size: 12.5px; padding: 4px 10px; border-radius: 999px; background: var(--chip); }
+.chips2.nen span { background: var(--good-soft); color: var(--good); font-weight: 600; }
+.chips2.ky span { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.ld { display: flex; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); align-items: flex-start; }
+.ld:first-child { border-top: 0; }
+.ld .n { font-weight: 700; flex: 0 0 88px; } .ld .n.good { color: var(--good); }
+.ld .h { font-size: 12.5px; font-weight: 600; } .ld .ds { font-size: 12.5px; color: var(--muted); margin-top: 1px; }
+.tasks { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; padding-bottom: 8px; margin: 0 -2px; }
+.tasks::-webkit-scrollbar { display: none; }
+.tasks button { flex: none; padding: 8px 13px; border-radius: 999px; background: var(--chip); font-size: 13.5px; font-weight: 600; white-space: nowrap; }
+.tasks button.on { background: var(--blue); color: #fff; }
+.gd { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); width: 100%; text-align: left; }
+.gd:first-child { border-top: 0; }
+.gd .dt { width: 50px; text-align: center; flex: none; }
+.gd .dt b { display: block; font-size: 21px; line-height: 1.1; } .gd .dt small { font-size: 11px; color: var(--muted); white-space: nowrap; }
+.gd .b { flex: 1; min-width: 0; } .gd .t { font-weight: 600; } .gd .r { font-size: 12.5px; color: var(--muted); }
+.gd .sc { font-size: 13px; color: var(--gold); white-space: nowrap; letter-spacing: -1px; }
 
 /* Gợi ý */
 .tip { display: flex; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
@@ -270,6 +293,24 @@ button.item:active { background: var(--chip); }
   <div class="chips" id="hours"></div>
 </section>
 
+<section class="card" id="almCard">
+  <h2>Xem ngày</h2>
+  <div class="kv" id="almKv"></div>
+  <div id="almTruc">
+    <div class="lbl2">Việc nên làm</div><div class="chips2 nen" id="almNen"></div>
+    <div class="lbl2">Không nên</div><div class="chips2 ky" id="almKy"></div>
+  </div>
+  <div id="almHuongWrap"><div class="lbl2">Hướng xuất hành</div><div class="kv" id="almHuong"></div></div>
+  <div id="almLdWrap"><div class="lbl2">Giờ xuất hành (Lục Diệu) · ngày <span id="ldDay"></span></div><div id="almLd"></div></div>
+  <p class="muted small" style="margin:12px 0 0">Tính theo trực ngày (thập nhị kiến trừ), can chi ngày và phép Lục Diệu. Chỉ để tham khảo.</p>
+</section>
+
+<section class="card" id="gdCard">
+  <h2>Chọn ngày tốt · 60 ngày tới</h2>
+  <div class="tasks" id="tasks"></div>
+  <div id="gdList"></div>
+</section>
+
 <div id="settings" role="dialog" aria-label="Cài đặt">
   <div class="s-head"><button class="back" id="closeSettings" aria-label="Quay lại">‹</button><h1>Cài đặt</h1></div>
 
@@ -287,6 +328,18 @@ button.item:active { background: var(--chip); }
     <label class="item" for="spiritual"><span class="ico">✦</span><span class="body"><span class="lbl">Ngày hoàng đạo, giờ tốt</span><span class="val">Hiện trên widget và trong app</span></span><input type="checkbox" class="switch" id="spiritual"></label>
     <div class="item"><span class="ico">🌓</span><span class="body"><span class="lbl">Giao diện</span></span>
       <div class="seg" id="themeSeg"><button data-v="system">Hệ thống</button><button data-v="light">Sáng</button><button data-v="dark">Tối</button></div></div>
+    <label class="item" for="showAlmanac"><span class="ico">📖</span><span class="body"><span class="lbl">Việc nên làm, không nên</span><span class="val">Trực ngày, ngũ hành, tuổi xung</span></span><input type="checkbox" class="switch" id="showAlmanac"></label>
+    <label class="item" for="showHuong"><span class="ico">🧭</span><span class="body"><span class="lbl">Hướng xuất hành</span><span class="val">Hỷ thần, Tài thần theo can ngày</span></span><input type="checkbox" class="switch" id="showHuong"></label>
+    <label class="item" for="showLucDieu"><span class="ico">⏱️</span><span class="body"><span class="lbl">Giờ xuất hành Lục Diệu</span><span class="val">Đại An, Tốc Hỷ, Tiểu Cát…</span></span><input type="checkbox" class="switch" id="showLucDieu"></label>
+    <label class="item" for="showGoodDays"><span class="ico">🗓️</span><span class="body"><span class="lbl">Chọn ngày tốt</span><span class="val">Cưới hỏi, khai trương, khởi công…</span></span><input type="checkbox" class="switch" id="showGoodDays"></label>
+  </div>
+
+  <div class="g-title">Thông báo</div>
+  <div class="group">
+    <label class="item" for="notifyEvents"><span class="ico">🔔</span><span class="body"><span class="lbl">Nhắc sự kiện</span><span class="val">Giỗ, sinh nhật, lịch hẹn sắp tới</span></span><input type="checkbox" class="switch" id="notifyEvents"></label>
+    <label class="item" for="notifyLunar"><span class="ico">🌕</span><span class="body"><span class="lbl">Nhắc rằm, mùng 1, lễ Tết</span><span class="val">Báo hôm trước và đúng ngày</span></span><input type="checkbox" class="switch" id="notifyLunar"></label>
+    <div class="item"><span class="ico">⏰</span><span class="body"><span class="lbl">Giờ nhắc mỗi ngày</span></span><select class="in" id="notifyHour" style="width:108px;flex:none;padding:8px 12px"></select></div>
+    <button class="item" id="testNotify"><span class="ico">📣</span><span class="body"><span class="lbl">Gửi thông báo thử</span><span class="val">Kiểm tra máy có chặn thông báo không</span></span><span class="act">Gửi</span></button>
   </div>
 
   <div class="g-title">Dữ liệu</div>
@@ -356,6 +409,7 @@ function render() {
   renderGrid();
   renderDay();
   renderWeather();
+  renderGoodDays();
 }
 
 function renderGrid() {
@@ -422,6 +476,8 @@ function renderDay() {
     const ic = tp.short.slice(0, sp), txt = tp.short.slice(sp + 1);
     return `<div class="tip ${tp.kind.toLowerCase()}"><div class="ic">${ic}</div><div><div class="t">${esc(txt)}</div><div class="d">${esc(tp.detail)}</div></div></div>`;
   }).join("");
+
+  renderAlmanac(d);
 
   // Giờ tốt
   $("hoursCard").style.display = state.prefs.spiritual ? "" : "none";
@@ -497,8 +553,47 @@ function smooth(pts) {
 $("prev").onclick = () => { view.m--; if (view.m < 1) { view.m = 12; view.y--; } view.sel = 1; render(); };
 $("next").onclick = () => { view.m++; if (view.m > 12) { view.m = 1; view.y++; } view.sel = 1; render(); };
 $("todayBtn").onclick = () => { view = { y: state.today.y, m: state.today.m, sel: state.today.d }; render(); };
+// ---- Xem ngày, chọn ngày tốt ----
+const TASKS = [["cuoi","💍 Cưới hỏi"],["khaitruong","✂️ Khai trương"],["khoicong","🏗️ Khởi công"],["nhaptrach","🏠 Nhập trạch"],["hopdong","🤝 Ký hợp đồng"],["muasam","🚗 Mua xe, tài sản"],["xuathanh","✈️ Xuất hành"],["cungle","🙏 Cúng lễ"]];
+let curTask = "cuoi";
+
+function renderAlmanac(d) {
+  const p = state.prefs;
+  const show = p.showAlmanac || p.showHuong || p.showLucDieu;
+  $("almCard").style.display = show ? "" : "none";
+  if (!show) return;
+  $("almKv").innerHTML = `<span>Trực <b>${esc(d.truc)}</b></span><span>Ngũ hành <b>${esc(d.napAm)}</b></span><span>Tuổi xung <b>${esc(d.xung)}</b></span>`;
+  $("almTruc").style.display = p.showAlmanac ? "" : "none";
+  $("almNen").innerHTML = d.trucNen.map(x => `<span>${esc(x)}</span>`).join("");
+  $("almKy").innerHTML = d.trucKy.map(x => `<span>${esc(x)}</span>`).join("");
+  $("almHuongWrap").style.display = p.showHuong ? "" : "none";
+  $("almHuong").innerHTML = `<span>Hỷ thần <b>${esc(d.hyThan)}</b></span><span>Tài thần <b>${esc(d.taiThan)}</b></span>`;
+  $("almLdWrap").style.display = p.showLucDieu ? "" : "none";
+  $("ldDay").textContent = d.lucDieuDay;
+  $("almLd").innerHTML = d.lucDieu.map(h =>
+    `<div class="ld"><div class="n${h.good ? " good" : ""}">${esc(h.name)}</div><div><div class="h">${esc(h.hours)}</div><div class="ds">${esc(h.desc)}</div></div></div>`).join("");
+}
+
+function renderGoodDays() {
+  const on = !!state.prefs.showGoodDays;
+  $("gdCard").style.display = on ? "" : "none";
+  if (!on) return;
+  $("tasks").innerHTML = TASKS.map(([k, n]) => `<button data-k="${k}" class="${k === curTask ? "on" : ""}">${n}</button>`).join("");
+  $("tasks").querySelectorAll("button").forEach(b => b.onclick = () => { curTask = b.dataset.k; renderGoodDays(); });
+  const list = JSON.parse(Android.goodDays(curTask, 60));
+  $("gdList").innerHTML = list.length ? list.map(g =>
+    `<button class="gd" data-date="${g.date}"><div class="dt"><b>${g.d}</b><small>${esc(g.dow)} ${g.m}/${String(g.y).slice(2)}</small></div>
+     <div class="b"><div class="t">${esc(g.canChi)} · ${esc(g.lunar)}</div><div class="r">${g.reasons.map(esc).join(" · ")}</div></div>
+     <div class="sc">${"★".repeat(Math.min(g.score, 5))}</div></button>`).join("")
+    : `<div class="ev-empty">Không có ngày nổi bật cho việc này trong 60 ngày tới.</div>`;
+  $("gdList").querySelectorAll(".gd").forEach(b => b.onclick = () => {
+    const [y, m, d] = b.dataset.date.split("-").map(Number);
+    view = { y, m, sel: d }; render(); window.scrollTo({ top: 0, behavior: "smooth" });
+  });
+}
+
 // ---- Sự kiện ----
-const ICONS = ["📌","🕯️","🎂","💍","🙏","🎉","💼","🏥","✈️","📚","🏠","❤️"];
+const ICONS =["📌","🕯️","🎂","💍","🙏","🎉","💼","🏥","✈️","📚","🏠","❤️"];
 const DOW = ["Chủ nhật","Thứ Hai","Thứ Ba","Thứ Tư","Thứ Năm","Thứ Sáu","Thứ Bảy"];
 let curDay = null, editing = null;
 
@@ -595,7 +690,20 @@ function renderSettings() {
   document.querySelectorAll("#themeSeg button").forEach(b => b.classList.toggle("on", b.dataset.v === theme));
   $("updVal").textContent = state.weather ? `Cập nhật lúc ${state.weather.updated} · ${state.weather.city}` : "Chưa có dữ liệu";
   $("verVal").textContent = state.version ? `Phiên bản ${state.version}` : "";
+  ["showAlmanac", "showHuong", "showLucDieu", "showGoodDays", "notifyEvents", "notifyLunar"].forEach(k => { $(k).checked = !!state.prefs[k]; });
+  const hs = $("notifyHour");
+  if (!hs.options.length) [6, 7, 8, 9, 12, 18, 19, 20, 21].forEach(h => { const o = document.createElement("option"); o.value = h; o.textContent = h + ":00"; hs.appendChild(o); });
+  hs.value = String(state.prefs.notifyHour ?? 7);
 }
+["showAlmanac", "showHuong", "showLucDieu", "showGoodDays"].forEach(k => $(k).onchange = e => {
+  state.prefs[k] = e.target.checked;
+  Android.setSections(!!state.prefs.showAlmanac, !!state.prefs.showLucDieu, !!state.prefs.showHuong, !!state.prefs.showGoodDays);
+  render();
+});
+function pushNotify() { Android.setNotify(!!state.prefs.notifyEvents, !!state.prefs.notifyLunar, +(state.prefs.notifyHour ?? 7)); }
+["notifyEvents", "notifyLunar"].forEach(k => $(k).onchange = e => { state.prefs[k] = e.target.checked; pushNotify(); });
+$("notifyHour").onchange = e => { state.prefs.notifyHour = +e.target.value; pushNotify(); toast(`Sẽ nhắc lúc ${e.target.value}:00 mỗi ngày`); };
+$("testNotify").onclick = () => { Android.testNotify(); toast("Đã gửi thông báo thử, kéo thanh trạng thái xuống xem"); };
 function openSettings() { renderSettings(); $("settings").classList.add("open"); }
 function closeSettings() { $("settings").classList.remove("open"); $("citySearch").hidden = true; }
 window.closeSettingsIfOpen = function () {

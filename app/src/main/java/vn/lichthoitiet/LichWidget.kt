@@ -25,6 +25,7 @@ class LichWidget : AppWidgetProvider() {
     override fun onEnabled(context: Context) {
         WeatherWorker.schedule(context)
         WeatherWorker.refreshNow(context)
+        Reminders.schedule(context)
     }
 
     override fun onDisabled(context: Context) {

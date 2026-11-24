@@ -206,7 +206,14 @@ object LunarCalendar {
 
     fun canChiMonth(l: LunarDate) = "${CAN[(l.year * 12 + l.month + 3) % 10]} ${CHI[(l.month + 1) % 12]}"
 
-    private fun dayChiIndex(jd: Int) = (jd + 1) % 12
+    fun dayChiIndex(jd: Int) = (jd + 1) % 12
+
+    /** Chi của tháng theo tiết khí (Lập xuân bắt đầu tháng Dần), dùng để tính trực ngày. */
+    fun tietMonthChi(jd: Int): Int {
+        val lon = sunLongitudeDeg(jd + 1.0)
+        val idx = int(((lon - 315.0 + 360.0) % 360.0) / 30.0)
+        return (2 + idx) % 12
+    }
 
     fun canChiDay(jd: Int) = "${CAN[(jd + 9) % 10]} ${CHI[dayChiIndex(jd)]}"
 

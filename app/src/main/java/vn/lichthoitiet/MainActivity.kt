@@ -1,13 +1,16 @@
 package vn.lichthoitiet
 
+import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
 import android.appwidget.AppWidgetManager
 import android.content.ComponentName
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.graphics.Color
 import android.net.Uri
+import android.os.Build
 import android.os.Bundle
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
@@ -47,6 +50,17 @@ class MainActivity : Activity() {
         web.loadUrl("file:///android_asset/index.html")
 
         if (WeatherRepo.load(this) == null) refreshWeather()
+        Reminders.schedule(this)
+        if (prefs.notifyEvents || prefs.notifyLunar) ensureNotificationPermission()
+    }
+
+    /** Android 13+ cần xin quyền hiện thông báo. */
+    private fun ensureNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= 33 &&
+            checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+        ) {
+            requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
+        }
     }
 
     override fun onResume() {
@@ -92,7 +106,11 @@ class MainActivity : Activity() {
             put("minute", now.minute)
             put("dark", isDark())
             put("version", versionName())
-            put("prefs", JSONObject().put("city", prefs.city).put("spiritual", prefs.spiritual).put("theme", prefs.theme))
+            put("prefs", JSONObject()
+                .put("city", prefs.city).put("spiritual", prefs.spiritual).put("theme", prefs.theme)
+                .put("showAlmanac", prefs.showAlmanac).put("showLucDieu", prefs.showLucDieu)
+                .put("showHuong", prefs.showHuong).put("showGoodDays", prefs.showGoodDays)
+                .put("notifyEvents", prefs.notifyEvents).put("notifyLunar", prefs.notifyLunar).put("notifyHour", prefs.notifyHour))
             put("weather", if (w == null) JSONObject.NULL else weatherJson(w))
         }.toString()
     }
@@ -182,6 +200,13 @@ class MainActivity : Activity() {
                 put("weekday", WidgetRenderer.dayOfWeek(date))
                 put("ld", l.day); put("lm", l.month); put("ly", l.year); put("leap", l.leap)
                 put("events", dayEvents)
+                val a = Almanac.of(l)
+                put("truc", a.truc); put("trucNen", JSONArray(a.nen)); put("trucKy", JSONArray(a.ky))
+                put("napAm", a.napAm); put("nguHanh", a.nguHanh); put("xung", a.xung)
+                put("hyThan", a.hyThan); put("taiThan", a.taiThan); put("lucDieuDay", a.lucDieuDay)
+                put("lucDieu", JSONArray().apply {
+                    a.lucDieu.forEach { put(JSONObject().put("name", it.name).put("hours", it.hours).put("good", it.good).put("desc", it.desc)) }
+                })
                 put("canChiYear", LunarCalendar.canChiYear(l.year))
                 put("canChiMonth", LunarCalendar.canChiMonth(l))
                 put("canChiDay", LunarCalendar.canChiDay(l.jd))
@@ -194,6 +219,50 @@ class MainActivity : Activity() {
                 put("isToday", isToday)
                 put("isTomorrow", date == today.plusDays(1))
             }.toString()
+        }
+
+        // ---- Xem ngày ----
+
+        /** Ngày tốt cho một việc trong [days] ngày tới. */
+        @JavascriptInterface
+        fun goodDays(task: String, days: Int): String {
+            val arr = JSONArray()
+            Almanac.goodDays(task, LocalDate.now(), days.coerceIn(7, 366)).forEach { g ->
+                val l = LunarCalendar.convert(g.date)
+                arr.put(JSONObject().apply {
+                    put("date", g.date.toString())
+                    put("d", g.date.dayOfMonth); put("m", g.date.monthValue); put("y", g.date.year)
+                    put("dow", SHORT_DOW[g.date.dayOfWeek.value - 1])
+                    put("lunar", "${l.day}/${l.month} âm")
+                    put("canChi", LunarCalendar.canChiDay(l.jd))
+                    put("truc", g.truc); put("hoangDao", g.hoangDao)
+                    put("score", g.score); put("reasons", JSONArray(g.reasons))
+                })
+            }
+            return arr.toString()
+        }
+
+        @JavascriptInterface
+        fun setSections(almanac: Boolean, lucDieu: Boolean, huong: Boolean, goodDays: Boolean) {
+            prefs.showAlmanac = almanac; prefs.showLucDieu = lucDieu
+            prefs.showHuong = huong; prefs.showGoodDays = goodDays
+        }
+
+        // ---- Thông báo ----
+
+        @JavascriptInterface
+        fun setNotify(events: Boolean, lunar: Boolean, hour: Int) {
+            prefs.notifyEvents = events
+            prefs.notifyLunar = lunar
+            prefs.notifyHour = hour.coerceIn(0, 23)
+            Reminders.schedule(this@MainActivity)
+            if (events || lunar) runOnUiThread { ensureNotificationPermission() }
+        }
+
+        @JavascriptInterface
+        fun testNotify() = runOnUiThread {
+            ensureNotificationPermission()
+            Reminders.test(this@MainActivity)
         }
 
         // ---- Sự kiện ----
