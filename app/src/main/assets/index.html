@@ -107,12 +107,12 @@ h2 { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: u
 .tile .k { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .tile .v { font-size: 20px; font-weight: 800; margin-top: 2px; line-height: 1.15; }
 .tile .v small { font-size: 12px; font-weight: 600; color: var(--muted); margin-left: 3px; }
-.sun { margin-top: 14px; }
-.sun .lbl { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
-.sun .lbl b { display: block; font-size: 15px; color: var(--text); }
-.sun .track { position: relative; height: 4px; border-radius: 4px; background: var(--line); margin: 10px 0 4px; }
-.sun .track .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--gold); }
-.sun .track .mk { position: absolute; top: 50%; transform: translate(-50%, -50%); font-size: 18px; line-height: 1; }
+.sunbar { margin-top: 14px; }
+.sunbar .lbl { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+.sunbar .lbl b { display: block; font-size: 15px; color: var(--text); }
+.sunbar .track { position: relative; height: 4px; border-radius: 4px; background: var(--line); margin: 10px 0 4px; }
+.sunbar .track .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--gold); }
+.sunbar .track .mk { position: absolute; top: 50%; transform: translate(-50%, -50%); font-size: 18px; line-height: 1; }
 
 /* Gợi ý */
 .tip { display: flex; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
@@ -256,7 +256,7 @@ button.item:active { background: var(--chip); }
   <svg class="wx-curve" id="wxCurve" aria-hidden="true"></svg>
   <div class="wx-days" id="wxBottom"></div>
   <div class="tiles" id="tiles"></div>
-  <div class="sun" id="sun"></div>
+  <div class="sunbar" id="sun"></div>
   <div class="muted small" id="wxUpd" style="margin-top:10px"></div>
 </section>
 
