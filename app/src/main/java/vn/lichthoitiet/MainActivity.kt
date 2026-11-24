@@ -70,15 +70,35 @@ class MainActivity : Activity() {
             put("minute", now.minute)
             put("dark", isDark())
             put("prefs", JSONObject().put("city", prefs.city).put("spiritual", prefs.spiritual))
-            put("weather", if (w == null) JSONObject.NULL else JSONObject().apply {
-                put("city", w.city)
-                put("tempNow", w.tempNow); put("feelsLike", w.feelsLike); put("humidity", w.humidity)
-                put("iconNow", WeatherText.icon(w.codeNow)); put("labelNow", WeatherText.label(w.codeNow))
-                put("todayMin", w.todayMin); put("todayMax", w.todayMax); put("todayRain", w.todayRain)
-                put("tomorrowMin", w.tomorrowMin); put("tomorrowMax", w.tomorrowMax); put("tomorrowRain", w.tomorrowRain)
-                put("iconTomorrow", WeatherText.icon(w.tomorrowCode)); put("labelTomorrow", WeatherText.label(w.tomorrowCode))
-            })
+            put("weather", if (w == null) JSONObject.NULL else weatherJson(w))
         }.toString()
+    }
+
+    private fun weatherJson(w: WeatherData): JSONObject = JSONObject().apply {
+        val today = LocalDate.now()
+        put("city", w.city)
+        put("updated", String.format("%tH:%<tM", w.fetchedAt))
+        put("tempNow", w.tempNow); put("feelsLike", w.feelsLike); put("humidity", w.humidity)
+        put("iconNow", WeatherText.icon(w.codeNow)); put("labelNow", WeatherText.label(w.codeNow))
+        put("windKmh", w.windNow); put("windDir", WeatherText.windDir(w.windDir)); put("beaufort", WeatherText.beaufort(w.windNow))
+        put("pressure", w.pressure); put("visibility", w.visibility)
+        put("uv", w.todayUv.toInt()); put("uvLabel", WeatherText.uvLabel(w.todayUv))
+        put("daily", JSONArray().apply {
+            w.daily.forEachIndexed { i, d ->
+                val date = try { LocalDate.parse(d.date) } catch (e: Exception) { today.plusDays(i.toLong()) }
+                put(JSONObject().apply {
+                    put("date", d.date)
+                    put("label", if (date == today) "Hôm nay" else SHORT_DOW[date.dayOfWeek.value - 1])
+                    put("icon", WeatherText.icon(d.code)); put("text", WeatherText.label(d.code))
+                    put("max", d.max); put("min", d.min); put("rain", d.rain)
+                    put("sunrise", d.sunrise); put("sunset", d.sunset)
+                })
+            }
+        })
+    }
+
+    private companion object {
+        val SHORT_DOW = listOf("T2", "T3", "T4", "T5", "T6", "T7", "CN")
     }
 
     private fun refreshWeather() {

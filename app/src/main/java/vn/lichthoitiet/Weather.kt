@@ -6,7 +6,32 @@ import org.json.JSONObject
 import java.net.HttpURLConnection
 import java.net.URL
 import java.net.URLEncoder
+import java.time.LocalDateTime
 import kotlin.math.roundToInt
+
+/** Dự báo một ngày. [date] dạng "2026-11-24", [sunrise]/[sunset] dạng "06:09". */
+data class DailyForecast(
+    val date: String,
+    val code: Int,
+    val max: Int,
+    val min: Int,
+    val rain: Int,
+    val uv: Double,
+    val sunrise: String,
+    val sunset: String,
+) {
+    fun toJson(): JSONObject = JSONObject().apply {
+        put("date", date); put("code", code); put("max", max); put("min", min)
+        put("rain", rain); put("uv", uv); put("sunrise", sunrise); put("sunset", sunset)
+    }
+
+    companion object {
+        fun fromJson(j: JSONObject) = DailyForecast(
+            j.getString("date"), j.getInt("code"), j.getInt("max"), j.getInt("min"),
+            j.getInt("rain"), j.getDouble("uv"), j.getString("sunrise"), j.getString("sunset"),
+        )
+    }
+}
 
 /** Dữ liệu thời tiết lấy từ Open-Meteo (miễn phí, không cần API key). */
 data class WeatherData(
@@ -15,21 +40,31 @@ data class WeatherData(
     val feelsLike: Int,
     val humidity: Int,
     val windNow: Int,
+    /** Hướng gió thổi tới, độ (0 = bắc). */
+    val windDir: Int,
+    /** hPa */
+    val pressure: Int,
+    /** km */
+    val visibility: Int,
     val codeNow: Int,
-    val todayMax: Int,
-    val todayMin: Int,
-    val todayRain: Int,
-    val todayUv: Double,
-    val todayCode: Int,
-    val tomorrowMax: Int,
-    val tomorrowMin: Int,
-    val tomorrowRain: Int,
-    val tomorrowCode: Int,
+    /** 7 ngày, phần tử đầu là hôm nay. */
+    val daily: List<DailyForecast>,
     /** 48 giờ, bắt đầu từ 0h hôm nay. */
     val hourlyRain: List<Int>,
     val hourlyCode: List<Int>,
     val fetchedAt: Long,
 ) {
+    private fun d(i: Int) = daily.getOrNull(i)
+    val todayMax get() = d(0)?.max ?: tempNow
+    val todayMin get() = d(0)?.min ?: tempNow
+    val todayRain get() = d(0)?.rain ?: 0
+    val todayUv get() = d(0)?.uv ?: 0.0
+    val todayCode get() = d(0)?.code ?: codeNow
+    val tomorrowMax get() = d(1)?.max ?: todayMax
+    val tomorrowMin get() = d(1)?.min ?: todayMin
+    val tomorrowRain get() = d(1)?.rain ?: todayRain
+    val tomorrowCode get() = d(1)?.code ?: todayCode
+
     /** Xác suất mưa cao nhất trong khoảng giờ [from, to] (0..47). */
     fun maxRain(from: Int, to: Int): Int {
         if (hourlyRain.isEmpty()) return 0
@@ -50,11 +85,9 @@ data class WeatherData(
     fun toJson(): String = JSONObject().apply {
         put("city", city)
         put("tempNow", tempNow); put("feelsLike", feelsLike); put("humidity", humidity)
-        put("windNow", windNow); put("codeNow", codeNow)
-        put("todayMax", todayMax); put("todayMin", todayMin); put("todayRain", todayRain)
-        put("todayUv", todayUv); put("todayCode", todayCode)
-        put("tomorrowMax", tomorrowMax); put("tomorrowMin", tomorrowMin)
-        put("tomorrowRain", tomorrowRain); put("tomorrowCode", tomorrowCode)
+        put("windNow", windNow); put("windDir", windDir); put("pressure", pressure); put("visibility", visibility)
+        put("codeNow", codeNow)
+        put("daily", JSONArray().apply { daily.forEach { put(it.toJson()) } })
         put("hourlyRain", JSONArray(hourlyRain)); put("hourlyCode", JSONArray(hourlyCode))
         put("fetchedAt", fetchedAt)
     }.toString()
@@ -62,14 +95,14 @@ data class WeatherData(
     companion object {
         fun fromJson(s: String): WeatherData? = try {
             val j = JSONObject(s)
+            val dailyArr = j.getJSONArray("daily")
             WeatherData(
                 city = j.getString("city"),
-                tempNow = j.getInt("tempNow"), feelsLike = j.getInt("feelsLike"),
-                humidity = j.getInt("humidity"), windNow = j.getInt("windNow"), codeNow = j.getInt("codeNow"),
-                todayMax = j.getInt("todayMax"), todayMin = j.getInt("todayMin"), todayRain = j.getInt("todayRain"),
-                todayUv = j.getDouble("todayUv"), todayCode = j.getInt("todayCode"),
-                tomorrowMax = j.getInt("tomorrowMax"), tomorrowMin = j.getInt("tomorrowMin"),
-                tomorrowRain = j.getInt("tomorrowRain"), tomorrowCode = j.getInt("tomorrowCode"),
+                tempNow = j.getInt("tempNow"), feelsLike = j.getInt("feelsLike"), humidity = j.getInt("humidity"),
+                windNow = j.getInt("windNow"), windDir = j.getInt("windDir"),
+                pressure = j.getInt("pressure"), visibility = j.getInt("visibility"),
+                codeNow = j.getInt("codeNow"),
+                daily = List(dailyArr.length()) { DailyForecast.fromJson(dailyArr.getJSONObject(it)) },
                 hourlyRain = j.getJSONArray("hourlyRain").toIntList(),
                 hourlyCode = j.getJSONArray("hourlyCode").toIntList(),
                 fetchedAt = j.getLong("fetchedAt"),
@@ -104,23 +137,39 @@ object WeatherRepo {
 
     fun fetch(lat: Double, lon: Double, city: String): WeatherData {
         val url = "https://api.open-meteo.com/v1/forecast?latitude=$lat&longitude=$lon" +
-            "&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m" +
-            "&hourly=precipitation_probability,weather_code" +
-            "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,uv_index_max" +
-            "&timezone=Asia%2FBangkok&forecast_days=2"
+            "&current=temperature_2m,relative_humidity_2m,apparent_temperature,weather_code,wind_speed_10m,wind_direction_10m,surface_pressure" +
+            "&hourly=precipitation_probability,weather_code,visibility" +
+            "&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max,uv_index_max,sunrise,sunset" +
+            "&timezone=Asia%2FBangkok&forecast_days=7"
         val j = JSONObject(httpGet(url))
         val cur = j.getJSONObject("current")
         val daily = j.getJSONObject("daily")
         val hourly = j.getJSONObject("hourly")
 
         fun JSONArray.num(i: Int): Double = optDouble(i, 0.0).let { if (it.isNaN()) 0.0 else it }
-        fun JSONArray.ints(): List<Int> = List(length()) { num(it).roundToInt() }
+        fun JSONArray.ints(limit: Int): List<Int> = List(minOf(length(), limit)) { num(it).roundToInt() }
 
+        val dDate = daily.getJSONArray("time")
         val dMax = daily.getJSONArray("temperature_2m_max")
         val dMin = daily.getJSONArray("temperature_2m_min")
         val dRain = daily.getJSONArray("precipitation_probability_max")
         val dCode = daily.getJSONArray("weather_code")
         val dUv = daily.getJSONArray("uv_index_max")
+        val dRise = daily.getJSONArray("sunrise")
+        val dSet = daily.getJSONArray("sunset")
+        val days = List(dDate.length()) { i ->
+            DailyForecast(
+                date = dDate.getString(i),
+                code = dCode.num(i).roundToInt(),
+                max = dMax.num(i).roundToInt(), min = dMin.num(i).roundToInt(),
+                rain = dRain.num(i).roundToInt(), uv = dUv.num(i),
+                sunrise = dRise.optString(i).substringAfter('T', "06:00"),
+                sunset = dSet.optString(i).substringAfter('T', "18:00"),
+            )
+        }
+
+        val hourNow = LocalDateTime.now().hour
+        val visibilityM = hourly.optJSONArray("visibility")?.num(hourNow) ?: 10_000.0
 
         return WeatherData(
             city = city,
@@ -128,13 +177,13 @@ object WeatherRepo {
             feelsLike = cur.optDouble("apparent_temperature", 0.0).roundToInt(),
             humidity = cur.optDouble("relative_humidity_2m", 0.0).roundToInt(),
             windNow = cur.optDouble("wind_speed_10m", 0.0).roundToInt(),
+            windDir = cur.optDouble("wind_direction_10m", 0.0).roundToInt(),
+            pressure = cur.optDouble("surface_pressure", 0.0).roundToInt(),
+            visibility = (visibilityM / 1000).roundToInt(),
             codeNow = cur.optInt("weather_code", 0),
-            todayMax = dMax.num(0).roundToInt(), todayMin = dMin.num(0).roundToInt(),
-            todayRain = dRain.num(0).roundToInt(), todayUv = dUv.num(0), todayCode = dCode.num(0).roundToInt(),
-            tomorrowMax = dMax.num(1).roundToInt(), tomorrowMin = dMin.num(1).roundToInt(),
-            tomorrowRain = dRain.num(1).roundToInt(), tomorrowCode = dCode.num(1).roundToInt(),
-            hourlyRain = hourly.getJSONArray("precipitation_probability").ints(),
-            hourlyCode = hourly.getJSONArray("weather_code").ints(),
+            daily = days,
+            hourlyRain = hourly.getJSONArray("precipitation_probability").ints(48),
+            hourlyCode = hourly.getJSONArray("weather_code").ints(48),
             fetchedAt = System.currentTimeMillis(),
         )
     }
@@ -164,7 +213,7 @@ object WeatherRepo {
     }
 }
 
-/** Đổi mã thời tiết WMO sang biểu tượng và chữ tiếng Việt. */
+/** Đổi số liệu thời tiết sang biểu tượng và chữ tiếng Việt. */
 object WeatherText {
     fun icon(code: Int): String = when (code) {
         0 -> "☀️"
@@ -193,5 +242,21 @@ object WeatherText {
         in 71..77, 85, 86 -> "có tuyết"
         in 95..99 -> "dông"
         else -> "không rõ"
+    }
+
+    fun windDir(deg: Int): String {
+        val names = listOf("bắc", "đông bắc", "đông", "đông nam", "nam", "tây nam", "tây", "tây bắc")
+        return "Gió " + names[(((deg % 360) + 22.5) / 45).toInt() % 8]
+    }
+
+    /** Cấp gió Beaufort từ km/h. */
+    fun beaufort(kmh: Int): Int = when {
+        kmh < 1 -> 0; kmh <= 5 -> 1; kmh <= 11 -> 2; kmh <= 19 -> 3; kmh <= 28 -> 4
+        kmh <= 38 -> 5; kmh <= 49 -> 6; kmh <= 61 -> 7; kmh <= 74 -> 8; kmh <= 88 -> 9
+        kmh <= 102 -> 10; kmh <= 117 -> 11; else -> 12
+    }
+
+    fun uvLabel(uv: Double): String = when {
+        uv < 3 -> "Thấp"; uv < 6 -> "Trung bình"; uv < 8 -> "Cao"; uv < 11 -> "Rất cao"; else -> "Cực cao"
     }
 }

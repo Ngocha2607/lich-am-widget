@@ -9,17 +9,20 @@
   --bg: #EEF2F7; --card: #FFFFFF; --text: #1C1C1E; --muted: #6B7280; --line: #E5E7EB;
   --chip: #F3F4F6; --accent: #D7263D; --accent-soft: #FDECEF; --gold: #D4A017; --gold-soft: #FFF6DA;
   --blue: #2563EB; --blue-soft: #E8F0FF; --shadow: 0 1px 2px rgba(0,0,0,.05), 0 6px 20px rgba(20,30,60,.06);
+  --series-max: #eb6834; --series-min: #2a78d6;
 }
 html.dark {
   --bg: #0F1115; --card: #1B1D23; --text: #F3F4F6; --muted: #9CA3AF; --line: #2A2D35;
   --chip: #262930; --accent: #FF5A6E; --accent-soft: #3A1F25; --gold: #F2C94C; --gold-soft: #3A3218;
   --blue: #7AA2FF; --blue-soft: #1E2A44; --shadow: none;
+  --series-max: #d95926; --series-min: #3987e5;
 }
 @media (prefers-color-scheme: dark) {
   html:not(.light) {
     --bg: #0F1115; --card: #1B1D23; --text: #F3F4F6; --muted: #9CA3AF; --line: #2A2D35;
     --chip: #262930; --accent: #FF5A6E; --accent-soft: #3A1F25; --gold: #F2C94C; --gold-soft: #3A3218;
     --blue: #7AA2FF; --blue-soft: #1E2A44; --shadow: none;
+    --series-max: #d95926; --series-min: #3987e5;
   }
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -52,14 +55,14 @@ h2 { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: u
 .cell.today { background: var(--accent); }
 .cell.today .s, .cell.today .l { color: #fff; }
 .cell.sel:not(.today) { box-shadow: inset 0 0 0 2px var(--blue); }
-.cell .dot { position: absolute; top: 6px; right: 8px; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
+.cell .dot { position: absolute; top: 7px; right: 9px; width: 5px; height: 5px; border-radius: 50%; background: var(--gold); opacity: .9; }
 .cell.today .dot { background: #fff; }
 
 /* Thẻ ngày */
 .day-top { display: flex; gap: 14px; }
 .solar { flex: 0 0 44%; text-align: center; }
 .solar .wd { font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
-.solar .big { font-size: 76px; font-weight: 800; line-height: 1; color: var(--accent); margin: 2px 0; letter-spacing: -.02em; }
+.solar .big { font-size: 72px; font-weight: 800; line-height: 1; color: var(--accent); margin: 2px 0; letter-spacing: -.02em; }
 .solar .sub { font-size: 14px; font-weight: 600; }
 .solar .hour { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
 .vsep { width: 1px; background: var(--line); }
@@ -72,7 +75,7 @@ h2 { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: u
 .badge.hd { background: var(--gold-soft); color: var(--gold); }
 .badge.hac { background: var(--chip); color: var(--muted); }
 
-/* Thời tiết */
+/* Thời tiết của ngày đang chọn */
 .weather { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); display: flex; align-items: center; gap: 12px; }
 .weather .icon { font-size: 38px; line-height: 1; }
 .weather .temp { font-size: 30px; font-weight: 800; line-height: 1; }
@@ -80,6 +83,36 @@ h2 { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: u
 .weather .city { margin-left: auto; text-align: right; font-size: 12.5px; color: var(--muted); }
 .weather .city b { display: block; font-size: 14px; color: var(--text); }
 .weather.empty { color: var(--muted); font-size: 13.5px; }
+
+/* Thẻ thời tiết 7 ngày */
+.wx-head { display: flex; align-items: baseline; justify-content: space-between; margin-bottom: 8px; }
+.wx-head .legend { font-size: 11.5px; color: var(--muted); display: flex; gap: 10px; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 50%; vertical-align: -1px; margin-right: 4px; }
+.legend .mx i { background: var(--series-max); } .legend .mn i { background: var(--series-min); }
+.wx-days { display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; }
+.wx-days .d { padding: 2px 0; border-radius: 10px; }
+.wx-days .d.sel { background: var(--chip); }
+.wx-days .lb { font-size: 11px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+.wx-days .ic { font-size: 22px; line-height: 1.3; }
+.wx-days .v { font-size: 14px; font-weight: 700; }
+.wx-days .v.min { color: var(--muted); font-weight: 600; }
+.wx-days .rain { font-size: 10.5px; color: var(--muted); }
+.wx-curve { display: block; width: 100%; height: 96px; }
+.wx-curve path { fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.wx-curve .mx { stroke: var(--series-max); } .wx-curve .mn { stroke: var(--series-min); }
+.wx-curve circle { stroke: var(--card); stroke-width: 2; }
+.wx-curve circle.mx { fill: var(--series-max); } .wx-curve circle.mn { fill: var(--series-min); }
+.tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 14px; }
+.tile { background: var(--chip); border-radius: 14px; padding: 10px 10px 9px; }
+.tile .k { font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tile .v { font-size: 20px; font-weight: 800; margin-top: 2px; line-height: 1.15; }
+.tile .v small { font-size: 12px; font-weight: 600; color: var(--muted); margin-left: 3px; }
+.sun { margin-top: 14px; }
+.sun .lbl { display: flex; justify-content: space-between; font-size: 12px; color: var(--muted); }
+.sun .lbl b { display: block; font-size: 15px; color: var(--text); }
+.sun .track { position: relative; height: 4px; border-radius: 4px; background: var(--line); margin: 10px 0 4px; }
+.sun .track .fill { position: absolute; left: 0; top: 0; bottom: 0; border-radius: 4px; background: var(--gold); }
+.sun .track .mk { position: absolute; top: 50%; transform: translate(-50%, -50%); font-size: 18px; line-height: 1; }
 
 /* Gợi ý */
 .tip { display: flex; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
@@ -147,6 +180,19 @@ input[type=text]:focus { border-color: var(--blue); }
   <div class="weather" id="weather"></div>
 </section>
 
+<section class="card" id="wxCard" style="display:none">
+  <div class="wx-head">
+    <h2 style="margin:0">Thời tiết · <span id="wxCity"></span></h2>
+    <div class="legend"><span class="mx"><i></i>Cao nhất</span><span class="mn"><i></i>Thấp nhất</span></div>
+  </div>
+  <div class="wx-days" id="wxTop"></div>
+  <svg class="wx-curve" id="wxCurve" aria-hidden="true"></svg>
+  <div class="wx-days" id="wxBottom"></div>
+  <div class="tiles" id="tiles"></div>
+  <div class="sun" id="sun"></div>
+  <div class="muted small" id="wxUpd" style="margin-top:10px"></div>
+</section>
+
 <section class="card">
   <h2 id="tipsTitle">Gợi ý hôm nay</h2>
   <div id="tips"></div>
@@ -160,7 +206,7 @@ input[type=text]:focus { border-color: var(--blue); }
 <section class="card">
   <h2>Cài đặt</h2>
   <label for="city">Thành phố lấy thời tiết</label>
-  <div class="row"><input type="text" id="city" placeholder="Ví dụ: Hà Nội, Đà Nẵng"><button class="btn" id="saveCity">Lưu</button></div>
+  <div class="row"><input type="text" id="city" placeholder="Ví dụ: Hà Nội, Hải Phòng"><button class="btn" id="saveCity">Lưu</button></div>
   <label class="switch-row"><span>Hiện ngày hoàng đạo, giờ tốt</span><input type="checkbox" class="switch" id="spiritual"></label>
   <button class="btn ghost" id="refresh">Làm mới thời tiết</button>
   <div id="status" class="muted"></div>
@@ -169,15 +215,16 @@ input[type=text]:focus { border-color: var(--blue); }
 
 <script>
 const $ = id => document.getElementById(id);
-const THU = ["Thứ Hai","Thứ Ba","Thứ Tư","Thứ Năm","Thứ Sáu","Thứ Bảy","Chủ nhật"];
 const CON_GIAP = {Tý:"🐭",Sửu:"🐮",Dần:"🐯",Mão:"🐱",Thìn:"🐲",Tỵ:"🐍",Ngọ:"🐴",Mùi:"🐐",Thân:"🐵",Dậu:"🐔",Tuất:"🐶",Hợi:"🐷"};
 
-let state = null;               // {today:{y,m,d}, prefs:{city,spiritual}, weather, dark, hour}
+let state = null;               // {today:{y,m,d}, hour, minute, prefs:{city,spiritual}, weather, dark}
 let view = { y: 0, m: 0, sel: 0 };
 
 function pad(n) { return (n < 10 ? "0" : "") + n; }
 function esc(s) { return String(s).replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
 function monthName(m) { return m === 1 ? "Giêng" : m === 12 ? "Chạp" : String(m); }
+function dateKey(y, m, d) { return `${y}-${pad(m)}-${pad(d)}`; }
+function forecastFor(y, m, d) { const w = state.weather; return w ? w.daily.find(x => x.date === dateKey(y, m, d)) : null; }
 
 window.onState = function (s) {
   const first = !state;
@@ -195,6 +242,7 @@ function render() {
   if (!state) return;
   renderGrid();
   renderDay();
+  renderWeather();
 }
 
 function renderGrid() {
@@ -220,7 +268,6 @@ function renderGrid() {
 
 function renderDay() {
   const d = JSON.parse(Android.day(view.y, view.m, view.sel));
-  const t = state.today;
   $("wd").textContent = d.weekday;
   $("bigDay").textContent = d.d;
   $("solarSub").textContent = `Tháng ${d.m}, ${d.y}`;
@@ -234,22 +281,22 @@ function renderDay() {
     ? (d.hoangDao ? `<span class="badge hd">✦ Hoàng đạo · ${esc(d.trucThan)}</span>` : `<span class="badge hac">Hắc đạo · ${esc(d.trucThan)}</span>`)
     : "";
 
-  // Thời tiết
-  const w = state.weather, wEl = $("weather");
+  // Thời tiết của ngày đang chọn
+  const w = state.weather, wEl = $("weather"), f = forecastFor(view.y, view.m, view.sel);
   if (!w) {
     wEl.className = "weather empty"; wEl.textContent = "Chưa có dữ liệu thời tiết. Bấm Làm mới ở dưới.";
   } else if (d.isToday) {
     wEl.className = "weather";
     wEl.innerHTML = `<div class="icon">${w.iconNow}</div><div><div class="temp">${w.tempNow}°</div>
-      <div class="desc">${esc(w.labelNow)} · ${w.todayMin}–${w.todayMax}° · mưa ${w.todayRain}%</div></div>
+      <div class="desc">${esc(w.labelNow)} · ${f ? `${f.min}–${f.max}° · mưa ${f.rain}%` : ""}</div></div>
       <div class="city"><b>${esc(w.city)}</b>cảm giác ${w.feelsLike}° · ẩm ${w.humidity}%</div>`;
-  } else if (d.isTomorrow) {
+  } else if (f) {
     wEl.className = "weather";
-    wEl.innerHTML = `<div class="icon">${w.iconTomorrow}</div><div><div class="temp">${w.tomorrowMin}–${w.tomorrowMax}°</div>
-      <div class="desc">${esc(w.labelTomorrow)} · mưa ${w.tomorrowRain}%</div></div>
-      <div class="city"><b>${esc(w.city)}</b>dự báo ngày mai</div>`;
+    wEl.innerHTML = `<div class="icon">${f.icon}</div><div><div class="temp">${f.min}–${f.max}°</div>
+      <div class="desc">${esc(f.text)} · mưa ${f.rain}%</div></div>
+      <div class="city"><b>${esc(w.city)}</b>dự báo ${f.label}</div>`;
   } else {
-    wEl.className = "weather empty"; wEl.textContent = "Chỉ có dự báo thời tiết cho hôm nay và ngày mai.";
+    wEl.className = "weather empty"; wEl.textContent = "Chỉ có dự báo thời tiết cho 7 ngày tới.";
   }
 
   // Gợi ý
@@ -266,6 +313,69 @@ function renderDay() {
   $("hours").innerHTML = d.gioTot.map(g =>
     `<div class="chip${g.chi === nowChi ? " now" : ""}"><div class="an">${CON_GIAP[g.chi] || ""}</div><div class="n">${g.chi}</div><div class="h">${g.from}h–${g.to}h</div></div>`
   ).join("");
+}
+
+function renderWeather() {
+  const w = state.weather, card = $("wxCard");
+  if (!w || !w.daily.length) { card.style.display = "none"; return; }
+  card.style.display = "";
+  $("wxCity").textContent = w.city;
+  $("wxUpd").textContent = `Cập nhật lúc ${w.updated} · nguồn Open-Meteo`;
+
+  const selKey = dateKey(view.y, view.m, view.sel);
+  const days = w.daily.slice(0, 7);
+  $("wxTop").innerHTML = days.map(d =>
+    `<div class="d${d.date === selKey ? " sel" : ""}" data-date="${d.date}"><div class="lb">${esc(d.label)}</div><div class="ic">${d.icon}</div><div class="v">${d.max}°</div></div>`).join("");
+  $("wxBottom").innerHTML = days.map(d =>
+    `<div class="d${d.date === selKey ? " sel" : ""}" data-date="${d.date}"><div class="v min">${d.min}°</div><div class="rain">${d.rain >= 20 ? "💧" + d.rain + "%" : "&nbsp;"}</div></div>`).join("");
+  document.querySelectorAll(".wx-days .d").forEach(el => el.onclick = () => {
+    const [y, m, d] = el.dataset.date.split("-").map(Number);
+    view = { y, m, sel: d }; render();
+  });
+
+  // Đường nhiệt độ cao nhất / thấp nhất
+  const svg = $("wxCurve"), W = svg.clientWidth || 380, H = 96, padY = 10;
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  const all = days.flatMap(d => [d.max, d.min]);
+  const lo = Math.min(...all), hi = Math.max(...all), span = Math.max(hi - lo, 4);
+  const x = i => (i + 0.5) * W / days.length;
+  const y = v => H - padY - (v - lo) / span * (H - 2 * padY);
+  const ptsMax = days.map((d, i) => ({ x: x(i), y: y(d.max) }));
+  const ptsMin = days.map((d, i) => ({ x: x(i), y: y(d.min) }));
+  const dots = (pts, cls) => pts.map(p => `<circle class="${cls}" cx="${p.x}" cy="${p.y}" r="4"/>`).join("");
+  svg.innerHTML = `<path class="mx" d="${smooth(ptsMax)}"/><path class="mn" d="${smooth(ptsMin)}"/>${dots(ptsMax, "mx")}${dots(ptsMin, "mn")}`;
+
+  // Ô chỉ số
+  const tile = (k, v, unit) => `<div class="tile"><div class="k">${k}</div><div class="v">${v}${unit ? `<small>${unit}</small>` : ""}</div></div>`;
+  $("tiles").innerHTML =
+    tile("☀️ UV", w.uv, w.uvLabel) +
+    tile("🌡️ Cảm giác", w.feelsLike + "°") +
+    tile("💧 Độ ẩm", w.humidity, "%") +
+    tile("🌬️ " + esc(w.windDir), "Cấp " + w.beaufort, w.windKmh + " km/h") +
+    tile("🧭 Áp suất", w.pressure, "hPa") +
+    tile("👁️ Tầm nhìn", w.visibility, "km");
+
+  // Bình minh / hoàng hôn
+  const toMin = s => { const [h, m] = s.split(":").map(Number); return h * 60 + m; };
+  const now = state.hour * 60 + state.minute, t0 = days[0], t1 = days[1] || days[0];
+  const rise = toMin(t0.sunrise), set = toMin(t0.sunset);
+  let left, right, start, end, mark;
+  if (now >= rise && now < set) { left = ["Bình minh", t0.sunrise]; right = ["Hoàng hôn", t0.sunset]; start = rise; end = set; mark = "☀️"; }
+  else if (now >= set) { left = ["Hoàng hôn", t0.sunset]; right = ["Bình minh", t1.sunrise]; start = set; end = toMin(t1.sunrise) + 1440; mark = "🌙"; }
+  else { left = ["Hoàng hôn", t0.sunset]; right = ["Bình minh", t0.sunrise]; start = set - 1440; end = rise; mark = "🌙"; }
+  const pct = Math.max(0, Math.min(100, (now - start) / (end - start) * 100));
+  $("sun").innerHTML = `<div class="lbl"><span>${left[0]}<b>${left[1]}</b></span><span style="text-align:right">${right[0]}<b>${right[1]}</b></span></div>
+    <div class="track"><div class="fill" style="width:${pct}%"></div><div class="mk" style="left:${pct}%">${mark}</div></div>`;
+}
+
+function smooth(pts) {
+  if (pts.length < 2) return "";
+  let d = `M${pts[0].x},${pts[0].y}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] || pts[i], p1 = pts[i], p2 = pts[i + 1], p3 = pts[i + 2] || p2;
+    d += ` C${p1.x + (p2.x - p0.x) / 6},${p1.y + (p2.y - p0.y) / 6} ${p2.x - (p3.x - p1.x) / 6},${p2.y - (p3.y - p1.y) / 6} ${p2.x},${p2.y}`;
+  }
+  return d;
 }
 
 $("prev").onclick = () => { view.m--; if (view.m < 1) { view.m = 12; view.y--; } view.sel = 1; render(); };
