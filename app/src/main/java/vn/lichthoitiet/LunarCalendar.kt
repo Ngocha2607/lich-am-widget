@@ -167,12 +167,23 @@ object LunarCalendar {
 
     fun isHoangDao(l: LunarDate): Boolean = trucThanIndex(l) in HOANG_DAO_INDEX
 
-    fun gioHoangDao(jd: Int): List<String> {
+    /** Giờ hoàng đạo trong ngày: (chi, giờ bắt đầu, giờ kết thúc). */
+    fun gioHoangDaoList(jd: Int): List<Triple<String, Int, Int>> {
         val pattern = GIO_HOANG_DAO[dayChiIndex(jd) % 6]
         return (0 until 12).filter { pattern[it] == '1' }.map { i ->
             val start = (i * 2 + 23) % 24
-            "${CHI[i]} ($start-${(start + 2) % 24}h)"
+            Triple(CHI[i], start, (start + 2) % 24)
         }
+    }
+
+    fun gioHoangDao(jd: Int): List<String> =
+        gioHoangDaoList(jd).map { (chi, from, to) -> "$chi ($from-${to}h)" }
+
+    /** Can chi của giờ hiện tại, ví dụ "Tân Hợi". Giờ Tý bắt đầu lúc 23h. */
+    fun canChiHour(jd: Int, hour: Int): String {
+        val chi = ((hour + 1) / 2) % 12
+        val dayCan = (jd + 9) % 10
+        return "${CAN[((dayCan % 5) * 2 + chi) % 10]} ${CHI[chi]}"
     }
 
     private fun tietKhiIndex(jdStart: Double): Int = int(sunLongitudeDeg(jdStart) / 15) % 24

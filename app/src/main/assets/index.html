@@ -1,0 +1,281 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lịch &amp; Thời tiết</title>
+<style>
+:root {
+  --bg: #EEF2F7; --card: #FFFFFF; --text: #1C1C1E; --muted: #6B7280; --line: #E5E7EB;
+  --chip: #F3F4F6; --accent: #D7263D; --accent-soft: #FDECEF; --gold: #D4A017; --gold-soft: #FFF6DA;
+  --blue: #2563EB; --blue-soft: #E8F0FF; --shadow: 0 1px 2px rgba(0,0,0,.05), 0 6px 20px rgba(20,30,60,.06);
+}
+html.dark {
+  --bg: #0F1115; --card: #1B1D23; --text: #F3F4F6; --muted: #9CA3AF; --line: #2A2D35;
+  --chip: #262930; --accent: #FF5A6E; --accent-soft: #3A1F25; --gold: #F2C94C; --gold-soft: #3A3218;
+  --blue: #7AA2FF; --blue-soft: #1E2A44; --shadow: none;
+}
+@media (prefers-color-scheme: dark) {
+  html:not(.light) {
+    --bg: #0F1115; --card: #1B1D23; --text: #F3F4F6; --muted: #9CA3AF; --line: #2A2D35;
+    --chip: #262930; --accent: #FF5A6E; --accent-soft: #3A1F25; --gold: #F2C94C; --gold-soft: #3A3218;
+    --blue: #7AA2FF; --blue-soft: #1E2A44; --shadow: none;
+  }
+}
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+html, body { margin: 0; background: var(--bg); color: var(--text);
+  font-family: Roboto, -apple-system, "Segoe UI", system-ui, sans-serif; font-size: 15px; line-height: 1.4; }
+body { padding: 12px 14px 32px; padding-top: calc(12px + env(safe-area-inset-top)); }
+button, input { font: inherit; color: inherit; }
+button { border: 0; background: none; cursor: pointer; }
+h2 { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
+.muted { color: var(--muted); }
+.small { font-size: 12.5px; }
+.card { background: var(--card); border-radius: 20px; padding: 16px; margin-bottom: 12px; box-shadow: var(--shadow); }
+
+/* Đầu trang */
+.top { display: flex; align-items: center; justify-content: space-between; padding: 4px 2px 12px; }
+.top .nav { width: 40px; height: 40px; border-radius: 50%; font-size: 26px; line-height: 1; background: var(--card); color: var(--blue); box-shadow: var(--shadow); }
+.top .title { text-align: center; }
+.top .title h1 { margin: 0; font-size: 19px; font-weight: 800; letter-spacing: .01em; }
+.pill { margin-top: 4px; padding: 3px 12px; border-radius: 999px; background: var(--blue-soft); color: var(--blue); font-size: 12px; font-weight: 600; }
+
+/* Lưới tháng */
+.weekdays, .grid { display: grid; grid-template-columns: repeat(7, 1fr); }
+.weekdays div { text-align: center; font-size: 11.5px; font-weight: 700; color: var(--muted); padding-bottom: 6px; letter-spacing: .04em; }
+.weekdays div:last-child { color: var(--accent); }
+.cell { position: relative; height: 54px; border-radius: 14px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+.cell .s { font-size: 17px; font-weight: 600; line-height: 1.1; }
+.cell .l { font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+.cell .l.first { color: var(--accent); font-weight: 700; }
+.cell.sun .s { color: var(--accent); }
+.cell.today { background: var(--accent); }
+.cell.today .s, .cell.today .l { color: #fff; }
+.cell.sel:not(.today) { box-shadow: inset 0 0 0 2px var(--blue); }
+.cell .dot { position: absolute; top: 6px; right: 8px; width: 6px; height: 6px; border-radius: 50%; background: var(--gold); }
+.cell.today .dot { background: #fff; }
+
+/* Thẻ ngày */
+.day-top { display: flex; gap: 14px; }
+.solar { flex: 0 0 44%; text-align: center; }
+.solar .wd { font-size: 13px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+.solar .big { font-size: 76px; font-weight: 800; line-height: 1; color: var(--accent); margin: 2px 0; letter-spacing: -.02em; }
+.solar .sub { font-size: 14px; font-weight: 600; }
+.solar .hour { font-size: 12.5px; color: var(--muted); margin-top: 4px; }
+.vsep { width: 1px; background: var(--line); }
+.lunar { flex: 1; display: flex; flex-direction: column; justify-content: center; gap: 3px; }
+.lunar .main { font-size: 17px; font-weight: 800; }
+.lunar .main b { color: var(--accent); }
+.lunar .row { font-size: 13.5px; color: var(--muted); }
+.lunar .row b { color: var(--text); font-weight: 600; }
+.badge { display: inline-block; margin-top: 6px; padding: 3px 10px; border-radius: 999px; font-size: 12px; font-weight: 700; width: fit-content; }
+.badge.hd { background: var(--gold-soft); color: var(--gold); }
+.badge.hac { background: var(--chip); color: var(--muted); }
+
+/* Thời tiết */
+.weather { margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line); display: flex; align-items: center; gap: 12px; }
+.weather .icon { font-size: 38px; line-height: 1; }
+.weather .temp { font-size: 30px; font-weight: 800; line-height: 1; }
+.weather .desc { font-size: 13.5px; color: var(--muted); margin-top: 3px; }
+.weather .city { margin-left: auto; text-align: right; font-size: 12.5px; color: var(--muted); }
+.weather .city b { display: block; font-size: 14px; color: var(--text); }
+.weather.empty { color: var(--muted); font-size: 13.5px; }
+
+/* Gợi ý */
+.tip { display: flex; gap: 12px; padding: 10px 0; border-top: 1px solid var(--line); }
+.tip:first-child { border-top: 0; padding-top: 0; }
+.tip:last-child { padding-bottom: 0; }
+.tip .ic { font-size: 26px; line-height: 1.1; width: 32px; text-align: center; flex: none; }
+.tip .t { font-weight: 700; }
+.tip .d { font-size: 13.5px; color: var(--muted); margin-top: 2px; }
+.tip.warn .t { color: var(--accent); }
+
+/* Giờ tốt */
+.chips { display: flex; gap: 10px; overflow-x: auto; padding: 4px 2px 6px; margin: 0 -2px; scrollbar-width: none; }
+.chips::-webkit-scrollbar { display: none; }
+.chip { flex: 0 0 auto; width: 84px; text-align: center; background: var(--chip); border-radius: 16px; padding: 10px 6px; }
+.chip .an { font-size: 26px; line-height: 1; }
+.chip .n { font-weight: 700; margin-top: 6px; font-size: 14px; }
+.chip .h { font-size: 12px; color: var(--muted); }
+.chip.now { background: var(--gold-soft); box-shadow: inset 0 0 0 1.5px var(--gold); }
+
+/* Cài đặt */
+label { display: block; font-size: 12.5px; font-weight: 600; color: var(--muted); margin: 8px 0 6px; }
+.row { display: flex; gap: 8px; }
+input[type=text] { flex: 1; min-width: 0; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--chip); outline: none; }
+input[type=text]:focus { border-color: var(--blue); }
+.btn { padding: 10px 16px; border-radius: 12px; background: var(--blue); color: #fff; font-weight: 700; }
+.btn.ghost { background: var(--chip); color: var(--text); width: 100%; margin-top: 10px; }
+.switch-row { display: flex; align-items: center; justify-content: space-between; margin: 14px 0 0; font-size: 15px; font-weight: 500; color: var(--text); }
+.switch { position: relative; width: 46px; height: 26px; appearance: none; -webkit-appearance: none; background: var(--line); border-radius: 999px; transition: .2s; flex: none; }
+.switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: .2s; box-shadow: 0 1px 3px rgba(0,0,0,.25); }
+.switch:checked { background: var(--blue); }
+.switch:checked::after { left: 23px; }
+#status { margin-top: 8px; font-size: 13px; min-height: 18px; }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <button class="nav" id="prev" aria-label="Tháng trước">‹</button>
+  <div class="title"><h1 id="monthTitle">Tháng</h1><button class="pill" id="todayBtn">Hôm nay</button></div>
+  <button class="nav" id="next" aria-label="Tháng sau">›</button>
+</header>
+
+<section class="card">
+  <div class="weekdays"><div>T2</div><div>T3</div><div>T4</div><div>T5</div><div>T6</div><div>T7</div><div>CN</div></div>
+  <div class="grid" id="grid"></div>
+</section>
+
+<section class="card">
+  <div class="day-top">
+    <div class="solar">
+      <div class="wd" id="wd"></div>
+      <div class="big" id="bigDay"></div>
+      <div class="sub" id="solarSub"></div>
+      <div class="hour" id="hourNow"></div>
+    </div>
+    <div class="vsep"></div>
+    <div class="lunar">
+      <div class="main" id="lunarMain"></div>
+      <div class="row" id="canChiDay"></div>
+      <div class="row" id="canChiMonth"></div>
+      <div class="row" id="tiet"></div>
+      <div id="hdBadge"></div>
+    </div>
+  </div>
+  <div class="weather" id="weather"></div>
+</section>
+
+<section class="card">
+  <h2 id="tipsTitle">Gợi ý hôm nay</h2>
+  <div id="tips"></div>
+</section>
+
+<section class="card" id="hoursCard">
+  <h2>Giờ hoàng đạo</h2>
+  <div class="chips" id="hours"></div>
+</section>
+
+<section class="card">
+  <h2>Cài đặt</h2>
+  <label for="city">Thành phố lấy thời tiết</label>
+  <div class="row"><input type="text" id="city" placeholder="Ví dụ: Hà Nội, Đà Nẵng"><button class="btn" id="saveCity">Lưu</button></div>
+  <label class="switch-row"><span>Hiện ngày hoàng đạo, giờ tốt</span><input type="checkbox" class="switch" id="spiritual"></label>
+  <button class="btn ghost" id="refresh">Làm mới thời tiết</button>
+  <div id="status" class="muted"></div>
+  <p class="muted small">Thêm widget: giữ lâu trên màn hình chính → Widget → Lịch âm &amp; Thời tiết.</p>
+</section>
+
+<script>
+const $ = id => document.getElementById(id);
+const THU = ["Thứ Hai","Thứ Ba","Thứ Tư","Thứ Năm","Thứ Sáu","Thứ Bảy","Chủ nhật"];
+const CON_GIAP = {Tý:"🐭",Sửu:"🐮",Dần:"🐯",Mão:"🐱",Thìn:"🐲",Tỵ:"🐍",Ngọ:"🐴",Mùi:"🐐",Thân:"🐵",Dậu:"🐔",Tuất:"🐶",Hợi:"🐷"};
+
+let state = null;               // {today:{y,m,d}, prefs:{city,spiritual}, weather, dark, hour}
+let view = { y: 0, m: 0, sel: 0 };
+
+function pad(n) { return (n < 10 ? "0" : "") + n; }
+function esc(s) { return String(s).replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
+function monthName(m) { return m === 1 ? "Giêng" : m === 12 ? "Chạp" : String(m); }
+
+window.onState = function (s) {
+  const first = !state;
+  state = s;
+  document.documentElement.classList.toggle("dark", !!s.dark);
+  document.documentElement.classList.toggle("light", s.dark === false);
+  if (first) { view = { y: s.today.y, m: s.today.m, sel: s.today.d }; }
+  $("city").value = s.prefs.city;
+  $("spiritual").checked = !!s.prefs.spiritual;
+  render();
+};
+window.onStatus = function (msg) { $("status").textContent = msg; };
+
+function render() {
+  if (!state) return;
+  renderGrid();
+  renderDay();
+}
+
+function renderGrid() {
+  const data = JSON.parse(Android.month(view.y, view.m));
+  $("monthTitle").textContent = `Tháng ${view.m}, ${view.y}`;
+  const grid = $("grid");
+  grid.innerHTML = "";
+  for (let i = 1; i < data.firstWeekday; i++) grid.appendChild(document.createElement("div"));
+  const t = state.today;
+  data.days.forEach(d => {
+    const el = document.createElement("div");
+    const isToday = view.y === t.y && view.m === t.m && d.d === t.d;
+    const dow = (data.firstWeekday - 1 + d.d - 1) % 7;
+    el.className = "cell" + (isToday ? " today" : "") + (d.d === view.sel ? " sel" : "") + (dow === 6 ? " sun" : "");
+    const special = d.ld === 1 || d.ld === 15;
+    const lunarLabel = special ? `${d.ld}/${d.lm}` : String(d.ld);
+    el.innerHTML = `<div class="s">${d.d}</div><div class="l${special ? " first" : ""}">${lunarLabel}</div>` +
+      (state.prefs.spiritual && d.hd ? `<div class="dot"></div>` : "");
+    el.onclick = () => { view.sel = d.d; render(); };
+    grid.appendChild(el);
+  });
+}
+
+function renderDay() {
+  const d = JSON.parse(Android.day(view.y, view.m, view.sel));
+  const t = state.today;
+  $("wd").textContent = d.weekday;
+  $("bigDay").textContent = d.d;
+  $("solarSub").textContent = `Tháng ${d.m}, ${d.y}`;
+  $("hourNow").textContent = d.isToday ? `Giờ ${d.canChiHour} · ${pad(state.hour)}:${pad(state.minute)}` : "";
+
+  $("lunarMain").innerHTML = `<b>${d.ld}</b> tháng ${monthName(d.lm)}${d.leap ? " (nhuận)" : ""}, ${esc(d.canChiYear)}`;
+  $("canChiDay").innerHTML = `Ngày <b>${esc(d.canChiDay)}</b>`;
+  $("canChiMonth").innerHTML = `Tháng <b>${esc(d.canChiMonth)}</b>`;
+  $("tiet").innerHTML = `Tiết <b>${esc(d.tietKhi)}</b>`;
+  $("hdBadge").innerHTML = state.prefs.spiritual
+    ? (d.hoangDao ? `<span class="badge hd">✦ Hoàng đạo · ${esc(d.trucThan)}</span>` : `<span class="badge hac">Hắc đạo · ${esc(d.trucThan)}</span>`)
+    : "";
+
+  // Thời tiết
+  const w = state.weather, wEl = $("weather");
+  if (!w) {
+    wEl.className = "weather empty"; wEl.textContent = "Chưa có dữ liệu thời tiết. Bấm Làm mới ở dưới.";
+  } else if (d.isToday) {
+    wEl.className = "weather";
+    wEl.innerHTML = `<div class="icon">${w.iconNow}</div><div><div class="temp">${w.tempNow}°</div>
+      <div class="desc">${esc(w.labelNow)} · ${w.todayMin}–${w.todayMax}° · mưa ${w.todayRain}%</div></div>
+      <div class="city"><b>${esc(w.city)}</b>cảm giác ${w.feelsLike}° · ẩm ${w.humidity}%</div>`;
+  } else if (d.isTomorrow) {
+    wEl.className = "weather";
+    wEl.innerHTML = `<div class="icon">${w.iconTomorrow}</div><div><div class="temp">${w.tomorrowMin}–${w.tomorrowMax}°</div>
+      <div class="desc">${esc(w.labelTomorrow)} · mưa ${w.tomorrowRain}%</div></div>
+      <div class="city"><b>${esc(w.city)}</b>dự báo ngày mai</div>`;
+  } else {
+    wEl.className = "weather empty"; wEl.textContent = "Chỉ có dự báo thời tiết cho hôm nay và ngày mai.";
+  }
+
+  // Gợi ý
+  $("tipsTitle").textContent = d.isToday ? (state.hour >= 18 ? "Gợi ý cho ngày mai" : "Gợi ý hôm nay") : `Ngày ${d.d}/${d.m}`;
+  $("tips").innerHTML = d.tips.map(tp => {
+    const sp = tp.short.indexOf(" ");
+    const ic = tp.short.slice(0, sp), txt = tp.short.slice(sp + 1);
+    return `<div class="tip ${tp.kind.toLowerCase()}"><div class="ic">${ic}</div><div><div class="t">${esc(txt)}</div><div class="d">${esc(tp.detail)}</div></div></div>`;
+  }).join("");
+
+  // Giờ tốt
+  $("hoursCard").style.display = state.prefs.spiritual ? "" : "none";
+  const nowChi = d.isToday ? d.canChiHour.split(" ")[1] : "";
+  $("hours").innerHTML = d.gioTot.map(g =>
+    `<div class="chip${g.chi === nowChi ? " now" : ""}"><div class="an">${CON_GIAP[g.chi] || ""}</div><div class="n">${g.chi}</div><div class="h">${g.from}h–${g.to}h</div></div>`
+  ).join("");
+}
+
+$("prev").onclick = () => { view.m--; if (view.m < 1) { view.m = 12; view.y--; } view.sel = 1; render(); };
+$("next").onclick = () => { view.m++; if (view.m > 12) { view.m = 1; view.y++; } view.sel = 1; render(); };
+$("todayBtn").onclick = () => { view = { y: state.today.y, m: state.today.m, sel: state.today.d }; render(); };
+$("saveCity").onclick = () => { const v = $("city").value.trim(); if (v) { onStatus("Đang tìm " + v + "..."); Android.saveCity(v); } };
+$("spiritual").onchange = e => { Android.setSpiritual(e.target.checked); state.prefs.spiritual = e.target.checked; render(); };
+$("refresh").onclick = () => { onStatus("Đang tải thời tiết..."); Android.refresh(); };
+
+if (!window.Android) { const s = document.createElement("script"); s.src = "mock.js"; document.body.appendChild(s); }
+</script>
+</body>
+</html>

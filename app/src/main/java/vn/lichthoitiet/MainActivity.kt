@@ -1,117 +1,171 @@
 package vn.lichthoitiet
 
+import android.annotation.SuppressLint
 import android.app.Activity
+import android.content.res.Configuration
+import android.graphics.Color
 import android.os.Bundle
-import android.widget.Button
-import android.widget.EditText
-import android.widget.Switch
-import android.widget.TextView
+import android.webkit.JavascriptInterface
+import android.webkit.WebView
+import android.webkit.WebViewClient
+import org.json.JSONArray
+import org.json.JSONObject
 import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.YearMonth
 
-/** Màn hình cài đặt và xem chi tiết. Mở khi chạm vào widget. */
+/**
+ * Màn hình chính: giao diện là trang HTML trong assets/index.html,
+ * dữ liệu (lịch âm, thời tiết, gợi ý) do Kotlin tính và đưa sang qua cầu nối `Android`.
+ */
 class MainActivity : Activity() {
+    private lateinit var web: WebView
     private lateinit var prefs: Prefs
-    private lateinit var cityInput: EditText
-    private lateinit var status: TextView
-    private lateinit var details: TextView
+    private var pageReady = false
 
+    @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
         prefs = Prefs(this)
 
-        cityInput = findViewById(R.id.city_input)
-        status = findViewById(R.id.status)
-        details = findViewById(R.id.details)
-        val saveBtn = findViewById<Button>(R.id.save_btn)
-        val refreshBtn = findViewById<Button>(R.id.refresh_btn)
-        val spiritualSwitch = findViewById<Switch>(R.id.spiritual_switch)
-
-        cityInput.setText(prefs.city)
-        spiritualSwitch.isChecked = prefs.spiritual
-        spiritualSwitch.setOnCheckedChangeListener { _, checked ->
-            prefs.spiritual = checked
-            render()
-            LichWidget.updateAll(this)
+        web = WebView(this)
+        web.settings.javaScriptEnabled = true
+        web.settings.domStorageEnabled = true
+        web.setBackgroundColor(Color.TRANSPARENT)
+        web.addJavascriptInterface(Bridge(), "Android")
+        web.webViewClient = object : WebViewClient() {
+            override fun onPageFinished(view: WebView, url: String) {
+                pageReady = true
+                pushState()
+            }
         }
+        setContentView(web)
+        web.loadUrl("file:///android_asset/index.html")
 
-        saveBtn.setOnClickListener {
-            val name = cityInput.text.toString().trim()
-            if (name.isEmpty()) return@setOnClickListener
-            status.text = "Đang tìm \"$name\"..."
-            Thread {
-                val geo = try { WeatherRepo.geocode(name) } catch (e: Exception) { null }
-                runOnUiThread {
-                    if (geo == null) {
-                        status.text = "Không tìm thấy địa điểm. Thử gõ tên không dấu, ví dụ: Ha Noi, Da Nang."
-                    } else {
-                        prefs.lat = geo.lat
-                        prefs.lon = geo.lon
-                        prefs.city = geo.name
-                        cityInput.setText(geo.name)
-                        doRefresh()
-                    }
-                }
-            }.start()
-        }
-
-        refreshBtn.setOnClickListener { doRefresh() }
-
-        if (WeatherRepo.load(this) == null) doRefresh()
+        if (WeatherRepo.load(this) == null) refreshWeather()
     }
 
     override fun onResume() {
         super.onResume()
-        render()
+        if (pageReady) pushState()
     }
 
-    private fun doRefresh() {
-        status.text = "Đang tải thời tiết..."
+    private fun isDark(): Boolean =
+        resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+
+    private fun pushState() = runOnUiThread {
+        web.evaluateJavascript("window.onState && onState(${stateJson()})", null)
+    }
+
+    private fun status(msg: String) = runOnUiThread {
+        web.evaluateJavascript("window.onStatus && onStatus(${JSONObject.quote(msg)})", null)
+    }
+
+    private fun stateJson(): String {
+        val now = LocalDateTime.now()
+        val w = WeatherRepo.load(this)
+        return JSONObject().apply {
+            put("today", JSONObject().put("y", now.year).put("m", now.monthValue).put("d", now.dayOfMonth))
+            put("hour", now.hour)
+            put("minute", now.minute)
+            put("dark", isDark())
+            put("prefs", JSONObject().put("city", prefs.city).put("spiritual", prefs.spiritual))
+            put("weather", if (w == null) JSONObject.NULL else JSONObject().apply {
+                put("city", w.city)
+                put("tempNow", w.tempNow); put("feelsLike", w.feelsLike); put("humidity", w.humidity)
+                put("iconNow", WeatherText.icon(w.codeNow)); put("labelNow", WeatherText.label(w.codeNow))
+                put("todayMin", w.todayMin); put("todayMax", w.todayMax); put("todayRain", w.todayRain)
+                put("tomorrowMin", w.tomorrowMin); put("tomorrowMax", w.tomorrowMax); put("tomorrowRain", w.tomorrowRain)
+                put("iconTomorrow", WeatherText.icon(w.tomorrowCode)); put("labelTomorrow", WeatherText.label(w.tomorrowCode))
+            })
+        }.toString()
+    }
+
+    private fun refreshWeather() {
+        status("Đang tải thời tiết...")
         Thread {
             val err = try { WeatherRepo.refresh(this); null } catch (e: Exception) { e.message ?: "lỗi mạng" }
-            runOnUiThread {
-                status.text = if (err == null) "Đã cập nhật." else "Không tải được thời tiết ($err)."
-                render()
-                LichWidget.updateAll(this)
-            }
+            status(if (err == null) "Đã cập nhật thời tiết." else "Không tải được thời tiết ($err).")
+            pushState()
+            LichWidget.updateAll(this)
         }.start()
     }
 
-    private fun render() {
-        val today = LocalDate.now()
-        val now = LocalDateTime.now()
-        val lunar = LunarCalendar.convert(today)
-        val weather = WeatherRepo.load(this)
-        val tips = SuggestionEngine.build(today, now, weather, prefs.spiritual)
-
-        val sb = StringBuilder()
-        sb.appendLine("📅 ${WidgetRenderer.dayOfWeek(today)}, ${today.dayOfMonth}/${today.monthValue}/${today.year}")
-        sb.append("🌙 Âm lịch: ${lunar.day}/${LunarCalendar.monthName(lunar.month)}")
-        if (lunar.leap) sb.append(" (nhuận)")
-        sb.appendLine(" năm ${LunarCalendar.canChiYear(lunar.year)}")
-        sb.appendLine("   Ngày ${LunarCalendar.canChiDay(lunar.jd)}, tháng ${LunarCalendar.canChiMonth(lunar)}")
-        sb.appendLine("   Tiết: ${LunarCalendar.currentTietKhi(lunar.jd)}")
-        if (prefs.spiritual) {
-            val hd = if (LunarCalendar.isHoangDao(lunar)) "Hoàng đạo" else "Hắc đạo"
-            sb.appendLine("   $hd (trực ${LunarCalendar.trucThan(lunar)})")
-            sb.appendLine("   Giờ tốt: ${LunarCalendar.gioHoangDao(lunar.jd).joinToString(", ")}")
+    /** Các hàm trang HTML gọi được qua `Android.*`. Chạy trên luồng riêng của WebView. */
+    inner class Bridge {
+        @JavascriptInterface
+        fun month(y: Int, m: Int): String {
+            val ym = YearMonth.of(y, m)
+            val days = JSONArray()
+            for (d in 1..ym.lengthOfMonth()) {
+                val l = LunarCalendar.convert(LocalDate.of(y, m, d))
+                days.put(
+                    JSONObject().put("d", d).put("ld", l.day).put("lm", l.month)
+                        .put("leap", l.leap).put("hd", LunarCalendar.isHoangDao(l)),
+                )
+            }
+            return JSONObject().put("firstWeekday", ym.atDay(1).dayOfWeek.value).put("days", days).toString()
         }
-        sb.appendLine()
 
-        if (weather == null) {
-            sb.appendLine("🌡️ Chưa có dữ liệu thời tiết.")
-        } else {
-            sb.appendLine("${WeatherText.icon(weather.codeNow)} ${weather.city}: ${weather.tempNow}° (cảm giác ${weather.feelsLike}°), ${WeatherText.label(weather.codeNow)}")
-            sb.appendLine("   Độ ẩm ${weather.humidity}%, gió ${weather.windNow} km/h")
-            sb.appendLine("   Hôm nay: ${weather.todayMin}-${weather.todayMax}°, mưa ${weather.todayRain}%, UV ${weather.todayUv.toInt()}")
-            sb.appendLine("   Ngày mai: ${weather.tomorrowMin}-${weather.tomorrowMax}°, mưa ${weather.tomorrowRain}%, ${WeatherText.label(weather.tomorrowCode)}")
+        @JavascriptInterface
+        fun day(y: Int, m: Int, d: Int): String {
+            val date = LocalDate.of(y, m, d)
+            val today = LocalDate.now()
+            val now = LocalDateTime.now()
+            val l = LunarCalendar.convert(date)
+            val isToday = date == today
+            val tips = if (isToday) {
+                SuggestionEngine.build(date, now, WeatherRepo.load(this@MainActivity), prefs.spiritual)
+            } else {
+                SuggestionEngine.build(date, date.atTime(9, 0), null, prefs.spiritual)
+            }
+            val gio = JSONArray()
+            LunarCalendar.gioHoangDaoList(l.jd).forEach { (chi, from, to) ->
+                gio.put(JSONObject().put("chi", chi).put("from", from).put("to", to))
+            }
+            val tipsJson = JSONArray()
+            tips.forEach { tipsJson.put(JSONObject().put("short", it.short).put("detail", it.detail).put("kind", it.kind.name)) }
+
+            return JSONObject().apply {
+                put("y", y); put("m", m); put("d", d)
+                put("weekday", WidgetRenderer.dayOfWeek(date))
+                put("ld", l.day); put("lm", l.month); put("leap", l.leap)
+                put("canChiYear", LunarCalendar.canChiYear(l.year))
+                put("canChiMonth", LunarCalendar.canChiMonth(l))
+                put("canChiDay", LunarCalendar.canChiDay(l.jd))
+                put("canChiHour", LunarCalendar.canChiHour(l.jd, now.hour))
+                put("tietKhi", LunarCalendar.currentTietKhi(l.jd))
+                put("hoangDao", LunarCalendar.isHoangDao(l))
+                put("trucThan", LunarCalendar.trucThan(l))
+                put("gioTot", gio)
+                put("tips", tipsJson)
+                put("isToday", isToday)
+                put("isTomorrow", date == today.plusDays(1))
+            }.toString()
         }
-        sb.appendLine()
 
-        sb.appendLine(if (now.hour >= 18) "💡 Gợi ý cho ngày mai" else "💡 Gợi ý hôm nay")
-        tips.forEach { sb.appendLine("• ${it.short}\n   ${it.detail}") }
+        @JavascriptInterface
+        fun saveCity(name: String) {
+            Thread {
+                val geo = try { WeatherRepo.geocode(name) } catch (e: Exception) { null }
+                if (geo == null) {
+                    status("Không tìm thấy địa điểm. Thử gõ không dấu, ví dụ: Ha Noi, Da Nang.")
+                } else {
+                    prefs.lat = geo.lat
+                    prefs.lon = geo.lon
+                    prefs.city = geo.name
+                    refreshWeather()
+                }
+            }.start()
+        }
 
-        details.text = sb.toString()
+        @JavascriptInterface
+        fun setSpiritual(on: Boolean) {
+            prefs.spiritual = on
+            LichWidget.updateAll(this@MainActivity)
+        }
+
+        @JavascriptInterface
+        fun refresh() = refreshWeather()
     }
 }
