@@ -51,6 +51,15 @@ class LunarCalendarTest {
     }
 
     @Test
+    fun amSangDuong() {
+        assertEquals(LocalDate.of(2026, 2, 17), LunarCalendar.toSolar(1, 1, 2026))
+        assertEquals(LocalDate.of(2026, 11, 24), LunarCalendar.toSolar(16, 10, 2026))
+        assertEquals(LocalDate.of(2026, 11, 23), LunarCalendar.toSolar(15, 10, 2026))
+        assertEquals(LocalDate.of(2025, 7, 25), LunarCalendar.toSolar(1, 6, 2025, leap = true))
+        assertEquals(LocalDate.of(2027, 2, 6), LunarCalendar.toSolar(1, 1, 2027))
+    }
+
+    @Test
     fun gioHoangDaoCoSauGio() {
         val l = lunar(24, 11, 2026)
         assertEquals(6, LunarCalendar.gioHoangDao(l.jd).size)

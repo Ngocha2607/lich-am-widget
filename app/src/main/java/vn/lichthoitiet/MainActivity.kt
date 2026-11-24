@@ -139,16 +139,22 @@ class MainActivity : Activity() {
         @JavascriptInterface
         fun month(y: Int, m: Int): String {
             val ym = YearMonth.of(y, m)
+            val events = EventStore.load(this@MainActivity)
             val days = JSONArray()
             for (d in 1..ym.lengthOfMonth()) {
-                val l = LunarCalendar.convert(LocalDate.of(y, m, d))
+                val date = LocalDate.of(y, m, d)
+                val l = LunarCalendar.convert(date)
+                val ev = EventStore.eventsOn(events, date)
                 days.put(
                     JSONObject().put("d", d).put("ld", l.day).put("lm", l.month)
-                        .put("leap", l.leap).put("hd", LunarCalendar.isHoangDao(l)),
+                        .put("leap", l.leap).put("hd", LunarCalendar.isHoangDao(l))
+                        .put("ev", ev.firstOrNull()?.icon ?: ""),
                 )
             }
             return JSONObject().put("firstWeekday", ym.atDay(1).dayOfWeek.value).put("days", days).toString()
         }
+
+        private fun eventJson(e: Event): JSONObject = e.toJson().put("dateLabel", e.dateLabel)
 
         @JavascriptInterface
         fun day(y: Int, m: Int, d: Int): String {
@@ -157,11 +163,13 @@ class MainActivity : Activity() {
             val now = LocalDateTime.now()
             val l = LunarCalendar.convert(date)
             val isToday = date == today
+            val events = EventStore.load(this@MainActivity)
             val tips = if (isToday) {
-                SuggestionEngine.build(date, now, WeatherRepo.load(this@MainActivity), prefs.spiritual)
+                SuggestionEngine.build(date, now, WeatherRepo.load(this@MainActivity), prefs.spiritual, EventStore.upcoming(events, today))
             } else {
                 SuggestionEngine.build(date, date.atTime(9, 0), null, prefs.spiritual)
             }
+            val dayEvents = JSONArray().apply { EventStore.eventsOn(events, date).forEach { put(eventJson(it)) } }
             val gio = JSONArray()
             LunarCalendar.gioHoangDaoList(l.jd).forEach { (chi, from, to) ->
                 gio.put(JSONObject().put("chi", chi).put("from", from).put("to", to))
@@ -172,7 +180,8 @@ class MainActivity : Activity() {
             return JSONObject().apply {
                 put("y", y); put("m", m); put("d", d)
                 put("weekday", WidgetRenderer.dayOfWeek(date))
-                put("ld", l.day); put("lm", l.month); put("leap", l.leap)
+                put("ld", l.day); put("lm", l.month); put("ly", l.year); put("leap", l.leap)
+                put("events", dayEvents)
                 put("canChiYear", LunarCalendar.canChiYear(l.year))
                 put("canChiMonth", LunarCalendar.canChiMonth(l))
                 put("canChiDay", LunarCalendar.canChiDay(l.jd))
@@ -186,6 +195,45 @@ class MainActivity : Activity() {
                 put("isTomorrow", date == today.plusDays(1))
             }.toString()
         }
+
+        // ---- Sự kiện ----
+
+        /** Các lần diễn ra trong [days] ngày tới, kèm thông tin sự kiện để sửa. */
+        @JavascriptInterface
+        fun upcoming(days: Int): String {
+            val today = LocalDate.now()
+            val arr = JSONArray()
+            EventStore.upcoming(EventStore.load(this@MainActivity), today, days.coerceIn(1, 366)).forEach { u ->
+                arr.put(
+                    eventJson(u.event)
+                        .put("date", u.date.toString())
+                        .put("daysLeft", u.daysLeft)
+                        .put("solarLabel", "${WidgetRenderer.dayOfWeek(u.date)} ${u.date.dayOfMonth}/${u.date.monthValue}"),
+                )
+            }
+            return arr.toString()
+        }
+
+        /** Lưu (thêm hoặc sửa) sự kiện từ JSON; trả về id. */
+        @JavascriptInterface
+        fun saveEvent(json: String): String {
+            val e = Event.fromJson(JSONObject(json))
+            if (e.title.isBlank()) return ""
+            EventStore.upsert(this@MainActivity, e)
+            LichWidget.updateAll(this@MainActivity)
+            return e.id
+        }
+
+        @JavascriptInterface
+        fun deleteEvent(id: String) {
+            EventStore.delete(this@MainActivity, id)
+            LichWidget.updateAll(this@MainActivity)
+        }
+
+        /** Ngày dương của một ngày âm, dạng "2026-11-23", hoặc "" nếu năm đó không có ngày này. */
+        @JavascriptInterface
+        fun lunarToSolar(d: Int, m: Int, y: Int): String =
+            LunarCalendar.toSolar(d, m, y)?.toString() ?: ""
 
         /** Tìm thành phố; kết quả trả về trang qua `onCityResults([...])`. */
         @JavascriptInterface

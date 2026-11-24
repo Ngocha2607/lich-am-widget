@@ -35,12 +35,37 @@ object SuggestionEngine {
                 else -> null
             }
 
-    fun build(today: LocalDate, now: LocalDateTime, weather: WeatherData?, spiritual: Boolean): List<Suggestion> {
+    fun build(
+        today: LocalDate,
+        now: LocalDateTime,
+        weather: WeatherData?,
+        spiritual: Boolean,
+        upcoming: List<Upcoming> = emptyList(),
+    ): List<Suggestion> {
         val lunar = LunarCalendar.convert(today)
         val lunarTomorrow = LunarCalendar.convert(today.plusDays(1))
         val hour = now.hour
         val evening = hour >= 18
         val out = mutableListOf<Suggestion>()
+
+        // 0. Sự kiện cá nhân: giỗ, sinh nhật, lịch hẹn (ưu tiên cao nhất)
+        for (u in upcoming.sortedBy { it.daysLeft }) {
+            val e = u.event
+            val time = if (e.time.isNotBlank()) " lúc ${e.time}" else ""
+            val note = if (e.note.isNotBlank()) " ${e.note}" else ""
+            val solar = "${WidgetRenderer.dayOfWeek(u.date)} ${u.date.dayOfMonth}/${u.date.monthValue}"
+            when {
+                u.daysLeft == 0 -> out += Suggestion(
+                    "${e.icon} Hôm nay: ${e.title}", "Hôm nay là ${e.title}$time.$note", Kind.SPECIAL,
+                )
+                u.daysLeft == 1 && (evening || e.remind >= 1) -> out += Suggestion(
+                    "${e.icon} Mai: ${e.title}", "Ngày mai ($solar) là ${e.title}$time.$note", Kind.SPECIAL,
+                )
+                u.daysLeft <= e.remind -> out += Suggestion(
+                    "${e.icon} Còn ${u.daysLeft} ngày: ${e.title}", "${e.title} vào $solar$time.$note", Kind.SPECIAL,
+                )
+            }
+        }
 
         // 1. Cảnh báo thời tiết
         if (weather != null) {

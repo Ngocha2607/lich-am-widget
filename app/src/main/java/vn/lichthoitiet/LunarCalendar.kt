@@ -147,6 +147,59 @@ object LunarCalendar {
         return LunarDate(lunarDay, lunarMonth, lunarYear, leap, dayNumber)
     }
 
+    /** Ngày Julius → ngày dương. */
+    fun jdToDate(jd: Int): LocalDate {
+        val b: Int
+        val c: Int
+        if (jd > 2299160) {
+            val a = jd + 32044
+            b = (4 * a + 3) / 146097
+            c = a - (b * 146097) / 4
+        } else {
+            b = 0
+            c = jd + 32082
+        }
+        val d = (4 * c + 3) / 1461
+        val e = c - (1461 * d) / 4
+        val m = (5 * e + 2) / 153
+        val day = e - (153 * m + 2) / 5 + 1
+        val month = m + 3 - 12 * (m / 10)
+        val year = b * 100 + d - 4800 + m / 10
+        return LocalDate.of(year, month, day)
+    }
+
+    /**
+     * Âm → dương. Trả về null nếu ngày không tồn tại
+     * (ngày 30 của tháng thiếu, hoặc tháng nhuận không đúng năm).
+     */
+    fun toSolar(day: Int, month: Int, year: Int, leap: Boolean = false): LocalDate? {
+        if (day !in 1..30 || month !in 1..12) return null
+        val a11: Int
+        val b11: Int
+        if (month < 11) {
+            a11 = lunarMonth11(year - 1)
+            b11 = lunarMonth11(year)
+        } else {
+            a11 = lunarMonth11(year)
+            b11 = lunarMonth11(year + 1)
+        }
+        val k = int(0.5 + (a11 - 2415021.076998695) / 29.530588853)
+        var off = month - 11
+        if (off < 0) off += 12
+        if (b11 - a11 > 365) {
+            val leapOff = leapMonthOffset(a11)
+            var leapMonth = leapOff - 2
+            if (leapMonth < 0) leapMonth += 12
+            if (leap && month != leapMonth) return null
+            if (leap || off >= leapOff) off += 1
+        } else if (leap) {
+            return null
+        }
+        val date = try { jdToDate(newMoonDay(k + off) + day - 1) } catch (e: Exception) { return null }
+        val back = convert(date)
+        return if (back.day == day && back.month == month && back.leap == leap) date else null
+    }
+
     // ---------- Can chi, hoàng đạo, tiết khí ----------
 
     fun canChiYear(year: Int) = "${CAN[(year + 6) % 10]} ${CHI[(year + 8) % 12]}"

@@ -61,7 +61,8 @@ object WidgetRenderer {
         val now = LocalDateTime.now()
         val lunar = LunarCalendar.convert(today)
         val weather = WeatherRepo.load(context)
-        val tip = SuggestionEngine.build(today, now, weather, prefs.spiritual).first()
+        val upcoming = EventStore.upcoming(EventStore.load(context), today)
+        val tip = SuggestionEngine.build(today, now, weather, prefs.spiritual, upcoming).first()
 
         val views = RemoteViews(context.packageName, R.layout.widget_4x2)
 

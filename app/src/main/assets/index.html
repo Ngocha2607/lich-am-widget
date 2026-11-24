@@ -26,7 +26,7 @@ html.dark {
   }
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-html, body { margin: 0; background: var(--bg); color: var(--text);
+html, body { margin: 0; background: var(--bg); color: var(--text); overflow-x: hidden;
   font-family: Roboto, -apple-system, "Segoe UI", system-ui, sans-serif; font-size: 15px; line-height: 1.4; }
 body { padding: 12px 14px 32px; padding-top: calc(12px + env(safe-area-inset-top)); }
 button, input { font: inherit; color: inherit; }
@@ -135,9 +135,10 @@ h2 { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: u
 /* Cài đặt */
 .top .spacer { width: 40px; flex: none; }
 .top .gear { width: 40px; height: 40px; border-radius: 50%; background: var(--card); color: var(--muted); box-shadow: var(--shadow); font-size: 19px; flex: none; }
-#settings { position: fixed; inset: 0; z-index: 50; background: var(--bg); transform: translateX(100%); transition: transform .25s ease; overflow-y: auto;
+#settings { position: fixed; inset: 0; z-index: 50; background: var(--bg); transform: translateX(100%); visibility: hidden;
+  transition: transform .25s ease, visibility 0s linear .25s; overflow-y: auto;
   padding: 12px 14px 40px; padding-top: calc(12px + env(safe-area-inset-top)); }
-#settings.open { transform: none; }
+#settings.open { transform: none; visibility: visible; transition: transform .25s ease, visibility 0s; }
 @media (prefers-reduced-motion: reduce) { #settings { transition: none; } }
 .s-head { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
 .s-head .back { width: 40px; height: 40px; border-radius: 50%; font-size: 26px; line-height: 1; color: var(--blue); background: var(--card); box-shadow: var(--shadow); }
@@ -168,6 +169,38 @@ button.item:active { background: var(--chip); }
 .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: .2s; box-shadow: 0 1px 3px rgba(0,0,0,.25); }
 .switch:checked { background: var(--blue); }
 .switch:checked::after { left: 23px; }
+/* Sự kiện */
+.cell .ev { position: absolute; top: 7px; left: 9px; width: 5px; height: 5px; border-radius: 50%; background: var(--blue); }
+.cell.today .ev { background: #fff; }
+.ev-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+.ev-head h2 { margin: 0; }
+.ev { display: flex; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); width: 100%; text-align: left; }
+.ev:first-of-type { border-top: 0; }
+.ev .ic { font-size: 24px; width: 32px; text-align: center; flex: none; }
+.ev .b { flex: 1; min-width: 0; }
+.ev .t { font-weight: 700; } .ev .d { font-size: 12.5px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ev .left { font-size: 12px; font-weight: 700; color: var(--blue); background: var(--blue-soft); padding: 3px 9px; border-radius: 999px; white-space: nowrap; flex: none; }
+.ev-empty { font-size: 13.5px; color: var(--muted); line-height: 1.5; }
+.sub-h { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 14px 0 4px; }
+.sheet-bg { position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 70; }
+.sheet { position: fixed; left: 0; right: 0; bottom: 0; z-index: 71; background: var(--card); border-radius: 24px 24px 0 0; padding: 16px 16px calc(20px + env(safe-area-inset-bottom)); max-height: 92vh; overflow-y: auto; box-shadow: 0 -8px 30px rgba(0,0,0,.2); }
+.sheet h3 { margin: 0 0 12px; font-size: 18px; }
+.icons { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none; }
+.icons::-webkit-scrollbar { display: none; }
+.icons button { flex: none; width: 42px; height: 42px; border-radius: 12px; font-size: 22px; background: var(--chip); }
+.icons button.on { box-shadow: inset 0 0 0 2px var(--blue); background: var(--blue-soft); }
+.field { margin-top: 12px; }
+.field label { display: block; font-size: 11.5px; font-weight: 700; color: var(--muted); margin-bottom: 6px; letter-spacing: .05em; text-transform: uppercase; }
+.in { width: 100%; box-sizing: border-box; padding: 11px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--chip); outline: none; font-size: 15px; color: var(--text); }
+.in:focus { border-color: var(--blue); }
+.row3 { display: flex; gap: 8px; } .row3 > * { flex: 1; min-width: 0; }
+.hint { font-size: 12.5px; color: var(--muted); margin-top: 6px; min-height: 16px; }
+.sheet .seg { width: 100%; }
+.sw-row { display: flex; align-items: center; justify-content: space-between; margin-top: 14px; font-size: 15px; font-weight: 500; }
+.actions { display: flex; gap: 8px; margin-top: 18px; }
+.btn { padding: 11px 16px; border-radius: 12px; background: var(--blue); color: #fff; font-weight: 700; flex: 1; }
+.btn.ghost { background: var(--chip); color: var(--text); }
+.btn.danger { background: var(--accent-soft); color: var(--accent); flex: 0 0 auto; }
 .toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%) translateY(16px); background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 999px;
   font-size: 13.5px; font-weight: 500; opacity: 0; transition: .25s; z-index: 60; pointer-events: none; max-width: 88vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .toast.show { opacity: 1; transform: translateX(-50%); }
@@ -206,6 +239,12 @@ button.item:active { background: var(--chip); }
     </div>
   </div>
   <div class="weather" id="weather"></div>
+</section>
+
+<section class="card" id="evCard">
+  <div class="ev-head"><h2 id="evTitle">Sự kiện</h2><button class="pill" id="addEvent">+ Thêm</button></div>
+  <div id="evList"></div>
+  <div id="evUpcoming"></div>
 </section>
 
 <section class="card" id="wxCard" style="display:none">
@@ -267,6 +306,24 @@ button.item:active { background: var(--chip); }
     <button class="item" id="srcRow"><span class="ico">💻</span><span class="body"><span class="lbl">Mã nguồn</span><span class="val">github.com/Ngocha2607/lich-am-widget</span></span><span class="chev">›</span></button>
   </div>
 </div>
+<div class="sheet-bg" id="sheetBg" hidden></div>
+<div class="sheet" id="sheet" hidden role="dialog" aria-label="Sự kiện">
+  <h3 id="sheetTitle">Thêm sự kiện</h3>
+  <div class="icons" id="evIcons"></div>
+  <div class="field"><input class="in" id="evName" placeholder="Tên sự kiện, ví dụ: Giỗ ông nội" maxlength="60" autocomplete="off"></div>
+  <div class="field"><label>Theo lịch</label><div class="seg" id="evCal"><button data-v="lunar">Âm lịch</button><button data-v="solar">Dương lịch</button></div></div>
+  <div class="field"><label>Ngày</label>
+    <div class="row3"><select class="in" id="evDay"></select><select class="in" id="evMonth"></select><select class="in" id="evYear"></select></div>
+    <div class="hint" id="evHint"></div>
+  </div>
+  <label class="sw-row" for="evYearly"><span>Lặp lại hằng năm</span><input type="checkbox" class="switch" id="evYearly"></label>
+  <div class="row3" style="margin-top:12px">
+    <div class="field" style="margin:0"><label>Giờ</label><input class="in" type="time" id="evTime"></div>
+    <div class="field" style="margin:0"><label>Nhắc trước</label><select class="in" id="evRemind"><option value="0">Đúng ngày</option><option value="1">1 ngày</option><option value="3">3 ngày</option><option value="7">7 ngày</option></select></div>
+  </div>
+  <div class="field"><input class="in" id="evNote" placeholder="Ghi chú (tùy chọn)" maxlength="120" autocomplete="off"></div>
+  <div class="actions"><button class="btn danger" id="evDelete" hidden>Xóa</button><button class="btn ghost" id="evCancel">Hủy</button><button class="btn" id="evSave">Lưu</button></div>
+</div>
 <div class="toast" id="toast" role="status"></div>
 
 <script>
@@ -316,7 +373,8 @@ function renderGrid() {
     const special = d.ld === 1 || d.ld === 15;
     const lunarLabel = special ? `${d.ld}/${d.lm}` : String(d.ld);
     el.innerHTML = `<div class="s">${d.d}</div><div class="l${special ? " first" : ""}">${lunarLabel}</div>` +
-      (state.prefs.spiritual && d.hd ? `<div class="dot"></div>` : "");
+      (state.prefs.spiritual && d.hd ? `<div class="dot"></div>` : "") +
+      (d.ev ? `<div class="ev"></div>` : "");
     el.onclick = () => { view.sel = d.d; render(); };
     grid.appendChild(el);
   });
@@ -324,6 +382,8 @@ function renderGrid() {
 
 function renderDay() {
   const d = JSON.parse(Android.day(view.y, view.m, view.sel));
+  curDay = d;
+  renderEvents(d);
   $("wd").textContent = d.weekday;
   $("bigDay").textContent = d.d;
   $("solarSub").textContent = `Tháng ${d.m}, ${d.y}`;
@@ -437,6 +497,96 @@ function smooth(pts) {
 $("prev").onclick = () => { view.m--; if (view.m < 1) { view.m = 12; view.y--; } view.sel = 1; render(); };
 $("next").onclick = () => { view.m++; if (view.m > 12) { view.m = 1; view.y++; } view.sel = 1; render(); };
 $("todayBtn").onclick = () => { view = { y: state.today.y, m: state.today.m, sel: state.today.d }; render(); };
+// ---- Sự kiện ----
+const ICONS = ["📌","🕯️","🎂","💍","🙏","🎉","💼","🏥","✈️","📚","🏠","❤️"];
+const DOW = ["Chủ nhật","Thứ Hai","Thứ Ba","Thứ Tư","Thứ Năm","Thứ Sáu","Thứ Bảy"];
+let curDay = null, editing = null;
+
+function evRow(e, extra) {
+  const meta = [e.dateLabel, e.time, e.note].filter(Boolean).map(esc).join(" · ");
+  return `<button class="ev" data-id="${e.id}"><div class="ic">${e.icon}</div><div class="b"><div class="t">${esc(e.title)}</div><div class="d">${meta}</div></div>${extra || ""}</button>`;
+}
+function renderEvents(d) {
+  $("evTitle").textContent = d.isToday ? "Sự kiện hôm nay" : `Sự kiện ngày ${d.d}/${d.m}`;
+  const list = d.events || [];
+  $("evList").innerHTML = list.length ? list.map(e => evRow(e)).join("")
+    : `<div class="ev-empty">Chưa có sự kiện. Bấm <b>+ Thêm</b> để ghi giỗ, sinh nhật, lịch hẹn theo âm hoặc dương lịch. App sẽ nhắc trên widget khi gần đến ngày.</div>`;
+  $("evList").querySelectorAll(".ev").forEach(b => b.onclick = () => openSheet(list.find(e => e.id === b.dataset.id)));
+  let up = [];
+  if (d.isToday) up = JSON.parse(Android.upcoming(30)).filter(u => u.daysLeft > 0);
+  $("evUpcoming").innerHTML = up.length
+    ? `<div class="sub-h">Sắp tới</div>` + up.map(u => evRow({ ...u, dateLabel: `${u.solarLabel} · ${u.dateLabel}` }, `<span class="left">còn ${u.daysLeft} ngày</span>`)).join("")
+    : "";
+  $("evUpcoming").querySelectorAll(".ev").forEach(b => b.onclick = () => openSheet(up.find(u => u.id === b.dataset.id)));
+}
+function fillSelect(sel, from, to, val, prefix) {
+  sel.innerHTML = "";
+  for (let i = from; i <= to; i++) { const o = document.createElement("option"); o.value = i; o.textContent = (prefix || "") + i; if (i === val) o.selected = true; sel.appendChild(o); }
+}
+function setIcon(ic) {
+  $("evIcons").innerHTML = ICONS.map(i => `<button data-i="${i}" class="${i === ic ? "on" : ""}" aria-label="Biểu tượng ${i}">${i}</button>`).join("");
+  $("evIcons").querySelectorAll("button").forEach(b => b.onclick = () => setIcon(b.dataset.i));
+}
+function curIcon() { const b = $("evIcons").querySelector(".on"); return b ? b.dataset.i : "📌"; }
+function isLunar() { const b = $("evCal").querySelector(".on"); return !b || b.dataset.v === "lunar"; }
+function setCal(lunar, e) {
+  document.querySelectorAll("#evCal button").forEach(b => b.classList.toggle("on", (b.dataset.v === "lunar") === lunar));
+  const d = e ? e.day : (lunar ? curDay.ld : curDay.d);
+  const m = e ? e.month : (lunar ? curDay.lm : curDay.m);
+  const y = e && e.year ? e.year : (lunar ? curDay.ly : curDay.y);
+  fillSelect($("evDay"), 1, lunar ? 30 : 31, d);
+  fillSelect($("evMonth"), 1, 12, m, "Tháng ");
+  fillSelect($("evYear"), state.today.y - 10, state.today.y + 10, y);
+  updateHint();
+}
+function toggleYear() { $("evYear").style.display = $("evYearly").checked ? "none" : ""; updateHint(); }
+function updateHint() {
+  const d = +$("evDay").value, m = +$("evMonth").value, yearly = $("evYearly").checked;
+  const y = yearly ? state.today.y : +$("evYear").value;
+  if (!isLunar()) { $("evHint").textContent = yearly ? `Lặp lại ngày ${d}/${m} dương lịch hằng năm.` : ""; return; }
+  const s = Android.lunarToSolar(d, m, y);
+  if (!s) { $("evHint").textContent = `Năm ${y} tháng này chỉ có 29 ngày, sẽ tính vào ngày 29.`; return; }
+  const dt = new Date(s + "T00:00:00");
+  $("evHint").textContent = `${yearly ? "Năm nay" : "Năm " + y} rơi vào ${DOW[dt.getDay()]}, ${dt.getDate()}/${dt.getMonth() + 1}/${dt.getFullYear()} dương lịch.`;
+}
+function openSheet(e) {
+  editing = e || null;
+  $("sheetTitle").textContent = e ? "Sửa sự kiện" : "Thêm sự kiện";
+  $("evDelete").hidden = !e; $("evDelete").textContent = "Xóa"; delete $("evDelete").dataset.arm;
+  $("evName").value = e ? e.title : "";
+  setIcon(e ? e.icon : "📌");
+  $("evYearly").checked = e ? e.yearly : true;
+  setCal(e ? e.lunar : true, e);
+  $("evTime").value = e ? e.time : "";
+  $("evRemind").value = String(e ? e.remind : 1);
+  $("evNote").value = e ? e.note : "";
+  toggleYear();
+  $("sheetBg").hidden = false; $("sheet").hidden = false;
+  if (!e) $("evName").focus();
+}
+function closeSheet() { $("sheet").hidden = true; $("sheetBg").hidden = true; editing = null; }
+$("addEvent").onclick = () => openSheet(null);
+$("evCancel").onclick = closeSheet; $("sheetBg").onclick = closeSheet;
+$("evCal").onclick = ev => { const b = ev.target.closest("button"); if (b) setCal(b.dataset.v === "lunar", null); };
+["evDay", "evMonth", "evYear"].forEach(id => $(id).onchange = updateHint);
+$("evYearly").onchange = toggleYear;
+$("evSave").onclick = () => {
+  const title = $("evName").value.trim();
+  if (!title) { toast("Nhập tên sự kiện trước đã"); $("evName").focus(); return; }
+  const yearly = $("evYearly").checked;
+  const ev = { id: editing ? editing.id : "", title, icon: curIcon(), lunar: isLunar(), day: +$("evDay").value, month: +$("evMonth").value,
+    year: yearly ? null : +$("evYear").value, yearly, time: $("evTime").value || "", note: $("evNote").value.trim(), remind: +$("evRemind").value };
+  Android.saveEvent(JSON.stringify(ev));
+  const wasEditing = !!editing;
+  closeSheet(); render();
+  toast(wasEditing ? "Đã lưu thay đổi" : "Đã thêm sự kiện");
+};
+$("evDelete").onclick = () => {
+  if (!editing) return;
+  if (!$("evDelete").dataset.arm) { $("evDelete").dataset.arm = "1"; $("evDelete").textContent = "Xóa thật?"; return; }
+  Android.deleteEvent(editing.id); closeSheet(); render(); toast("Đã xóa sự kiện");
+};
+
 // ---- Cài đặt ----
 function renderSettings() {
   $("cityVal").textContent = state.prefs.city;
@@ -448,7 +598,11 @@ function renderSettings() {
 }
 function openSettings() { renderSettings(); $("settings").classList.add("open"); }
 function closeSettings() { $("settings").classList.remove("open"); $("citySearch").hidden = true; }
-window.closeSettingsIfOpen = function () { if ($("settings").classList.contains("open")) { closeSettings(); return true; } return false; };
+window.closeSettingsIfOpen = function () {
+  if (!$("sheet").hidden) { closeSheet(); return true; }
+  if ($("settings").classList.contains("open")) { closeSettings(); return true; }
+  return false;
+};
 $("openSettings").onclick = openSettings;
 $("closeSettings").onclick = closeSettings;
 
