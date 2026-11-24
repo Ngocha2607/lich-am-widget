@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="widget_bg">#F5FFFFFF</color>
+    <color name="widget_bg_warn">#F8FFF1DC</color>
+    <color name="widget_text">#1C1C1E</color>
+    <color name="widget_text2">#5A5A60</color>
+    <color name="widget_stroke">#22000000</color>
+    <color name="warn_stroke">#66E08A2E</color>
+    <color name="gold">#E6B422</color>
+    <color name="ic_launcher_bg">#1E3A5F</color>
+</resources>

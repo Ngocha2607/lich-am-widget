@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Lịch &amp; Thời tiết</string>
+    <string name="widget_name">Lịch âm &amp; Thời tiết</string>
+    <string name="widget_desc">Lịch âm, thời tiết và gợi ý hôm nay nên làm gì</string>
+    <string name="add_widget_hint">Để thêm widget: giữ lâu trên màn hình chính → Widget → Lịch âm &amp; Thời tiết. Chạm vào widget để mở màn hình này.</string>
+</resources>

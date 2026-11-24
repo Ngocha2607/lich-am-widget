@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="widget_bg">#EB1F2023</color>
+    <color name="widget_bg_warn">#EB3A2A18</color>
+    <color name="widget_text">#F2F2F2</color>
+    <color name="widget_text2">#B4B4BA</color>
+    <color name="widget_stroke">#33FFFFFF</color>
+    <color name="warn_stroke">#88E08A2E</color>
+</resources>
