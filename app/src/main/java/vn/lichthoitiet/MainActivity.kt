@@ -2,8 +2,12 @@ package vn.lichthoitiet
 
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.appwidget.AppWidgetManager
+import android.content.ComponentName
+import android.content.Intent
 import android.content.res.Configuration
 import android.graphics.Color
+import android.net.Uri
 import android.os.Bundle
 import android.webkit.JavascriptInterface
 import android.webkit.WebView
@@ -50,8 +54,26 @@ class MainActivity : Activity() {
         if (pageReady) pushState()
     }
 
-    private fun isDark(): Boolean =
-        resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+    /** Nút Back: đóng màn Cài đặt nếu đang mở, không thì thoát app. */
+    @Deprecated("Deprecated in Java")
+    override fun onBackPressed() {
+        if (!pageReady) { super.onBackPressed(); return }
+        web.evaluateJavascript("window.closeSettingsIfOpen ? closeSettingsIfOpen() : false") { r ->
+            if (r != "true") finish()
+        }
+    }
+
+    private fun isDark(): Boolean = when (prefs.theme) {
+        "dark" -> true
+        "light" -> false
+        else -> resources.configuration.uiMode and Configuration.UI_MODE_NIGHT_MASK == Configuration.UI_MODE_NIGHT_YES
+    }
+
+    private fun versionName(): String = try {
+        packageManager.getPackageInfo(packageName, 0).versionName ?: ""
+    } catch (e: Exception) {
+        ""
+    }
 
     private fun pushState() = runOnUiThread {
         web.evaluateJavascript("window.onState && onState(${stateJson()})", null)
@@ -69,7 +91,8 @@ class MainActivity : Activity() {
             put("hour", now.hour)
             put("minute", now.minute)
             put("dark", isDark())
-            put("prefs", JSONObject().put("city", prefs.city).put("spiritual", prefs.spiritual))
+            put("version", versionName())
+            put("prefs", JSONObject().put("city", prefs.city).put("spiritual", prefs.spiritual).put("theme", prefs.theme))
             put("weather", if (w == null) JSONObject.NULL else weatherJson(w))
         }.toString()
     }
@@ -164,19 +187,25 @@ class MainActivity : Activity() {
             }.toString()
         }
 
+        /** Tìm thành phố; kết quả trả về trang qua `onCityResults([...])`. */
         @JavascriptInterface
-        fun saveCity(name: String) {
+        fun searchCity(query: String) {
             Thread {
-                val geo = try { WeatherRepo.geocode(name) } catch (e: Exception) { null }
-                if (geo == null) {
-                    status("Không tìm thấy địa điểm. Thử gõ không dấu, ví dụ: Ha Noi, Da Nang.")
-                } else {
-                    prefs.lat = geo.lat
-                    prefs.lon = geo.lon
-                    prefs.city = geo.name
-                    refreshWeather()
+                val list = try { WeatherRepo.geocodeList(query) } catch (e: Exception) { emptyList() }
+                val arr = JSONArray()
+                list.forEach {
+                    arr.put(JSONObject().put("name", it.name).put("region", it.region).put("lat", it.lat).put("lon", it.lon))
                 }
+                runOnUiThread { web.evaluateJavascript("window.onCityResults && onCityResults($arr)", null) }
             }.start()
+        }
+
+        @JavascriptInterface
+        fun setCity(lat: Double, lon: Double, name: String) {
+            prefs.lat = lat
+            prefs.lon = lon
+            prefs.city = name
+            refreshWeather()
         }
 
         @JavascriptInterface
@@ -186,6 +215,28 @@ class MainActivity : Activity() {
         }
 
         @JavascriptInterface
+        fun setTheme(mode: String) {
+            prefs.theme = if (mode in listOf("light", "dark")) mode else "system"
+            pushState()
+        }
+
+        @JavascriptInterface
         fun refresh() = refreshWeather()
+
+        /** Mở hộp thoại hệ thống để ghim widget ra màn hình chính. */
+        @JavascriptInterface
+        fun pinWidget() = runOnUiThread {
+            val mgr = AppWidgetManager.getInstance(this@MainActivity)
+            if (mgr.isRequestPinAppWidgetSupported) {
+                mgr.requestPinAppWidget(ComponentName(this@MainActivity, LichWidget::class.java), null, null)
+            } else {
+                status("Máy không hỗ trợ thêm nhanh. Giữ lâu màn hình chính → Widget → Lịch âm & Thời tiết.")
+            }
+        }
+
+        @JavascriptInterface
+        fun openUrl(url: String) {
+            if (url.startsWith("https://")) runOnUiThread { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
+        }
     }
 }

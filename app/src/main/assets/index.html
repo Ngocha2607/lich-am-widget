@@ -133,26 +133,54 @@ h2 { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: u
 .chip.now { background: var(--gold-soft); box-shadow: inset 0 0 0 1.5px var(--gold); }
 
 /* Cài đặt */
-label { display: block; font-size: 12.5px; font-weight: 600; color: var(--muted); margin: 8px 0 6px; }
-.row { display: flex; gap: 8px; }
-input[type=text] { flex: 1; min-width: 0; padding: 10px 12px; border-radius: 12px; border: 1px solid var(--line); background: var(--chip); outline: none; }
-input[type=text]:focus { border-color: var(--blue); }
-.btn { padding: 10px 16px; border-radius: 12px; background: var(--blue); color: #fff; font-weight: 700; }
-.btn.ghost { background: var(--chip); color: var(--text); width: 100%; margin-top: 10px; }
-.switch-row { display: flex; align-items: center; justify-content: space-between; margin: 14px 0 0; font-size: 15px; font-weight: 500; color: var(--text); }
-.switch { position: relative; width: 46px; height: 26px; appearance: none; -webkit-appearance: none; background: var(--line); border-radius: 999px; transition: .2s; flex: none; }
+.top .spacer { width: 40px; flex: none; }
+.top .gear { width: 40px; height: 40px; border-radius: 50%; background: var(--card); color: var(--muted); box-shadow: var(--shadow); font-size: 19px; flex: none; }
+#settings { position: fixed; inset: 0; z-index: 50; background: var(--bg); transform: translateX(100%); transition: transform .25s ease; overflow-y: auto;
+  padding: 12px 14px 40px; padding-top: calc(12px + env(safe-area-inset-top)); }
+#settings.open { transform: none; }
+@media (prefers-reduced-motion: reduce) { #settings { transition: none; } }
+.s-head { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+.s-head .back { width: 40px; height: 40px; border-radius: 50%; font-size: 26px; line-height: 1; color: var(--blue); background: var(--card); box-shadow: var(--shadow); }
+.s-head h1 { font-size: 20px; font-weight: 800; margin: 0; }
+.g-title { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 0 8px 8px; }
+.group { background: var(--card); border-radius: 18px; box-shadow: var(--shadow); margin-bottom: 18px; overflow: hidden; }
+.item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--line); min-height: 58px; width: 100%; text-align: left; box-sizing: border-box; }
+.group > .item:first-child { border-top: 0; }
+button.item:active { background: var(--chip); }
+.item .ico { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; font-size: 17px; flex: none; background: var(--chip); }
+.item .body { flex: 1; min-width: 0; }
+.item .lbl { display: block; font-size: 15px; font-weight: 500; }
+.item .val { display: block; font-size: 12.5px; color: var(--muted); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.item .chev { color: var(--muted); font-size: 22px; line-height: 1; }
+.item .act { color: var(--blue); font-weight: 700; font-size: 14px; }
+.seg { display: flex; flex: 0 0 auto; width: 210px; background: var(--chip); border-radius: 10px; padding: 3px; gap: 2px; }
+.seg button { flex: 1; padding: 6px 2px; border-radius: 8px; font-size: 12.5px; font-weight: 600; color: var(--muted); white-space: nowrap; }
+.seg button.on { background: var(--card); color: var(--text); box-shadow: 0 1px 3px rgba(0,0,0,.14); }
+.search { padding: 10px 16px 14px; border-top: 1px solid var(--line); }
+.search input { width: 100%; box-sizing: border-box; padding: 11px 14px; border-radius: 12px; border: 1px solid var(--line); background: var(--chip); outline: none; }
+.search input:focus { border-color: var(--blue); }
+.results { margin-top: 6px; }
+.results button { display: block; width: 100%; text-align: left; padding: 9px 12px; border-radius: 10px; }
+.results button:active { background: var(--chip); }
+.results .n { font-weight: 600; } .results .r { font-size: 12.5px; color: var(--muted); }
+.results .empty { font-size: 13px; color: var(--muted); padding: 8px 12px; }
+.switch { position: relative; width: 46px; height: 26px; appearance: none; -webkit-appearance: none; background: var(--line); border-radius: 999px; transition: .2s; flex: none; margin: 0; }
 .switch::after { content: ""; position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; transition: .2s; box-shadow: 0 1px 3px rgba(0,0,0,.25); }
 .switch:checked { background: var(--blue); }
 .switch:checked::after { left: 23px; }
-#status { margin-top: 8px; font-size: 13px; min-height: 18px; }
+.toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%) translateY(16px); background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 999px;
+  font-size: 13.5px; font-weight: 500; opacity: 0; transition: .25s; z-index: 60; pointer-events: none; max-width: 88vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.toast.show { opacity: 1; transform: translateX(-50%); }
 </style>
 </head>
 <body>
 
 <header class="top">
+  <span class="spacer"></span>
   <button class="nav" id="prev" aria-label="Tháng trước">‹</button>
   <div class="title"><h1 id="monthTitle">Tháng</h1><button class="pill" id="todayBtn">Hôm nay</button></div>
   <button class="nav" id="next" aria-label="Tháng sau">›</button>
+  <button class="gear" id="openSettings" aria-label="Cài đặt">⚙</button>
 </header>
 
 <section class="card">
@@ -203,15 +231,43 @@ input[type=text]:focus { border-color: var(--blue); }
   <div class="chips" id="hours"></div>
 </section>
 
-<section class="card">
-  <h2>Cài đặt</h2>
-  <label for="city">Thành phố lấy thời tiết</label>
-  <div class="row"><input type="text" id="city" placeholder="Ví dụ: Hà Nội, Hải Phòng"><button class="btn" id="saveCity">Lưu</button></div>
-  <label class="switch-row"><span>Hiện ngày hoàng đạo, giờ tốt</span><input type="checkbox" class="switch" id="spiritual"></label>
-  <button class="btn ghost" id="refresh">Làm mới thời tiết</button>
-  <div id="status" class="muted"></div>
-  <p class="muted small">Thêm widget: giữ lâu trên màn hình chính → Widget → Lịch âm &amp; Thời tiết.</p>
-</section>
+<div id="settings" role="dialog" aria-label="Cài đặt">
+  <div class="s-head"><button class="back" id="closeSettings" aria-label="Quay lại">‹</button><h1>Cài đặt</h1></div>
+
+  <div class="g-title">Vị trí</div>
+  <div class="group">
+    <button class="item" id="cityRow"><span class="ico">📍</span><span class="body"><span class="lbl">Thành phố</span><span class="val" id="cityVal"></span></span><span class="act">Đổi</span></button>
+    <div class="search" id="citySearch" hidden>
+      <input type="text" id="cityInput" placeholder="Nhập tên thành phố, ví dụ Hải Phòng" autocomplete="off">
+      <div class="results" id="cityResults"></div>
+    </div>
+  </div>
+
+  <div class="g-title">Hiển thị</div>
+  <div class="group">
+    <label class="item" for="spiritual"><span class="ico">✦</span><span class="body"><span class="lbl">Ngày hoàng đạo, giờ tốt</span><span class="val">Hiện trên widget và trong app</span></span><input type="checkbox" class="switch" id="spiritual"></label>
+    <div class="item"><span class="ico">🌓</span><span class="body"><span class="lbl">Giao diện</span></span>
+      <div class="seg" id="themeSeg"><button data-v="system">Hệ thống</button><button data-v="light">Sáng</button><button data-v="dark">Tối</button></div></div>
+  </div>
+
+  <div class="g-title">Dữ liệu</div>
+  <div class="group">
+    <button class="item" id="refreshRow"><span class="ico">🔄</span><span class="body"><span class="lbl">Thời tiết</span><span class="val" id="updVal"></span></span><span class="act">Làm mới</span></button>
+    <div class="item"><span class="ico">🌐</span><span class="body"><span class="lbl">Nguồn dữ liệu</span><span class="val">Open-Meteo · lịch âm tính trên máy, không cần mạng</span></span></div>
+  </div>
+
+  <div class="g-title">Widget</div>
+  <div class="group">
+    <button class="item" id="pinRow"><span class="ico">➕</span><span class="body"><span class="lbl">Thêm widget vào màn hình chính</span><span class="val">Hoặc giữ lâu màn hình chính → Widget</span></span><span class="chev">›</span></button>
+  </div>
+
+  <div class="g-title">Về ứng dụng</div>
+  <div class="group">
+    <div class="item"><span class="ico">📅</span><span class="body"><span class="lbl">Lịch &amp; Thời tiết</span><span class="val" id="verVal"></span></span></div>
+    <button class="item" id="srcRow"><span class="ico">💻</span><span class="body"><span class="lbl">Mã nguồn</span><span class="val">github.com/Ngocha2607/lich-am-widget</span></span><span class="chev">›</span></button>
+  </div>
+</div>
+<div class="toast" id="toast" role="status"></div>
 
 <script>
 const $ = id => document.getElementById(id);
@@ -232,11 +288,11 @@ window.onState = function (s) {
   document.documentElement.classList.toggle("dark", !!s.dark);
   document.documentElement.classList.toggle("light", s.dark === false);
   if (first) { view = { y: s.today.y, m: s.today.m, sel: s.today.d }; }
-  $("city").value = s.prefs.city;
-  $("spiritual").checked = !!s.prefs.spiritual;
   render();
+  renderSettings();
 };
-window.onStatus = function (msg) { $("status").textContent = msg; };
+function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 2800); }
+window.onStatus = toast;
 
 function render() {
   if (!state) return;
@@ -381,9 +437,51 @@ function smooth(pts) {
 $("prev").onclick = () => { view.m--; if (view.m < 1) { view.m = 12; view.y--; } view.sel = 1; render(); };
 $("next").onclick = () => { view.m++; if (view.m > 12) { view.m = 1; view.y++; } view.sel = 1; render(); };
 $("todayBtn").onclick = () => { view = { y: state.today.y, m: state.today.m, sel: state.today.d }; render(); };
-$("saveCity").onclick = () => { const v = $("city").value.trim(); if (v) { onStatus("Đang tìm " + v + "..."); Android.saveCity(v); } };
+// ---- Cài đặt ----
+function renderSettings() {
+  $("cityVal").textContent = state.prefs.city;
+  $("spiritual").checked = !!state.prefs.spiritual;
+  const theme = state.prefs.theme || "system";
+  document.querySelectorAll("#themeSeg button").forEach(b => b.classList.toggle("on", b.dataset.v === theme));
+  $("updVal").textContent = state.weather ? `Cập nhật lúc ${state.weather.updated} · ${state.weather.city}` : "Chưa có dữ liệu";
+  $("verVal").textContent = state.version ? `Phiên bản ${state.version}` : "";
+}
+function openSettings() { renderSettings(); $("settings").classList.add("open"); }
+function closeSettings() { $("settings").classList.remove("open"); $("citySearch").hidden = true; }
+window.closeSettingsIfOpen = function () { if ($("settings").classList.contains("open")) { closeSettings(); return true; } return false; };
+$("openSettings").onclick = openSettings;
+$("closeSettings").onclick = closeSettings;
+
+let searchTimer, lastResults = [];
+$("cityRow").onclick = () => {
+  const p = $("citySearch"); p.hidden = !p.hidden;
+  if (!p.hidden) { $("cityInput").value = ""; $("cityResults").innerHTML = ""; $("cityInput").focus(); }
+};
+$("cityInput").oninput = e => {
+  clearTimeout(searchTimer);
+  const q = e.target.value.trim();
+  if (q.length < 2) { $("cityResults").innerHTML = ""; return; }
+  searchTimer = setTimeout(() => Android.searchCity(q), 350);
+};
+window.onCityResults = function (list) {
+  lastResults = list || [];
+  $("cityResults").innerHTML = lastResults.length
+    ? lastResults.map((c, i) => `<button data-i="${i}"><div class="n">${esc(c.name)}</div><div class="r">${esc(c.region)}</div></button>`).join("")
+    : `<div class="empty">Không tìm thấy. Thử gõ không dấu, ví dụ "Hai Phong".</div>`;
+  $("cityResults").querySelectorAll("button").forEach(b => b.onclick = () => {
+    const c = lastResults[+b.dataset.i];
+    Android.setCity(c.lat, c.lon, c.name);
+    state.prefs.city = c.name;
+    $("citySearch").hidden = true;
+    renderSettings();
+    toast(`Đã chọn ${c.name}, đang tải thời tiết...`);
+  });
+};
 $("spiritual").onchange = e => { Android.setSpiritual(e.target.checked); state.prefs.spiritual = e.target.checked; render(); };
-$("refresh").onclick = () => { onStatus("Đang tải thời tiết..."); Android.refresh(); };
+$("themeSeg").onclick = e => { const b = e.target.closest("button"); if (!b) return; state.prefs.theme = b.dataset.v; Android.setTheme(b.dataset.v); renderSettings(); };
+$("refreshRow").onclick = () => { toast("Đang tải thời tiết..."); Android.refresh(); };
+$("pinRow").onclick = () => Android.pinWidget();
+$("srcRow").onclick = () => Android.openUrl("https://github.com/Ngocha2607/lich-am-widget");
 
 if (!window.Android) { const s = document.createElement("script"); s.src = "mock.js"; document.body.appendChild(s); }
 </script>

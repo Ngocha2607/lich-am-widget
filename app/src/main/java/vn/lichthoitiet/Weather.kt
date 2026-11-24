@@ -115,7 +115,8 @@ data class WeatherData(
     }
 }
 
-data class GeoResult(val lat: Double, val lon: Double, val name: String)
+/** Một kết quả tìm địa điểm. [region] ví dụ "Thành phố Hải Phòng, Việt Nam". */
+data class GeoResult(val lat: Double, val lon: Double, val name: String, val region: String = "")
 
 object WeatherRepo {
     private const val KEY_JSON = "weather_json"
@@ -188,16 +189,22 @@ object WeatherRepo {
         )
     }
 
-    /** Tìm tọa độ theo tên thành phố. Trả về null nếu không thấy. */
-    fun geocode(name: String): GeoResult? {
+    /** Tìm địa điểm theo tên, trả về tối đa [count] kết quả. */
+    fun geocodeList(name: String, count: Int = 5): List<GeoResult> {
         val q = URLEncoder.encode(name, "UTF-8")
-        val url = "https://geocoding-api.open-meteo.com/v1/search?name=$q&count=1&language=vi&format=json"
+        val url = "https://geocoding-api.open-meteo.com/v1/search?name=$q&count=$count&language=vi&format=json"
         val j = JSONObject(httpGet(url))
-        val results = j.optJSONArray("results") ?: return null
-        if (results.length() == 0) return null
-        val r = results.getJSONObject(0)
-        return GeoResult(r.getDouble("latitude"), r.getDouble("longitude"), r.getString("name"))
+        val results = j.optJSONArray("results") ?: return emptyList()
+        return List(results.length()) { i ->
+            val r = results.getJSONObject(i)
+            val region = listOf(r.optString("admin1", ""), r.optString("country", ""))
+                .filter { it.isNotBlank() }.joinToString(", ")
+            GeoResult(r.getDouble("latitude"), r.getDouble("longitude"), r.getString("name"), region)
+        }
     }
+
+    /** Tìm tọa độ theo tên thành phố. Trả về null nếu không thấy. */
+    fun geocode(name: String): GeoResult? = geocodeList(name, 1).firstOrNull()
 
     private fun httpGet(url: String): String {
         val c = URL(url).openConnection() as HttpURLConnection

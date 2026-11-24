@@ -24,6 +24,11 @@ class Prefs(ctx: Context) {
         get() = sp.getBoolean("spiritual", true)
         set(v) = sp.edit().putBoolean("spiritual", v).apply()
 
+    /** Giao diện màn hình app: "system", "light" hoặc "dark". */
+    var theme: String
+        get() = sp.getString("theme", "system") ?: "system"
+        set(v) = sp.edit().putString("theme", v).apply()
+
     companion object {
         const val DEFAULT_LAT = 21.0285
         const val DEFAULT_LON = 105.8542
