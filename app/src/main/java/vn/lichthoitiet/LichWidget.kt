@@ -52,38 +52,50 @@ object WidgetRenderer {
 
     fun dayOfWeek(d: LocalDate): String = THU[d.dayOfWeek] ?: ""
 
+    private val GOLD = 0xFFFFD966.toInt()
+    private val SUB_WHITE = 0xC7FFFFFF.toInt()
+
     fun build(context: Context): RemoteViews {
         val prefs = Prefs(context)
         val today = LocalDate.now()
         val now = LocalDateTime.now()
         val lunar = LunarCalendar.convert(today)
         val weather = WeatherRepo.load(context)
-        val tips = SuggestionEngine.build(today, now, weather, prefs.spiritual)
-        val tip = tips.first()
+        val tip = SuggestionEngine.build(today, now, weather, prefs.spiritual).first()
 
         val views = RemoteViews(context.packageName, R.layout.widget_4x2)
 
+        // Dòng 1: thứ, ngày dương
         views.setTextViewText(R.id.line_date, "${dayOfWeek(today)}, ${today.dayOfMonth}/${today.monthValue}")
-        views.setTextViewText(
-            R.id.line_temp,
-            if (weather != null) "${WeatherText.icon(weather.codeNow)} ${weather.tempNow}°" else "--°",
-        )
 
-        val lunarText = StringBuilder("Âm ${lunar.day}/${LunarCalendar.monthName(lunar.month)}")
+        // Dòng 2: ngày âm (dòng chính)
+        val lunarText = StringBuilder("${lunar.day} tháng ${LunarCalendar.monthName(lunar.month)}")
         if (lunar.leap) lunarText.append(" nhuận")
-        lunarText.append(" ${LunarCalendar.canChiYear(lunar.year)}")
-        if (prefs.spiritual) lunarText.append(if (LunarCalendar.isHoangDao(lunar)) " · Hoàng đạo" else " · Hắc đạo")
         views.setTextViewText(R.id.line_lunar, lunarText.toString())
-        views.setTextViewText(R.id.line_city, weather?.city ?: prefs.city)
 
+        // Dòng 3: ngày đặc biệt (vàng) hoặc năm can chi + hoàng đạo + tiết khí
+        val special = SuggestionEngine.specialDayName(lunar)
+        val parts = mutableListOf<String>()
+        if (special != null) parts += "✦ $special" else parts += LunarCalendar.canChiYear(lunar.year)
+        if (prefs.spiritual) parts += if (LunarCalendar.isHoangDao(lunar)) "Hoàng đạo" else "Hắc đạo"
+        if (special == null) parts += LunarCalendar.currentTietKhi(lunar.jd)
+        views.setTextViewText(R.id.line_sub, parts.joinToString(" · "))
+        views.setTextColor(R.id.line_sub, if (special != null) GOLD else SUB_WHITE)
+
+        // Bên phải: nhiệt độ + mô tả
+        if (weather != null) {
+            views.setTextViewText(R.id.line_temp, "${WeatherText.icon(weather.codeNow)} ${weather.tempNow}°")
+            views.setTextViewText(R.id.line_wx, "${WeatherText.label(weather.codeNow)} · ${weather.city}")
+        } else {
+            views.setTextViewText(R.id.line_temp, "--°")
+            views.setTextViewText(R.id.line_wx, prefs.city)
+        }
+
+        // Gợi ý
         views.setTextViewText(R.id.line_tip, tip.short)
 
-        val bg = when {
-            tip.kind == Kind.WARN -> R.drawable.widget_bg_warn
-            tip.kind == Kind.SPECIAL || lunar.day == 1 || lunar.day == 15 -> R.drawable.widget_bg_special
-            else -> R.drawable.widget_bg
-        }
-        views.setInt(R.id.root, "setBackgroundResource", bg)
+        // Nền theo thời điểm trong ngày và thời tiết
+        views.setInt(R.id.root, "setBackgroundResource", background(now, weather))
 
         val open = Intent(context, MainActivity::class.java)
         val pending = PendingIntent.getActivity(
@@ -91,5 +103,29 @@ object WidgetRenderer {
         )
         views.setOnClickPendingIntent(R.id.root, pending)
         return views
+    }
+
+    private fun toMinutes(hhmm: String): Int? {
+        val p = hhmm.split(":")
+        if (p.size < 2) return null
+        val h = p[0].toIntOrNull() ?: return null
+        val m = p[1].toIntOrNull() ?: return null
+        return h * 60 + m
+    }
+
+    /** Chọn nền: đêm, sáng, ngày, chiều tà, hoặc mưa. */
+    private fun background(now: LocalDateTime, weather: WeatherData?): Int {
+        val todayF = weather?.daily?.firstOrNull()
+        val rise = todayF?.sunrise?.let(::toMinutes) ?: (6 * 60)
+        val set = todayF?.sunset?.let(::toMinutes) ?: (18 * 60)
+        val t = now.hour * 60 + now.minute
+        val rainy = weather != null && weather.codeNow >= 51
+        return when {
+            t < rise - 30 || t >= set + 30 -> R.drawable.widget_bg_night
+            rainy -> R.drawable.widget_bg_rain
+            t < rise + 150 -> R.drawable.widget_bg_morning
+            t < set - 90 -> R.drawable.widget_bg_day
+            else -> R.drawable.widget_bg_evening
+        }
     }
 }

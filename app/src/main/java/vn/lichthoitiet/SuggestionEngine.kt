@@ -26,6 +26,15 @@ object SuggestionEngine {
         (12 to 23) to "ngày ông Táo về trời",
     )
 
+    /** Tên ngày đặc biệt theo âm lịch (lễ Tết, rằm, mùng 1), hoặc null nếu là ngày thường. */
+    fun specialDayName(l: LunarDate): String? =
+        NGAY_LE[l.month to l.day]?.replaceFirstChar { it.uppercase() }
+            ?: when (l.day) {
+                15 -> "Rằm tháng ${LunarCalendar.monthName(l.month)}"
+                1 -> "Mùng 1 tháng ${LunarCalendar.monthName(l.month)}"
+                else -> null
+            }
+
     fun build(today: LocalDate, now: LocalDateTime, weather: WeatherData?, spiritual: Boolean): List<Suggestion> {
         val lunar = LunarCalendar.convert(today)
         val lunarTomorrow = LunarCalendar.convert(today.plusDays(1))
