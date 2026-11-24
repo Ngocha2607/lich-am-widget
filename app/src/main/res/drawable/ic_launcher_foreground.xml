@@ -7,7 +7,7 @@
     <!-- Mặt trăng khuyết -->
     <path
         android:fillColor="#FFD166"
-        android:pathData="M58,28 A26,26 0 1,0 58,80 A20,20 0 1,1 58,28 Z" />
+        android:pathData="M54,26 A28,28 0 0,0 54,82 A40,40 0 0,1 54,26 Z" />
     <!-- Mặt trời nhỏ -->
     <path
         android:fillColor="#FF8C42"
