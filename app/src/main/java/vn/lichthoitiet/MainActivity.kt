@@ -213,7 +213,7 @@ class MainActivity : Activity() {
         put("city", w.city)
         put("updated", String.format("%tH:%<tM", w.fetchedAt))
         put("tempNow", w.tempNow); put("feelsLike", w.feelsLike); put("humidity", w.humidity)
-        put("iconNow", WeatherText.icon(w.codeNow)); put("labelNow", WeatherText.label(w.codeNow))
+        put("iconNow", WeatherText.icon(w.codeNow)); put("labelNow", WeatherText.label(w.codeNow)); put("codeNow", w.codeNow)
         put("windKmh", w.windNow); put("windDir", WeatherText.windDir(w.windDir)); put("beaufort", WeatherText.beaufort(w.windNow))
         put("pressure", w.pressure); put("visibility", w.visibility)
         put("uv", w.todayUv.toInt()); put("uvLabel", WeatherText.uvLabel(w.todayUv))
@@ -262,7 +262,7 @@ class MainActivity : Activity() {
                 days.put(
                     JSONObject().put("d", d).put("ld", l.day).put("lm", l.month)
                         .put("leap", l.leap).put("hd", LunarCalendar.isHoangDao(l))
-                        .put("ev", ev.firstOrNull()?.icon ?: ""),
+                        .put("ev", ev.firstOrNull()?.icon ?: "").put("evn", ev.size),
                 )
             }
             return JSONObject().put("firstWeekday", ym.atDay(1).dayOfWeek.value).put("days", days).toString()
@@ -564,6 +564,17 @@ class MainActivity : Activity() {
                 mgr.requestPinAppWidget(ComponentName(this@MainActivity, LichWidget::class.java), null, null)
             } else {
                 status("Máy không hỗ trợ thêm nhanh. Giữ lâu màn hình chính → Widget → Lịch âm & Thời tiết.")
+            }
+        }
+
+        /** Ghim tờ lịch 1×1 "Lịch hôm nay" (đặt thay icon app để có biểu tượng lịch đổi theo ngày). */
+        @JavascriptInterface
+        fun pinIconWidget() = runOnUiThread {
+            val mgr = AppWidgetManager.getInstance(this@MainActivity)
+            if (mgr.isRequestPinAppWidgetSupported) {
+                mgr.requestPinAppWidget(ComponentName(this@MainActivity, LichIconWidget::class.java), null, null)
+            } else {
+                status("Máy không hỗ trợ thêm nhanh. Giữ lâu màn hình chính → Widget → Lịch hôm nay (1×1).")
             }
         }
 

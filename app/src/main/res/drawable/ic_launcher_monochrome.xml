@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Icon đơn sắc (Android 13+): tập lịch, ngày hôm nay khoét tròn. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#FF000000" android:fillType="evenOdd" android:pathData="M39,36 H69 A9,9 0 0,1 78,45 V67 A9,9 0 0,1 69,76 H39 A9,9 0 0,1 30,67 V45 A9,9 0 0,1 39,36 Z M30,49 H78 V50.6 H30 Z M54.2,57.7 A5.3,5.3 0 1,0 64.8,57.7 A5.3,5.3 0 1,0 54.2,57.7 Z" />
+    <path android:fillColor="#66000000" android:pathData="M39.6,39 H68.4 A9,9 0 0,1 77.4,48 V70 A9,9 0 0,1 68.4,79 H39.6 A9,9 0 0,1 30.6,70 V48 A9,9 0 0,1 39.6,39 Z" />
+    <path android:fillColor="#FF000000" android:pathData="M43.5,30 H43.5 A1.9,1.9 0 0,1 45.4,31.9 V39.3 A1.9,1.9 0 0,1 43.5,41.2 H43.5 A1.9,1.9 0 0,1 41.6,39.3 V31.9 A1.9,1.9 0 0,1 43.5,30 Z M64.5,30 H64.5 A1.9,1.9 0 0,1 66.4,31.9 V39.3 A1.9,1.9 0 0,1 64.5,41.2 H64.5 A1.9,1.9 0 0,1 62.6,39.3 V31.9 A1.9,1.9 0 0,1 64.5,30 Z" />
+</vector>

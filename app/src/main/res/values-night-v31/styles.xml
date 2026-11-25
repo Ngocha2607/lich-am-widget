@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Android 12+: màn splash hệ thống dùng màu trời đêm để chuyển liền sang nền chờ và trang -->
+    <style name="AppTheme" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:windowBackground">@drawable/splash_bg</item>
+        <item name="android:windowSplashScreenBackground">#FF0E1430</item>
+    </style>
+</resources>

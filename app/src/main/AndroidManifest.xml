@@ -43,6 +43,19 @@
                 android:resource="@xml/widget_info" />
         </receiver>
 
+        <!-- Widget 1×1 "Lịch hôm nay": đặt thay icon app để có biểu tượng lịch đổi theo ngày -->
+        <receiver
+            android:name=".LichIconWidget"
+            android:exported="true"
+            android:label="@string/widget_icon_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_icon_info" />
+        </receiver>
+
         <receiver
             android:name=".ReminderReceiver"
             android:exported="true">

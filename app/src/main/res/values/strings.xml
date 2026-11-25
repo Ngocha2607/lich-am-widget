@@ -3,5 +3,7 @@
     <string name="app_name">Lịch &amp; Thời tiết</string>
     <string name="widget_name">Lịch âm &amp; Thời tiết</string>
     <string name="widget_desc">Lịch âm, thời tiết và gợi ý hôm nay nên làm gì</string>
+    <string name="widget_icon_name">Lịch hôm nay (1×1)</string>
+    <string name="widget_icon_desc">Tờ lịch nhỏ như biểu tượng: thứ, ngày dương, ngày âm, tự đổi lúc 0h</string>
     <string name="add_widget_hint">Để thêm widget: giữ lâu trên màn hình chính → Widget → Lịch âm &amp; Thời tiết. Chạm vào widget để mở màn hình này.</string>
 </resources>

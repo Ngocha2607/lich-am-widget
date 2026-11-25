@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Gáy đỏ son 3D của tờ lịch 1×1: khối đỏ, vệt bóng phía trên, mép dưới tối, hai vòng gáy vàng kim -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <gradient android:angle="270" android:startColor="#FFFF8A78" android:centerColor="#FFE8494A" android:endColor="#FFB3283A" />
+            <corners android:topLeftRadius="16dp" android:topRightRadius="16dp" android:bottomLeftRadius="0dp" android:bottomRightRadius="0dp" />
+        </shape>
+    </item>
+    <item android:gravity="top|fill_horizontal" android:height="9dp" android:left="2dp" android:right="2dp" android:top="1.5dp">
+        <shape android:shape="rectangle">
+            <gradient android:angle="270" android:startColor="#80FFFFFF" android:endColor="#00FFFFFF" />
+            <corners android:topLeftRadius="14dp" android:topRightRadius="14dp" android:bottomLeftRadius="4dp" android:bottomRightRadius="4dp" />
+        </shape>
+    </item>
+    <item android:gravity="bottom|fill_horizontal" android:height="1dp">
+        <shape android:shape="rectangle"><solid android:color="#55801A26" /></shape>
+    </item>
+    <item android:drawable="@drawable/icon_rings" android:gravity="top|center_horizontal" android:width="34dp" android:height="7dp" />
+</layer-list>

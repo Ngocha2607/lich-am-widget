@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Trăng 3D trên nền giấy (tờ lịch 1×1), tuần trăng 0/8: 0 trăng mới, 4 trăng tròn. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="32dp" android:height="32dp"
+    android:viewportWidth="32" android:viewportHeight="32">
+    <path android:fillColor="#59FFFFFF" android:pathData="M5,16.8 A11,11 0 1,0 27,16.8 A11,11 0 1,0 5,16.8 Z" />
+    <path android:pathData="M5,16 A11,11 0 1,0 27,16 A11,11 0 1,0 5,16 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="radial" android:centerX="19" android:centerY="20" android:gradientRadius="14.3">
+                <item android:offset="0" android:color="#FFE9E0D1" />
+                <item android:offset="1" android:color="#FFCDBFA8" />
+            </gradient>
+        </aapt:attr>
+    </path>
+</vector>

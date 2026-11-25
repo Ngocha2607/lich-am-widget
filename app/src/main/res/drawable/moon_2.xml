@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Trăng hình cầu, tuần trăng 2/8 (0 trăng mới, 4 trăng tròn). Cùng hình với app (ART3D trong assets/index.html): sửa hình ở đây thì sửa cả bên đó. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="64dp" android:height="64dp"
+    android:viewportWidth="64" android:viewportHeight="64">
+    <path android:pathData="M0.64,32 A31.36,31.36 0 1,0 63.36,32 A31.36,31.36 0 1,0 0.64,32 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="radial" android:centerX="32" android:centerY="32" android:gradientRadius="31.36">
+                <item android:offset="0.38" android:color="#8CFFE7A3" />
+                <item android:offset="1" android:color="#00FFE7A3" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:pathData="M12.8,32 A19.2,19.2 0 1,0 51.2,32 A19.2,19.2 0 1,0 12.8,32 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="radial" android:centerX="26.24" android:centerY="25.28" android:gradientRadius="25.92">
+                <item android:offset="0" android:color="#3DFFFFFF" />
+                <item android:offset="1" android:color="#12FFFFFF" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:pathData="M32,12.8 A19.2,19.2 0 0,1 32,51.2 A0,19.2 0 0,0 32,12.8 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="radial" android:centerX="38.72" android:centerY="24.7" android:gradientRadius="30.72">
+                <item android:offset="0" android:color="#FFFFFBEA" />
+                <item android:offset="0.32" android:color="#FFF9D77A" />
+                <item android:offset="0.78" android:color="#FFE0A33A" />
+                <item android:offset="1" android:color="#FFA86A16" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <group>
+        <clip-path android:pathData="M32,12.8 A19.2,19.2 0 0,1 32,51.2 A0,19.2 0 0,0 32,12.8 Z" />
+        <path android:fillColor="#3DA86A16" android:pathData="M22.98,28.16 A3.26,3.26 0 1,0 29.5,28.16 A3.26,3.26 0 1,0 22.98,28.16 Z M33.73,36.22 A4.42,4.42 0 1,0 42.56,36.22 A4.42,4.42 0 1,0 33.73,36.22 Z M29.5,41.6 A2.11,2.11 0 1,0 33.73,41.6 A2.11,2.11 0 1,0 29.5,41.6 Z" />
+        <path android:pathData="M30.66,24.7 A8.06,8.06 0 1,0 46.78,24.7 A8.06,8.06 0 1,0 30.66,24.7 Z">
+            <aapt:attr name="android:fillColor">
+                <gradient android:type="radial" android:centerX="38.72" android:centerY="24.7" android:gradientRadius="8.06">
+                    <item android:offset="0" android:color="#CCFFFFFF" />
+                    <item android:offset="1" android:color="#00FFFFFF" />
+                </gradient>
+            </aapt:attr>
+        </path>
+    </group>
+</vector>

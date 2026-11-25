@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Hai vòng gáy vàng kim ở mép trên tờ lịch 1×1. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="34dp" android:height="7dp"
+    android:viewportWidth="34" android:viewportHeight="7">
+    <path android:pathData="M5.7,0 H5.7 A1.7,1.7 0 0,1 7.4,1.7 V4.8 A1.7,1.7 0 0,1 5.7,6.5 H5.7 A1.7,1.7 0 0,1 4,4.8 V1.7 A1.7,1.7 0 0,1 5.7,0 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="linear" android:startX="4" android:startY="0" android:endX="7.4" android:endY="0">
+                <item android:offset="0" android:color="#FF8A5A12" />
+                <item android:offset="0.35" android:color="#FFFFF0B8" />
+                <item android:offset="0.6" android:color="#FFE0A33A" />
+                <item android:offset="1" android:color="#FF7A4A0C" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:fillColor="#99FFFFFF" android:pathData="M5.35,0.4 H5.35 A0.45,0.45 0 0,1 5.8,0.85 V5.35 A0.45,0.45 0 0,1 5.35,5.8 H5.35 A0.45,0.45 0 0,1 4.9,5.35 V0.85 A0.45,0.45 0 0,1 5.35,0.4 Z" />
+    <path android:pathData="M28.3,0 H28.3 A1.7,1.7 0 0,1 30,1.7 V4.8 A1.7,1.7 0 0,1 28.3,6.5 H28.3 A1.7,1.7 0 0,1 26.6,4.8 V1.7 A1.7,1.7 0 0,1 28.3,0 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="linear" android:startX="26.6" android:startY="0" android:endX="30" android:endY="0">
+                <item android:offset="0" android:color="#FF8A5A12" />
+                <item android:offset="0.35" android:color="#FFFFF0B8" />
+                <item android:offset="0.6" android:color="#FFE0A33A" />
+                <item android:offset="1" android:color="#FF7A4A0C" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:fillColor="#99FFFFFF" android:pathData="M27.95,0.4 H27.95 A0.45,0.45 0 0,1 28.4,0.85 V5.35 A0.45,0.45 0 0,1 27.95,5.8 H27.95 A0.45,0.45 0 0,1 27.5,5.35 V0.85 A0.45,0.45 0 0,1 27.95,0.4 Z" />
+</vector>

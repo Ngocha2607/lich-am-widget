@@ -80,6 +80,8 @@
   let events = [
     { id: "e1", title: "Giỗ ông nội", icon: "🕯️", lunar: true, day: 18, month: 10, year: null, yearly: true, time: "", note: "Về quê từ chiều hôm trước", remind: 3 },
     { id: "e2", title: "Sinh nhật mẹ", icon: "🎂", lunar: false, day: 20, month: 12, year: null, yearly: true, time: "19:00", note: "", remind: 1 },
+    { id: "e3", title: "Họp lớp", icon: "🎉", lunar: false, day: 26, month: 11, year: null, yearly: true, time: "18:30", note: "", remind: 1 },
+    { id: "e4", title: "Khám sức khỏe", icon: "🏥", lunar: false, day: 3, month: 12, year: null, yearly: false, time: "08:00", note: "", remind: 1 },
   ];
   const profile = { name: "", birth: null, birthYear: 0, birthLabel: "" };
   const dateLabel = e => (e.lunar ? `${e.day}/${e.month} âm` : `${e.day}/${e.month}`) + (e.yearly ? " · hằng năm" : `/${e.year}`);
@@ -99,7 +101,7 @@
   const DAILY = [[3, 24, 31, 10], [2, 23, 30, 20], [61, 22, 27, 70], [80, 21, 26, 80], [3, 20, 28, 30], [1, 19, 29, 10], [0, 20, 30, 0]];
   const ICON = { 0: "☀️", 1: "🌤️", 2: "⛅", 3: "☁️", 61: "🌧️", 80: "🌧️" }, TEXT = { 0: "trời quang", 1: "ít mây", 2: "có mây", 3: "nhiều mây", 61: "mưa nhẹ", 80: "mưa nhẹ" };
   const weather = {
-    city: "Hà Nội", updated: "07:30", tempNow: 26, feelsLike: 27, humidity: 78, iconNow: "⛅", labelNow: "có mây",
+    city: "Hà Nội", updated: "07:30", tempNow: 26, feelsLike: 27, humidity: 78, iconNow: "⛅", labelNow: "có mây", codeNow: 2,
     windKmh: 12, windDir: "Gió đông bắc", beaufort: 3, pressure: 1014, visibility: 10, uv: 5, uvLabel: "Trung bình",
     daily: DAILY.map(([c, mn, mx, rain], i) => {
       const t = new Date(today); t.setDate(t.getDate() + i);
@@ -112,7 +114,7 @@
       const n = new Date(y, m, 0).getDate(), days = [];
       for (let d = 1; d <= n; d++) {
         const t = new Date(y, m - 1, d), l = toLunar(d, m, y), ev = on(t);
-        days.push({ d, ld: l.d, lm: l.m, leap: l.leap, hd: hoangDao(l), ev: ev.length ? ev[0].icon : "" });
+        days.push({ d, ld: l.d, lm: l.m, leap: l.leap, hd: hoangDao(l), ev: ev.length ? ev[0].icon : "", evn: ev.length });
       }
       return JSON.stringify({ firstWeekday: new Date(y, m - 1, 1).getDay() || 7, days });
     },
@@ -174,7 +176,7 @@
     searchCity(q) { setTimeout(() => window.onCityResults([{ name: q, region: "Việt Nam (mẫu)", lat: 21, lon: 105.8 }]), 200); },
   };
   ["setSections", "setNotify", "testNotify", "setNotifyWeather", "addCity", "setActiveCity", "removeCity", "exportEvents",
-    "exportIcs", "importEvents", "shareToday", "setCity", "refresh", "pinWidget", "openUrl"].forEach(k => {
+    "exportIcs", "importEvents", "shareToday", "setCity", "refresh", "pinWidget", "pinIconWidget", "openUrl"].forEach(k => {
     window.Android[k] = () => window.onStatus && window.onStatus(`(xem trước) Android.${k}()`);
   });
 

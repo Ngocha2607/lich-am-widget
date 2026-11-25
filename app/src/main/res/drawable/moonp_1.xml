@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Trăng 3D trên nền giấy (tờ lịch 1×1), tuần trăng 1/8: 0 trăng mới, 4 trăng tròn. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="32dp" android:height="32dp"
+    android:viewportWidth="32" android:viewportHeight="32">
+    <path android:fillColor="#59FFFFFF" android:pathData="M5,16.8 A11,11 0 1,0 27,16.8 A11,11 0 1,0 5,16.8 Z" />
+    <path android:pathData="M5,16 A11,11 0 1,0 27,16 A11,11 0 1,0 5,16 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="radial" android:centerX="19" android:centerY="20" android:gradientRadius="14.3">
+                <item android:offset="0" android:color="#FFE9E0D1" />
+                <item android:offset="1" android:color="#FFCDBFA8" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <path android:pathData="M16,5 A11,11 0 0,1 16,27 A7.78,11 0 0,0 16,5 Z">
+        <aapt:attr name="android:fillColor">
+            <gradient android:type="radial" android:centerX="11.82" android:centerY="11.38" android:gradientRadius="17.05">
+                <item android:offset="0" android:color="#FFFFFBEA" />
+                <item android:offset="0.35" android:color="#FFF9D77A" />
+                <item android:offset="0.8" android:color="#FFE0A33A" />
+                <item android:offset="1" android:color="#FFB97A1C" />
+            </gradient>
+        </aapt:attr>
+    </path>
+    <group>
+        <clip-path android:pathData="M16,5 A11,11 0 0,1 16,27 A7.78,11 0 0,0 16,5 Z" />
+        <path android:pathData="M8.52,11.38 A3.3,3.3 0 1,0 15.12,11.38 A3.3,3.3 0 1,0 8.52,11.38 Z">
+            <aapt:attr name="android:fillColor">
+                <gradient android:type="radial" android:centerX="11.82" android:centerY="11.38" android:gradientRadius="3.3">
+                    <item android:offset="0" android:color="#E6FFFFFF" />
+                    <item android:offset="1" android:color="#00FFFFFF" />
+                </gradient>
+            </aapt:attr>
+        </path>
+    </group>
+</vector>

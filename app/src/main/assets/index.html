@@ -8,20 +8,30 @@
 :root {
   --bg: #EEF2F7; --card: #FFFFFF; --text: #1C1C1E; --muted: #6B7280; --line: #E5E7EB;
   --chip: #F3F4F6; --accent: #D7263D; --accent-soft: #FDECEF; --gold: #D4A017; --gold-soft: #FFF6DA;
-  --blue: #2563EB; --blue-soft: #E8F0FF; --shadow: 0 1px 2px rgba(0,0,0,.05), 0 6px 20px rgba(20,30,60,.06);
+  --blue: #2563EB; --blue-soft: #E8F0FF;
+  /* 3D: ánh sáng từ trên trái; viền sáng phía trên + bóng nhiều lớp */
+  --card2: #F5F7FB; --hi: rgba(255,255,255,.75); --press: inset 0 2px 4px rgba(20,30,60,.18);
+  --shadow: inset 0 1px 0 rgba(255,255,255,.95), 0 1px 2px rgba(20,30,60,.06), 0 10px 24px -10px rgba(20,30,60,.24);
+  --raise-sm: inset 0 1px 0 rgba(255,255,255,.9), 0 1px 1px rgba(20,30,60,.08), 0 3px 6px -2px rgba(20,30,60,.16);
   --series-max: #eb6834; --series-min: #2a78d6; --good: #1E8E4A; --good-soft: #E6F4EA;
 }
 html.dark {
   --bg: #0F1115; --card: #1B1D23; --text: #F3F4F6; --muted: #9CA3AF; --line: #2A2D35;
   --chip: #262930; --accent: #FF5A6E; --accent-soft: #3A1F25; --gold: #F2C94C; --gold-soft: #3A3218;
-  --blue: #7AA2FF; --blue-soft: #1E2A44; --shadow: none;
+  --blue: #7AA2FF; --blue-soft: #1E2A44;
+  --card2: #16181D; --hi: rgba(255,255,255,.07); --press: inset 0 2px 5px rgba(0,0,0,.5);
+  --shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 1px 2px rgba(0,0,0,.4), 0 14px 28px -12px rgba(0,0,0,.75);
+  --raise-sm: inset 0 1px 0 rgba(255,255,255,.07), 0 1px 1px rgba(0,0,0,.4), 0 3px 8px -2px rgba(0,0,0,.5);
   --series-max: #d95926; --series-min: #3987e5; --good: #4ADE80; --good-soft: #16331F;
 }
 @media (prefers-color-scheme: dark) {
   html:not(.light) {
     --bg: #0F1115; --card: #1B1D23; --text: #F3F4F6; --muted: #9CA3AF; --line: #2A2D35;
     --chip: #262930; --accent: #FF5A6E; --accent-soft: #3A1F25; --gold: #F2C94C; --gold-soft: #3A3218;
-    --blue: #7AA2FF; --blue-soft: #1E2A44; --shadow: none;
+    --blue: #7AA2FF; --blue-soft: #1E2A44;
+  --card2: #16181D; --hi: rgba(255,255,255,.07); --press: inset 0 2px 5px rgba(0,0,0,.5);
+  --shadow: inset 0 1px 0 rgba(255,255,255,.06), 0 1px 2px rgba(0,0,0,.4), 0 14px 28px -12px rgba(0,0,0,.75);
+  --raise-sm: inset 0 1px 0 rgba(255,255,255,.07), 0 1px 1px rgba(0,0,0,.4), 0 3px 8px -2px rgba(0,0,0,.5);
     --series-max: #d95926; --series-min: #3987e5; --good: #4ADE80; --good-soft: #16331F;
   }
 }
@@ -169,6 +179,70 @@ h2 { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: u
 .count div { font-size: 13.5px; background: var(--chip); border-radius: 12px; padding: 8px 12px; }
 .count .tet { background: var(--gold-soft); }
 
+/* Khung trời ở thẻ ngày: màu theo giờ (giống widget), trăng đúng tuần trăng, mây cát tường, sao đêm */
+.sky-night   { background: linear-gradient(160deg, #0E1430 0%, #1C2A52 55%, #2A3C6E 100%); }
+.sky-morning { background: linear-gradient(160deg, #2B3A67 0%, #B5607E 55%, #F2A65B 100%); }
+.sky-day     { background: linear-gradient(160deg, #1F5FD1 0%, #3B95E3 55%, #7CC8F2 100%); }
+.sky-evening { background: linear-gradient(160deg, #33285F 0%, #8E4A8A 55%, #EE8A5A 100%); }
+.sky-rain    { background: linear-gradient(160deg, #222B3A 0%, #3A475F 55%, #56688A 100%); }
+.serif { font-family: "Noto Serif", "Droid Serif", Georgia, serif; }
+.hero { overflow: hidden; color: #fff; box-shadow: 0 10px 30px rgba(20, 30, 70, .25);
+  --text: #fff; --muted: rgba(255,255,255,.74); --line: rgba(255,255,255,.22); --chip: rgba(255,255,255,.13);
+  --gold: #FFE08A; --gold-soft: rgba(255,224,138,.16); --good: #8BF0B0; --good-soft: rgba(139,240,176,.16);
+  --accent-soft: rgba(255,140,150,.18); --blue: #fff; }
+.hero > :not(.sky-art):not(.share) { position: relative; z-index: 1; }
+.hero .share { z-index: 2; left: 10px; right: auto; backdrop-filter: blur(6px); }
+.sky-art { position: absolute; inset: 0; pointer-events: none; }
+.sky-art .stars { position: absolute; inset: 0 0 auto 0; height: 170px; }
+.sky-art .glow { position: absolute; right: -60px; top: -70px; width: 240px; height: 240px; border-radius: 50%; background: radial-gradient(circle, rgba(255,244,210,.5), rgba(255,244,210,0) 65%); }
+.hero .solar .wd { letter-spacing: .14em; color: var(--muted); }
+.hero .solar .big { color: #fff; font-weight: 700; font-size: 80px; line-height: .95; margin: 4px 0 2px; letter-spacing: 0; text-shadow: 0 6px 24px rgba(0,0,0,.25); }
+.hero .vsep { background: linear-gradient(transparent, rgba(255,255,255,.35), transparent); }
+.hero .lunar .main { font-weight: 600; }
+.mrow { display: flex; align-items: center; gap: 2px; margin-left: -12px; }
+.mrow .moon { flex: none; }
+.mrow .lday { font-size: 30px; font-weight: 700; color: var(--gold); line-height: 1; }
+.mrow .lmon { font-size: 15.5px; font-weight: 600; margin-left: 5px; }
+.lunar .cy { font-size: 14px; color: rgba(255,255,255,.86); margin: 0 0 5px; }
+.cloud-band { height: 34px; }
+.cloud-band .cloud { position: absolute; }
+.cloud-band .c1 { left: -46px; bottom: -16px; }
+.cloud-band .c2 { right: -50px; bottom: 2px; transform: scaleX(-1); }
+.hero .weather { margin-top: 0; border-top: 0; padding: 10px 12px; border-radius: 16px; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.18); backdrop-filter: blur(6px); }
+.hero .weather.empty { color: rgba(255,255,255,.8); }
+.hero .count div { background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.14); }
+.hero .count .tet { background: rgba(255,224,138,.16); border-color: rgba(255,224,138,.3); }
+.hero .badge.hac { background: rgba(255,255,255,.12); color: rgba(255,255,255,.85); }
+.moon .halo { transform-origin: center; transform-box: fill-box; }
+
+/* Mở app: khung trời hiện dần, trăng nhô lên, mây trôi vào, các thẻ lần lượt hiện */
+@keyframes heroIn { from { opacity: 0; transform: translateY(10px) scale(.985); } to { opacity: 1; transform: none; } }
+@keyframes moonRise { from { opacity: 0; transform: translateY(16px) scale(.8); } to { opacity: 1; transform: none; } }
+@keyframes cloudInL { from { opacity: 0; transform: translateX(-30px); } }
+@keyframes cloudInR { from { opacity: 0; transform: translateX(30px) scaleX(-1); } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes drift { from { translate: -5px 0; } to { translate: 5px 0; } }
+@keyframes twinkle { 0%, 100% { opacity: .3; } 50% { opacity: 1; } }
+@keyframes breathe { 0%, 100% { opacity: .75; transform: scale(.94); } 50% { opacity: 1; transform: scale(1.04); } }
+.intro .hero { animation: heroIn .6s ease-out both; }
+.intro .hero .mrow .moon { animation: moonRise .9s .2s cubic-bezier(.2,.8,.2,1) both; }
+.intro .cloud-band .c1 { animation: cloudInL 1.1s .25s ease-out both; }
+.intro .cloud-band .c2 { animation: cloudInR 1.1s .35s ease-out both; }
+.intro .card:not(.hero) { animation: fadeUp .5s ease-out both; }
+.intro .card:nth-of-type(1) { animation-delay: .05s; } .intro .card:nth-of-type(3) { animation-delay: .18s; }
+.intro .card:nth-of-type(4) { animation-delay: .26s; } .intro .card:nth-of-type(n+5) { animation-delay: .34s; }
+.cloud-band .cloud { animation: drift 9s ease-in-out infinite alternate; }
+.cloud-band .c2 { animation-duration: 12s; }
+.stars .tw { animation: twinkle 3.6s ease-in-out infinite; }
+.mrow .moon .halo { animation: breathe 5s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .intro *, .intro .hero, .cloud-band .cloud, .stars .tw, .mrow .moon .halo { animation: none !important; } }
+
+/* Ô lịch có sự kiện: biểu tượng sự kiện ở góc, số nhỏ khi có nhiều sự kiện */
+.cell .evb { position: absolute; top: 3px; left: 3px; font-size: 12.5px; line-height: 1; display: flex; align-items: flex-start; }
+.cell .evb i { font-style: normal; font-size: 9px; font-weight: 800; color: var(--blue); margin-left: 1px; }
+.cell.today .evb i { color: #fff; }
+.cell.has-ev:not(.today) { background: var(--blue-soft); }
+
 /* Thu gọn lịch tuần và thẻ */
 .wk { display: block; margin: 6px auto 0; width: 64px; height: 24px; border-radius: 12px; color: var(--muted); line-height: 0; }
 .wk:active { background: var(--chip); }
@@ -257,8 +331,6 @@ button.item:active { background: var(--chip); }
 .switch:checked { background: var(--blue); }
 .switch:checked::after { left: 23px; }
 /* Sự kiện */
-.cell .ev { position: absolute; top: 7px; left: 9px; width: 5px; height: 5px; border-radius: 50%; background: var(--blue); }
-.cell.today .ev { background: #fff; }
 .ev-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
 .ev-head h2 { margin: 0; }
 .ev { display: flex; gap: 12px; align-items: center; padding: 10px 0; border-top: 1px solid var(--line); width: 100%; text-align: left; }
@@ -291,6 +363,51 @@ button.item:active { background: var(--chip); }
 .toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%) translateY(16px); background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 999px;
   font-size: 13.5px; font-weight: 500; opacity: 0; transition: .25s; z-index: 60; pointer-events: none; max-width: 88vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .toast.show { opacity: 1; transform: translateX(-50%); }
+/* ===== Phong cách 3D: ánh sáng từ góc trên trái, khối nổi, bóng nhiều lớp, chạm thì lún ===== */
+.card:not(.hero), .group { background: linear-gradient(180deg, var(--card), var(--card2)); }
+.top .nav, .top .gear { background: linear-gradient(180deg, var(--card), var(--card2)); box-shadow: var(--raise-sm); }
+.top .nav, .top .gear, .pill, .btn, .tasks button, .cell, .share, .item { transition: transform .12s ease, box-shadow .12s ease; }
+.top .nav:active, .top .gear:active, .pill:active, .btn:active, .tasks button:active, .cell:active, .share:active { transform: translateY(1px) scale(.97); box-shadow: var(--press); }
+.pill { background: linear-gradient(180deg, color-mix(in srgb, var(--blue-soft) 60%, var(--card)), var(--blue-soft)); box-shadow: var(--raise-sm); }
+.btn { background: linear-gradient(180deg, color-mix(in srgb, var(--blue) 80%, white), var(--blue)); box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 6px 14px -6px color-mix(in srgb, var(--blue) 70%, transparent); }
+.btn.ghost { background: linear-gradient(180deg, var(--card), var(--chip)); box-shadow: var(--raise-sm); }
+.btn.danger { background: linear-gradient(180deg, var(--card), var(--accent-soft)); box-shadow: var(--raise-sm); }
+.tasks button { background: linear-gradient(180deg, var(--card), var(--chip)); box-shadow: var(--raise-sm); }
+.tasks button.on { background: linear-gradient(180deg, color-mix(in srgb, var(--blue) 80%, white), var(--blue)); box-shadow: inset 0 1px 0 rgba(255,255,255,.35), 0 6px 12px -6px color-mix(in srgb, var(--blue) 70%, transparent); }
+.tile, .wx-days .d.sel { background: linear-gradient(180deg, var(--card), var(--chip)); box-shadow: var(--raise-sm); }
+.chips2 span, .chips2 button, .badge, .count div { box-shadow: inset 0 1px 0 var(--hi), 0 1px 2px rgba(20,30,60,.12); }
+.item:active { transform: scale(.99); }
+
+/* Lịch tháng: ô hôm nay là nút đỏ nổi, ô có sự kiện nổi nhẹ, chấm hoàng đạo là hạt vàng */
+.cell.today { background: linear-gradient(180deg, #FF7275, #D7263D); transform: translateY(-1px);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.45), inset 0 -2px 0 rgba(0,0,0,.18), 0 7px 14px -5px rgba(215,38,61,.65); }
+.cell.sel:not(.today) { box-shadow: inset 0 0 0 2px var(--blue), 0 6px 12px -6px color-mix(in srgb, var(--blue) 55%, transparent); }
+.cell.has-ev:not(.today) { background: linear-gradient(180deg, color-mix(in srgb, var(--blue-soft) 55%, var(--card)), var(--blue-soft));
+  box-shadow: inset 0 1px 0 var(--hi), 0 3px 8px -4px color-mix(in srgb, var(--blue) 45%, transparent); }
+.cell.has-ev.sel:not(.today) { box-shadow: inset 0 0 0 2px var(--blue), 0 3px 8px -4px color-mix(in srgb, var(--blue) 45%, transparent); }
+.cell .dot { width: 6px; height: 6px; top: 6px; right: 8px; opacity: 1; box-shadow: 0 1px 1.5px rgba(0,0,0,.3);
+  background: radial-gradient(circle at 35% 35%, #FFF3C4, #E9B43A 60%, #A8740F); }
+.cell.today .dot { background: radial-gradient(circle at 35% 35%, #fff, #FFE3E6 60%, #F3B0B8); }
+
+/* Khung trời: tấm nổi có chiều sâu thị sai (nghiêng máy / rê ngón tay), chữ đùn khối, kính vát cạnh */
+.hero { --px: 0; --py: 0; transform: perspective(1100px) rotateY(calc(var(--px) * 2.5deg)) rotateX(calc(var(--py) * -2.5deg));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.22), inset 0 -2px 0 rgba(0,0,0,.18), 0 4px 10px rgba(10,20,60,.22), 0 22px 40px -16px rgba(10,20,60,.6); }
+.hero .solar .big { text-shadow: 0 1px 0 #DCE2ED, 0 2px 0 #C7CFDD, 0 3px 0 #B3BDCE, 0 4px 0 #A0ABC0, 0 5px 0 #8E9AB2, 0 12px 20px rgba(0,0,0,.4); }
+.mrow .lday { text-shadow: 0 1px 0 #E2B24C, 0 2px 0 #C8922E, 0 3px 0 #A97620, 0 7px 12px rgba(0,0,0,.35); }
+.mrow .lmon, .lunar .cy, .hero .solar .wd, .hero .solar .sub { text-shadow: 0 2px 6px rgba(0,0,0,.28); }
+.hero .weather, .hero .count div { background: linear-gradient(180deg, rgba(255,255,255,.2), rgba(255,255,255,.07));
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.32), inset 0 -1px 0 rgba(0,0,0,.1), 0 12px 22px -12px rgba(0,0,0,.45); }
+.hero .count .tet { background: linear-gradient(180deg, rgba(255,224,138,.28), rgba(255,224,138,.1)); }
+.hero .share { background: linear-gradient(180deg, rgba(255,255,255,.3), rgba(255,255,255,.1)); color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.4), 0 6px 12px -6px rgba(0,0,0,.45); }
+.hero .badge { box-shadow: inset 0 1px 0 rgba(255,255,255,.25), 0 4px 10px -4px rgba(0,0,0,.35); }
+.sky-art .stars { translate: calc(var(--px) * -4px) calc(var(--py) * -3px); }
+.sky-art .glow { translate: calc(var(--px) * -10px) calc(var(--py) * -7px); }
+.mrow .moon { translate: calc(var(--px) * 5px) calc(var(--py) * 4px); filter: drop-shadow(0 4px 6px rgba(0,0,0,.35)); }
+.cloud-band { translate: calc(var(--px) * 12px) calc(var(--py) * 6px); }
+.cloud-band .cloud { filter: drop-shadow(0 6px 8px rgba(10,20,60,.22)); }
+@media (prefers-reduced-motion: reduce) { .hero { transform: none; } }
+
 </style>
 </head>
 <body>
@@ -309,12 +426,13 @@ button.item:active { background: var(--chip); }
   <button class="wk" id="weekToggle" aria-label="Thu gọn còn một tuần"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
 </section>
 
-<section class="card day-card" id="dayCard">
+<section class="card day-card hero sky-night" id="dayCard">
+  <div class="sky-art" id="skyArt"></div>
   <button class="share" id="shareBtn" aria-label="Chia sẻ hôm nay">↗</button>
   <div class="day-top">
     <div class="solar">
       <div class="wd" id="wd"></div>
-      <div class="big" id="bigDay"></div>
+      <div class="big serif" id="bigDay"></div>
       <div class="sub" id="solarSub"></div>
       <div class="hour" id="hourNow"></div>
     </div>
@@ -327,6 +445,7 @@ button.item:active { background: var(--chip); }
       <div class="badges" id="hdBadge"></div>
     </div>
   </div>
+  <div class="cloud-band" id="cloudBand"></div>
   <div class="weather" id="weather"></div>
   <div class="count" id="count" hidden></div>
 </section>
@@ -447,6 +566,7 @@ button.item:active { background: var(--chip); }
   <div class="g-title">Widget</div>
   <div class="group">
     <button class="item" id="pinRow"><span class="ico">➕</span><span class="body"><span class="lbl">Thêm widget vào màn hình chính</span><span class="val">Hoặc giữ lâu màn hình chính → Widget</span></span><span class="chev">›</span></button>
+    <button class="item" id="pinIconRow"><span class="ico">📅</span><span class="body"><span class="lbl">Thêm tờ lịch 1×1 "Lịch hôm nay"</span><span class="val">Cỡ một biểu tượng, hiện ngày hôm nay và ngày âm, tự đổi lúc 0h. Đặt thay icon app để có icon lịch đổi theo ngày</span></span><span class="chev">›</span></button>
   </div>
 
   <div class="g-title">Về ứng dụng</div>
@@ -510,6 +630,126 @@ let weekMode = ls("weekMode") === "1";
 const COL_DEFAULT = { almCard: true, gdCard: true, hoursCard: false, ageCard: true };
 function isCollapsed(id) { const v = ls("col_" + id); return v === null ? COL_DEFAULT[id] : v === "1"; }
 
+// ART3D-BEGIN — Hình 3D dùng chung: trăng hình cầu và mây khối. Cùng một mã chạy trong app (index.html) và
+// trong script sinh VectorDrawable cho widget. Hình mô tả bằng danh sách {d, fill} (màu #AARRGGBB, gradient toạ độ tuyệt đối).
+const ART3D = (() => {
+  const f = n => +n.toFixed(2);
+  const circle = (cx, cy, r) => `M${f(cx - r)},${f(cy)} A${f(r)},${f(r)} 0 1,0 ${f(cx + r)},${f(cy)} A${f(r)},${f(r)} 0 1,0 ${f(cx - r)},${f(cy)} Z`;
+  const rad = (cx, cy, r, ...stops) => ({ rad: [f(cx), f(cy), f(r)], stops });
+  const lin = (x1, y1, x2, y2, ...stops) => ({ lin: [x1, y1, x2, y2], stops });
+
+  /** Viền phần sáng của trăng ngày âm ld; rỗng khi trăng mới. */
+  function moonLitPath(ld, cx, cy, r) {
+    const p = ((ld - 1) / 29.53) % 1, k = Math.cos(2 * Math.PI * p);
+    if (k > 0.985) return "";
+    const top = `${f(cx)},${f(cy - r)}`, bottom = `${f(cx)},${f(cy + r)}`;
+    if (k < -0.985) return `M${top} A${r},${r} 0 1,1 ${bottom} A${r},${r} 0 1,1 ${top} Z`;
+    const w = p < 0.5, rx = f(Math.abs(k) * r);
+    return `M${top} A${r},${r} 0 0,${w ? 1 : 0} ${bottom} A${rx},${r} 0 0,${w ? (k > 0 ? 0 : 1) : (k > 0 ? 1 : 0)} ${top} Z`;
+  }
+
+  /** Trăng hình cầu cho nền trời (khung size×size): quầng sáng, phần tối hắt sáng, phần sáng tô khối, vết trăng, điểm bóng. */
+  function moon(ld, size) {
+    const c = size / 2, r = size * .3, lit = moonLitPath(ld, c, c, r);
+    const p = ((ld - 1) / 29.53) % 1, side = Math.abs(p - .5) < .08 ? -.3 : (p < .5 ? .35 : -.35);  // nguồn sáng lệch về phía sáng
+    const lx = c + side * r, ly = c - .38 * r;
+    const s = [
+      { d: circle(c, c, c * .98), fill: rad(c, c, c * .98, [0.38, "#8CFFE7A3"], [1, "#00FFE7A3"]), cls: "halo" },
+      { d: circle(c, c, r), fill: rad(c - .3 * r, c - .35 * r, r * 1.35, [0, "#3DFFFFFF"], [1, "#12FFFFFF"]) },
+    ];
+    if (lit) {
+      s.push({ d: lit, fill: rad(lx, ly, r * 1.6, [0, "#FFFFFBEA"], [0.32, "#FFF9D77A"], [0.78, "#FFE0A33A"], [1, "#FFA86A16"]) });
+      s.push({ clip: lit, children: [
+        { d: `${circle(c - r * .3, c - r * .2, r * .17)} ${circle(c + r * .32, c + r * .22, r * .23)} ${circle(c - r * .02, c + r * .5, r * .11)}`, fill: "#3DA86A16" },
+        { d: circle(lx, ly, r * .42), fill: rad(lx, ly, r * .42, [0, "#CCFFFFFF"], [1, "#00FFFFFF"]) },
+      ] });
+    }
+    return s;
+  }
+
+  /** Mây cát tường dạng khối (khung 200×80): đáy đổ bóng, các múi mây tô sáng tối, nét cuộn truyền thống. */
+  const LOBES = [[44, 50, 17], [72, 40, 23], [106, 35, 26], [138, 44, 20], [161, 52, 13], [88, 50, 18], [122, 52, 17]];
+  const SWIRLS = "M30,60 C22,58 22,48 30,47 C36,46 37,53 32,53 M70,30 C66,40 78,44 83,37 C86,32 81,29 78,32 M104,24 C100,34 113,39 118,31 C121,26 116,23 113,26 M166,62 C178,62 184,56 192,58 C197,59 198,55 195,52";
+  function cloud() {
+    const s = [{ group: { scale: [1, .22], pivot: [100, 70] }, children: [{ d: circle(100, 70, 78), fill: rad(100, 70, 78, [0, "#59101A40"], [1, "#00101A40"]) }] }];
+    LOBES.forEach(([x, y, r]) => s.push({ d: circle(x, y, r), fill: rad(x - r * .35, y - r * .45, r * 1.45, [0, "#FFFFFFFF"], [0.55, "#FFF0F4FB"], [1, "#FFB9C7E0"]) }));
+    s.push({ d: "M42,55 H158 A6,6 0 0,1 158,67 H42 A6,6 0 0,1 42,55 Z", fill: lin(0, 55, 0, 67, [0, "#FFE8EEF8"], [1, "#FFAFBFDB"]) });
+    s.push({ d: SWIRLS, stroke: "#B3FFFFFF", strokeWidth: 2 });
+    s.push({ d: SWIRLS, stroke: "#4D8FA3C8", strokeWidth: 1, dy: 1 });
+    return s;
+  }
+
+  // ---------- Xuất SVG (app) ----------
+  const argb = c => { const h = c.slice(1); return { a: +(parseInt(h.slice(0, 2), 16) / 255).toFixed(3), rgb: "#" + h.slice(2) }; };
+  function toSvg(shapes, idp) {
+    let defs = "", n = 0;
+    const one = s => {
+      if (s.clip) { const id = idp + "c" + (++n); defs += `<clipPath id="${id}"><path d="${s.clip}"/></clipPath>`; return `<g clip-path="url(#${id})">${s.children.map(one).join("")}</g>`; }
+      if (s.group) { const [sx, sy] = s.group.scale, [px, py] = s.group.pivot; return `<g transform="translate(${px} ${py}) scale(${sx} ${sy}) translate(${-px} ${-py})">${s.children.map(one).join("")}</g>`; }
+      if (s.stroke) { const c = argb(s.stroke); return `<path d="${s.d}" fill="none" stroke="${c.rgb}" stroke-opacity="${c.a}" stroke-width="${s.strokeWidth}" stroke-linecap="round"${s.dy ? ` transform="translate(0 ${s.dy})"` : ""}/>`; }
+      let fill;
+      if (typeof s.fill === "string") { const c = argb(s.fill); fill = `fill="${c.rgb}" fill-opacity="${c.a}"`; }
+      else {
+        const id = idp + (++n), st = s.fill.stops.map(([o, c]) => { const k = argb(c); return `<stop offset="${o}" stop-color="${k.rgb}" stop-opacity="${k.a}"/>`; }).join("");
+        defs += s.fill.lin ? `<linearGradient id="${id}" gradientUnits="userSpaceOnUse" x1="${s.fill.lin[0]}" y1="${s.fill.lin[1]}" x2="${s.fill.lin[2]}" y2="${s.fill.lin[3]}">${st}</linearGradient>`
+          : `<radialGradient id="${id}" gradientUnits="userSpaceOnUse" cx="${s.fill.rad[0]}" cy="${s.fill.rad[1]}" r="${s.fill.rad[2]}">${st}</radialGradient>`;
+        fill = `fill="url(#${id})"`;
+      }
+      return `<path d="${s.d}" ${fill}${s.cls ? ` class="${s.cls}"` : ""}/>`;
+    };
+    const body = shapes.map(one).join("");
+    return `<defs>${defs}</defs>${body}`;
+  }
+  return { moonLitPath, moon, cloud, toSvg };
+})();
+// ART3D-END
+
+// ---- Hình vẽ "Trăng & mây" bản 3D (cùng hình với widget: res/drawable/moon_*, art_cloud) ----
+const ART = (() => {
+  const f = n => +n.toFixed(2);
+  /** Trăng hình cầu đúng tuần trăng của ngày âm ld. */
+  const moon = (ld, size, id) => `<svg viewBox="0 0 ${size} ${size}" width="${size}" height="${size}" class="moon" aria-hidden="true">${ART3D.toSvg(ART3D.moon(ld, size), id)}</svg>`;
+  /** Mây cát tường dạng khối; độ mờ áp cho cả nhóm để các múi chồng nhau không bị đậm lên. */
+  const cloud = (w, opacity, cls) => `<svg viewBox="0 0 200 80" width="${w}" height="${f(w * .4)}" class="cloud ${cls}" aria-hidden="true"><g opacity="${opacity}">${ART3D.toSvg(ART3D.cloud(), "cl" + cls)}</g></svg>`;
+  /** Sao: chấm tròn và sao bốn cánh, vị trí cố định theo hạt giống. */
+  function stars(w, h, n, seed) {
+    let s = seed; const rnd = () => (s = (s * 9301 + 49297) % 233280) / 233280;
+    let out = "";
+    for (let i = 0; i < n; i++) {
+      const x = f(rnd() * w), y = f(rnd() * h), big = rnd() > .82, d = f(1.5 + rnd() * 3);
+      out += big
+        ? `<path class="tw" style="animation-delay:-${d}s" d="M${x},${f(y - 4)} L${f(x + 1)},${f(y - 1)} L${f(x + 4)},${y} L${f(x + 1)},${f(y + 1)} L${x},${f(y + 4)} L${f(x - 1)},${f(y + 1)} L${f(x - 4)},${y} L${f(x - 1)},${f(y - 1)} Z" fill="#FFF6D8"/>`
+        : `<circle class="tw" style="animation-delay:-${d}s" cx="${x}" cy="${y}" r="${f(.6 + rnd() * .9)}" fill="#fff" fill-opacity="${f(.5 + rnd() * .5)}"/>`;
+    }
+    return `<svg viewBox="0 0 ${w} ${h}" width="100%" height="100%" preserveAspectRatio="xMidYMid slice" class="stars" aria-hidden="true">${out}</svg>`;
+  }
+  /** Thời điểm trong ngày như widget: night, morning, day, evening, rain. */
+  function sky(hour, minute, sunrise, sunset, rainy) {
+    const m = s => { const [a, b] = String(s).split(":").map(Number); return a * 60 + b; };
+    const t = hour * 60 + minute, rise = m(sunrise || "06:00"), set = m(sunset || "18:00");
+    if (t < rise - 30 || t >= set + 30) return "night";
+    if (rainy) return "rain";
+    return t < rise + 150 ? "morning" : t < set - 90 ? "day" : "evening";
+  }
+  return { moon, cloud, stars, sky };
+})();
+
+// Chiều sâu khung trời: nghiêng máy (hoặc rê ngón tay) thì tấm trời nghiêng nhẹ, sao (xa), trăng (giữa), mây (gần) dịch khác nhau
+(() => {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const card = document.getElementById("dayCard");
+  let tx = 0, ty = 0, x = 0, y = 0, raf = 0;
+  const loop = () => {
+    x += (tx - x) * .12; y += (ty - y) * .12;
+    card.style.setProperty("--px", x.toFixed(3)); card.style.setProperty("--py", y.toFixed(3));
+    raf = Math.abs(tx - x) + Math.abs(ty - y) > .002 ? requestAnimationFrame(loop) : 0;
+  };
+  const aim = (nx, ny) => { tx = Math.max(-1, Math.min(1, nx)); ty = Math.max(-1, Math.min(1, ny)); if (!raf) raf = requestAnimationFrame(loop); };
+  window.addEventListener("deviceorientation", e => { if (e.gamma != null && e.beta != null) aim(e.gamma / 25, (e.beta - 45) / 25); });
+  card.addEventListener("pointermove", e => { const r = card.getBoundingClientRect(); aim((e.clientX - r.left) / r.width * 2 - 1, (e.clientY - r.top) / r.height * 2 - 1); });
+  card.addEventListener("pointerleave", () => aim(0, 0));
+})();
+
 function pad(n) { return (n < 10 ? "0" : "") + n; }
 function esc(s) { return String(s).replace(/[&<>]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;"}[c])); }
 function monthName(m) { return m === 1 ? "Giêng" : m === 12 ? "Chạp" : String(m); }
@@ -521,7 +761,12 @@ window.onState = function (s) {
   state = s;
   document.documentElement.classList.toggle("dark", !!s.dark);
   document.documentElement.classList.toggle("light", s.dark === false);
-  if (first) { view = { y: s.today.y, m: s.today.m, sel: s.today.d }; }
+  if (first) {
+    view = { y: s.today.y, m: s.today.m, sel: s.today.d };
+    // Lần mở đầu: khung trời hiện dần, trăng nhô lên, mây trôi vào, các thẻ lần lượt hiện
+    document.body.classList.add("intro");
+    setTimeout(() => document.body.classList.remove("intro"), 1800);
+  }
   render();
   renderSettings();
 };
@@ -551,12 +796,12 @@ function renderGrid() {
     const d = data.days[dayNum - 1];
     const el = document.createElement("div");
     const isToday = view.y === t.y && view.m === t.m && d.d === t.d;
-    el.className = "cell" + (isToday ? " today" : "") + (d.d === view.sel ? " sel" : "") + (pos % 7 === 6 ? " sun" : "");
+    el.className = "cell" + (isToday ? " today" : "") + (d.d === view.sel ? " sel" : "") + (pos % 7 === 6 ? " sun" : "") + (d.ev ? " has-ev" : "");
     const special = d.ld === 1 || d.ld === 15;
     const lunarLabel = special ? `${d.ld}/${d.lm}` : String(d.ld);
     el.innerHTML = `<div class="s">${d.d}</div><div class="l${special ? " first" : ""}">${lunarLabel}</div>` +
       (state.prefs.spiritual && d.hd ? `<div class="dot"></div>` : "") +
-      (d.ev ? `<div class="ev"></div>` : "");
+      (d.ev ? `<div class="evb" title="${d.evn || 1} sự kiện">${d.ev}${d.evn > 1 ? `<i>${d.evn}</i>` : ""}</div>` : "");
     el.onclick = () => { view.sel = d.d; render(); };
     grid.appendChild(el);
   }
@@ -580,7 +825,9 @@ function renderDay() {
   $("solarSub").textContent = `Tháng ${d.m}, ${d.y}`;
   $("hourNow").textContent = d.isToday ? `Giờ ${d.canChiHour} · ${pad(state.hour)}:${pad(state.minute)}` : "";
 
-  $("lunarMain").innerHTML = `${d.moon ? d.moon + " " : ""}<b>${d.ld}</b> tháng ${monthName(d.lm)}${d.leap ? " (nhuận)" : ""}, ${esc(d.canChiYear)}`;
+  $("lunarMain").innerHTML = `<div class="mrow">${ART.moon(d.ld, 50, "dm")}<span class="lday serif">${d.ld}</span><span class="lmon serif">tháng ${monthName(d.lm)}${d.leap ? " nhuận" : ""}</span></div>
+    <div class="cy serif">năm ${esc(d.canChiYear)}</div>`;
+  heroSky();
   $("canChiDay").innerHTML = `Ngày <b>${esc(d.canChiDay)}</b>`;
   $("canChiMonth").innerHTML = `Tháng <b>${esc(d.canChiMonth)}</b>`;
   $("tiet").innerHTML = `Tiết <b>${esc(d.tietKhi)}</b>`;
@@ -640,6 +887,19 @@ function renderDay() {
   $("hours").innerHTML = d.gioTot.map(g =>
     `<div class="chip${g.chi === nowChi ? " now" : ""}"><div class="an">${CON_GIAP[g.chi] || ""}</div><div class="n">${g.chi}</div><div class="h">${g.from}h–${g.to}h</div></div>`
   ).join("");
+}
+
+/** Màu trời của thẻ ngày theo giờ hiện tại và mặt trời mọc/lặn; chỉ vẽ lại khi đổi thời điểm. */
+let lastSky = "";
+function heroSky() {
+  const w = state.weather, t = w && w.daily && w.daily[0];
+  const name = ART.sky(state.hour, state.minute, t && t.sunrise, t && t.sunset, !!(w && w.codeNow >= 51));
+  if (name === lastSky) return;
+  lastSky = name;
+  const card = $("dayCard");
+  card.className = card.className.replace(/\bsky-\w+/, "sky-" + name);
+  $("skyArt").innerHTML = name === "night" ? ART.stars(400, 170, 34, 3) : name === "rain" ? "" : `<div class="glow"></div>`;
+  $("cloudBand").innerHTML = ART.cloud(190, .85, "c1") + ART.cloud(150, .62, "c2");
 }
 
 function renderWeather() {
@@ -1111,6 +1371,7 @@ $("spiritual").onchange = e => { Android.setSpiritual(e.target.checked); state.p
 $("themeSeg").onclick = e => { const b = e.target.closest("button"); if (!b) return; state.prefs.theme = b.dataset.v; Android.setTheme(b.dataset.v); renderSettings(); };
 $("refreshRow").onclick = () => { toast("Đang tải thời tiết..."); Android.refresh(); };
 $("pinRow").onclick = () => Android.pinWidget();
+$("pinIconRow").onclick = () => Android.pinIconWidget();
 $("srcRow").onclick = () => Android.openUrl("https://github.com/Ngocha2607/lich-am-widget");
 
 if (!window.Android) { const s = document.createElement("script"); s.src = "mock.js"; document.body.appendChild(s); }

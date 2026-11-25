@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Nền lúc mở app (trước khi trang hiện): trời đêm, trăng rằm, sao và mây cát tường -->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item>
+        <shape android:shape="rectangle">
+            <gradient android:angle="270" android:startColor="#FF0E1430" android:centerColor="#FF1C2A52" android:endColor="#FF2A3C6E" />
+        </shape>
+    </item>
+    <item android:drawable="@drawable/art_stars" android:gravity="top|center_horizontal"
+        android:width="340dp" android:height="90dp" android:top="96dp" />
+    <item android:drawable="@drawable/moon_4" android:gravity="center"
+        android:width="150dp" android:height="150dp" android:bottom="70dp" />
+    <item android:drawable="@drawable/art_cloud" android:gravity="center"
+        android:width="230dp" android:height="92dp" android:top="70dp" />
+</layer-list>

@@ -21,13 +21,19 @@ Màn hình app (số liệu thời tiết là mẫu):
 **Widget**
 - Ba cỡ: 2×2 (ngày âm + nhiệt độ), 4×2 (thêm gợi ý), 4×4 (thêm dự báo 3 ngày và sự kiện sắp tới). Kéo giãn widget là tự đổi bố cục (Android 12+ do launcher chọn theo kích thước thật).
 - Qua 0h widget tự đổi sang ngày mới (không đánh thức máy, vẽ lại khi bạn mở màn hình).
-- Nền gradient đổi theo giờ mặt trời mọc/lặn của thành phố đã chọn (đêm, sáng sớm, ban ngày, chiều tà) và chuyển xám xanh khi mưa.
-- Dòng ngày âm nổi bật kèm tuần trăng 🌒🌕🌘; ngày rằm, mùng 1, lễ Tết đổi chữ vàng; đếm ngược Tết trong 90 ngày cuối năm.
+- Nền là bầu trời đổi theo giờ mặt trời mọc/lặn của thành phố đã chọn (đêm có sao, sáng sớm, ban ngày, chiều tà có quầng nắng, xám xanh khi mưa), điểm mây cát tường dạng khối. Kiểu 3D: tấm nền có cạnh dày, viền sáng vát cạnh, ánh sáng loang từ trên; ô gợi ý là kính khói nổi.
+- Ngày âm chữ có chân (serif) đi cùng hình trăng vẽ đúng tuần trăng; ngày rằm, mùng 1, lễ Tết đổi chữ vàng; đếm ngược Tết trong 90 ngày cuối năm.
 - Dòng gợi ý theo thứ tự ưu tiên: sự kiện cá nhân → cảnh báo thời tiết → rằm/mùng 1/lễ → tiết khí → hoàng đạo. Sau 18h nói về ngày mai.
 - Chạm vào nhiệt độ mở thẳng thẻ thời tiết, chạm phần còn lại mở lịch.
+- Widget 1×1 "Lịch hôm nay": tập lịch bloc 3D cỡ một biểu tượng (tờ chồng tạo độ dày, gáy đỏ son bóng có vòng gáy vàng kim, thứ trên gáy, ngày dương in chìm, ngày âm kèm trăng 3D đúng tuần trăng; số đỏ vào Chủ nhật, lễ, rằm, mùng 1; có biểu tượng khi hôm nay có sự kiện), tự đổi lúc 0h. Android không cho app tự đổi số ngày trên icon, nên đặt widget này thay icon app để có biểu tượng lịch đổi theo ngày. Trong app: Cài đặt → Widget → Thêm tờ lịch 1×1.
+
+**Icon app**
+- Tập lịch bloc 3D trên nền trời đêm: tờ chồng, gáy đỏ son bóng, vòng gáy vàng kim, lưới ngày với ngày hôm nay là vầng trăng vàng phát sáng; có lớp đơn sắc cho icon theo chủ đề (Android 13+).
 
 **Màn hình app**
-- Lưới tháng có ngày âm dưới ngày dương, chấm vàng ngày hoàng đạo, chấm xanh ngày có sự kiện; thu gọn thành một hàng tuần được.
+- Lưới tháng có ngày âm dưới ngày dương, chấm vàng ngày hoàng đạo; ngày có sự kiện tô nhạt và hiện biểu tượng sự kiện ở góc ô (🕯️ giỗ, 🎂 sinh nhật..., kèm số nếu có nhiều sự kiện); thu gọn thành một hàng tuần được.
+- Giao diện 3D (ánh sáng từ góc trên trái): thẻ và nút nổi khối, chạm thì lún xuống; ô hôm nay là nút đỏ nổi; chấm hoàng đạo là hạt vàng; trăng hình cầu, mây khối; số ngày trên khung trời có độ dày; khung trời nghiêng nhẹ và các lớp sao, trăng, mây dịch theo chiều sâu khi nghiêng máy hoặc rê ngón tay.
+- Mở app: màn chờ trời đêm có trăng thay cho màn trắng, rồi thẻ ngày hiện dần như một khung trời theo giờ (cùng màu với widget), trăng nhô lên đúng tuần trăng của ngày đang xem, mây cát tường trôi vào, sao lấp lánh ban đêm; các thẻ khác lần lượt hiện. Máy bật "giảm chuyển động" thì không chạy hiệu ứng.
 - Thẻ ngày: số ngày lớn, giờ can chi hiện tại, ngày/tháng/năm can chi, tiết khí, hoàng/hắc đạo, tuần trăng, hợp/xung với tuổi bạn (nếu đã nhập năm sinh).
 - Sự kiện: giỗ, sinh nhật, lịch hẹn theo âm hoặc dương lịch, lặp hằng năm, giờ, nhắc trước. Chọn ngày âm thì hiện luôn rơi vào ngày dương nào; giỗ 30 âm gặp tháng thiếu tự tính vào 29; sự kiện 29/2 dương lịch năm không nhuận tính vào 28/2.
 - Thời tiết 7 ngày: đường nhiệt độ cao nhất/thấp nhất, UV, cảm giác, độ ẩm, gió (hướng + cấp Beaufort), áp suất, tầm nhìn, thanh bình minh–hoàng hôn. Lưu nhiều thành phố, chuyển bằng chip.
@@ -79,12 +85,13 @@ Mở `app/src/main/assets/index.html` bằng trình duyệt (hoặc chạy `pyth
 | `SuggestionEngine.kt` | Bảng quy tắc sinh gợi ý theo thứ tự ưu tiên |
 | `EventStore.kt` | Sự kiện cá nhân, sao lưu JSON, xuất .ics |
 | `Reminders.kt` | Báo thức hằng ngày và thông báo sự kiện / ngày lễ / thời tiết |
-| `LichWidget.kt` | Widget ba cỡ và phần vẽ giao diện |
+| `LichWidget.kt` | Widget ba cỡ, widget 1×1 "Lịch hôm nay" (`LichIconWidget`) và phần vẽ giao diện |
 | `WeatherWorker.kt` | Cập nhật thời tiết ở nền (3 giờ/lần) |
 | `ShareCard.kt` | Vẽ ảnh "Hôm nay" để chia sẻ |
 | `MainActivity.kt` | WebView + cầu nối `Android.*` cho trang `assets/index.html` |
 | `assets/index.html` | Toàn bộ giao diện app (HTML/CSS/JS), xem trước được trên trình duyệt |
 | `assets/mock.js` | Giả lập cầu nối `Android` khi mở trang trên trình duyệt |
+| `res/drawable/moon_*`, `art_*` | Hình trăng 8 tuần trăng, mây cát tường, sao cho widget và màn chờ; sinh từ cùng hình vẽ với app (đối tượng `ART` trong `index.html`) |
 
 ## Nguồn tính toán
 

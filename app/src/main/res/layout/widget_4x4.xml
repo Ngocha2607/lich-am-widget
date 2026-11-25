@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/root"
+    android:id="@android:id/background"
+    android:clipToOutline="true"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@drawable/widget_bg_day"
@@ -38,21 +39,38 @@
                 android:shadowDy="1"
                 android:shadowRadius="2" />
 
-            <TextView
-                android:id="@+id/line_lunar"
+            <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:maxLines="1"
-                android:ellipsize="end"
-                android:fontFamily="sans-serif"
-                android:textStyle="bold"
-                android:textColor="#FFFFFFFF"
-                android:textSize="24sp"
-                android:includeFontPadding="false"
-                android:shadowColor="#40000000"
-                android:shadowDy="1"
-                android:shadowRadius="3" />
+                android:layout_marginTop="1dp"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <!-- Trăng đúng tuần trăng của ngày âm (moon_0..moon_7), quầng sáng tràn ra lề -->
+                <ImageView
+                    android:id="@+id/moon"
+                    android:layout_width="36dp"
+                    android:layout_height="36dp"
+                    android:layout_marginStart="-8dp"
+                    android:layout_marginEnd="2dp"
+                    android:src="@drawable/moon_4"
+                    android:importantForAccessibility="no" />
+
+                <TextView
+                    android:id="@+id/line_lunar"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:fontFamily="serif"
+                    android:textStyle="bold"
+                    android:textColor="#FFFFFFFF"
+                    android:textSize="22sp"
+                    android:includeFontPadding="false"
+                    android:shadowColor="#66000000"
+                    android:shadowDy="2"
+                    android:shadowRadius="4" />
+            </LinearLayout>
 
             <TextView
                 android:id="@+id/line_sub"
@@ -85,9 +103,9 @@
                 android:textColor="#FFFFFFFF"
                 android:textSize="38sp"
                 android:includeFontPadding="false"
-                android:shadowColor="#40000000"
-                android:shadowDy="1"
-                android:shadowRadius="3" />
+                android:shadowColor="#66000000"
+                android:shadowDy="2"
+                android:shadowRadius="4" />
 
             <TextView
                 android:id="@+id/line_wx"
@@ -117,6 +135,9 @@
         android:ellipsize="end"
         android:fontFamily="sans-serif-medium"
         android:textColor="#FFFFFFFF"
+        android:shadowColor="#73000000"
+        android:shadowDy="1"
+        android:shadowRadius="2"
         android:textSize="13.5sp" />
 
     <ImageView

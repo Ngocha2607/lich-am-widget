@@ -45,15 +45,26 @@ class LichWidget : AppWidgetProvider() {
     }
 
     companion object {
-        /** Vẽ lại tất cả widget đang có trên màn hình. */
+        /** Vẽ lại tất cả widget đang có trên màn hình (widget chính và tờ lịch 1×1). */
         fun updateAll(context: Context) {
             val manager = AppWidgetManager.getInstance(context)
-            val ids = manager.getAppWidgetIds(ComponentName(context, LichWidget::class.java))
-            if (ids.isEmpty()) return
-            ids.forEach { id ->
+            manager.getAppWidgetIds(ComponentName(context, LichWidget::class.java)).forEach { id ->
                 manager.updateAppWidget(id, WidgetRenderer.build(context, manager.getAppWidgetOptions(id)))
             }
+            val iconIds = manager.getAppWidgetIds(ComponentName(context, LichIconWidget::class.java))
+            if (iconIds.isNotEmpty()) manager.updateAppWidget(iconIds, WidgetRenderer.buildIcon(context))
         }
+    }
+}
+
+/**
+ * Widget 1×1 "Lịch hôm nay": tờ lịch nhỏ cỡ một biểu tượng app, hiện thứ, ngày dương và ngày âm.
+ * Android không cho app tự đổi số ngày trên icon, nên đặt widget này thay icon để có "icon lịch" đổi theo ngày.
+ */
+class LichIconWidget : AppWidgetProvider() {
+    override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
+        manager.updateAppWidget(ids, WidgetRenderer.buildIcon(context))
+        Reminders.schedule(context) // gồm báo thức nửa đêm để tờ lịch sang ngày mới đúng lúc
     }
 }
 
@@ -132,11 +143,11 @@ object WidgetRenderer {
         val tip = snap.tip
         val views = RemoteViews(context.packageName, size.layout)
 
-        // Dòng 1: thứ, ngày dương, tuần trăng
-        views.setTextViewText(
-            R.id.line_date,
-            "${dayOfWeek(today)}, ${today.dayOfMonth}/${today.monthValue}  ${LunarCalendar.moonPhase(lunar.day)}",
-        )
+        // Dòng 1: thứ, ngày dương
+        views.setTextViewText(R.id.line_date, "${dayOfWeek(today)}, ${today.dayOfMonth}/${today.monthValue}")
+
+        // Hình trăng đúng tuần trăng, cạnh ngày âm
+        views.setImageViewResource(R.id.moon, moonDrawable(lunar.day))
 
         // Dòng 2: ngày âm (dòng chính)
         val lunarText = StringBuilder("${lunar.day} tháng ${LunarCalendar.monthName(lunar.month)}")
@@ -177,15 +188,51 @@ object WidgetRenderer {
             bindEvents(views, upcoming)
         }
 
-        // Nền theo thời điểm trong ngày và thời tiết
-        views.setInt(R.id.root, "setBackgroundResource", background(now, weather))
+        // Nền theo thời điểm trong ngày và thời tiết (dải màu trời + sao/quầng sáng + mây cát tường).
+        // Gốc layout dùng id @android:id/background để launcher Android 12+ bo góc và cắt phần trang trí.
+        views.setInt(android.R.id.background, "setBackgroundResource", background(now, weather))
 
         // Vùng chạm: cả widget mở app; nhiệt độ/dự báo mở thẳng thẻ thời tiết
-        views.setOnClickPendingIntent(R.id.root, openApp(context, null, 0))
+        views.setOnClickPendingIntent(android.R.id.background, openApp(context, null, 0))
         val toWeather = openApp(context, "weather", 1)
         views.setOnClickPendingIntent(R.id.line_temp, toWeather)
         if (size != Size.SMALL) views.setOnClickPendingIntent(R.id.line_wx, toWeather)
         if (size == Size.LARGE) views.setOnClickPendingIntent(R.id.f_row, toWeather)
+        return views
+    }
+
+    private val INK = 0xFF1C2A52.toInt()
+    private val RED = 0xFFC8323A.toInt()
+    private val LUNAR_INK = 0xFF8A7A62.toInt()
+
+    private val PAPER_MOONS = intArrayOf(
+        R.drawable.moonp_0, R.drawable.moonp_1, R.drawable.moonp_2, R.drawable.moonp_3,
+        R.drawable.moonp_4, R.drawable.moonp_5, R.drawable.moonp_6, R.drawable.moonp_7,
+    )
+
+    /** Tờ lịch 1×1: thứ trên gáy đỏ, ngày dương lớn (đỏ vào Chủ nhật, lễ, rằm, mùng 1), ngày âm kèm trăng. */
+    fun buildIcon(context: Context): RemoteViews {
+        val today = LocalDate.now()
+        val lunar = LunarCalendar.convert(today)
+        val special = SuggestionEngine.specialDayName(lunar)
+        val todayEvent = EventStore.eventsOn(Profile.eventsWithBirthday(context), today).firstOrNull()
+        val views = RemoteViews(context.packageName, R.layout.widget_icon)
+
+        views.setTextViewText(R.id.icon_head, dayOfWeek(today).uppercase(java.util.Locale("vi")))
+        views.setTextViewText(R.id.icon_day, today.dayOfMonth.toString())
+        views.setTextColor(R.id.icon_day, if (today.dayOfWeek == DayOfWeek.SUNDAY || special != null) RED else INK)
+
+        // Ngày âm: rằm, mùng 1 ghi chữ; ngày có sự kiện thêm biểu tượng sự kiện
+        val lunarText = when (lunar.day) {
+            15 -> "Rằm"
+            1 -> "Mùng 1"
+            else -> "${lunar.day}/${lunar.month}"
+        }
+        views.setTextViewText(R.id.icon_lunar, (todayEvent?.icon?.plus(" ") ?: "") + lunarText)
+        views.setTextColor(R.id.icon_lunar, if (special != null) RED else LUNAR_INK)
+        views.setImageViewResource(R.id.icon_moon, PAPER_MOONS[moonPhase(lunar.day)])
+
+        views.setOnClickPendingIntent(android.R.id.background, openApp(context, null, 2))
         return views
     }
 
@@ -221,6 +268,17 @@ object WidgetRenderer {
             }
         }
     }
+
+    private val MOONS = intArrayOf(
+        R.drawable.moon_0, R.drawable.moon_1, R.drawable.moon_2, R.drawable.moon_3,
+        R.drawable.moon_4, R.drawable.moon_5, R.drawable.moon_6, R.drawable.moon_7,
+    )
+
+    /** Hình trăng cho ngày âm [lunarDay]: moon_0 trăng mới, moon_4 trăng tròn (8 tuần trăng). */
+    fun moonDrawable(lunarDay: Int): Int = MOONS[moonPhase(lunarDay)]
+
+    /** Chỉ số tuần trăng 0..7 của ngày âm (0 trăng mới, 4 trăng tròn). */
+    private fun moonPhase(lunarDay: Int): Int = Math.floorMod(Math.round((lunarDay - 1) / 29.53 * 8).toInt(), 8)
 
     private fun toMinutes(hhmm: String): Int? {
         val p = hhmm.split(":")
