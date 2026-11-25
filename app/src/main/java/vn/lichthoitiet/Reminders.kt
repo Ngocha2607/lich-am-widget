@@ -12,7 +12,10 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneId
 
-/** Nhận báo thức hằng ngày (và sau khi khởi động máy) để gửi thông báo. */
+/**
+ * Nhận báo thức hằng ngày (và sau khi khởi động máy) để gửi thông báo.
+ * Mọi lần nhận (kể cả báo thức nửa đêm [Reminders.ACTION_MIDNIGHT]) đều đặt lại báo thức và vẽ lại widget.
+ */
 class ReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         when (intent.action) {
@@ -32,6 +35,7 @@ class ReminderReceiver : BroadcastReceiver() {
 object Reminders {
     const val ACTION = "vn.lichthoitiet.REMIND"
     const val ACTION_WEATHER = "vn.lichthoitiet.REMIND_WEATHER"
+    const val ACTION_MIDNIGHT = "vn.lichthoitiet.MIDNIGHT"
     private const val CHANNEL = "events"
     private const val CHANNEL_WEATHER = "weather"
     private const val ID_LUNAR_TODAY = 1
@@ -66,6 +70,11 @@ object Reminders {
         if (prefs.notifyWeather) {
             am.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, nextAt(prefs.notifyWeatherHour), weather)
         }
+
+        // Qua 0h vẽ lại widget để ngày dương, ngày âm đổi ngay. Báo thức RTC không đánh thức máy:
+        // máy đang tắt màn hình thì chạy khi người dùng mở máy, đúng lúc cần nhìn widget.
+        val midnight = LocalDate.now().plusDays(1).atStartOfDay().plusSeconds(5)
+        am.set(AlarmManager.RTC, midnight.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(), alarmIntent(ctx, ACTION_MIDNIGHT, 102))
     }
 
     private fun manager(ctx: Context): NotificationManager {

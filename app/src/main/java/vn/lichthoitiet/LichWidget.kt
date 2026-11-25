@@ -6,7 +6,9 @@ import android.appwidget.AppWidgetProvider
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import android.os.Bundle
+import android.util.SizeF
 import android.view.View
 import android.widget.RemoteViews
 import java.time.DayOfWeek
@@ -22,6 +24,7 @@ class LichWidget : AppWidgetProvider() {
         }
 
         WeatherWorker.schedule(context)
+        Reminders.schedule(context) // gồm báo thức nửa đêm để widget đổi ngày đúng lúc
         val cached = WeatherRepo.load(context)
         if (cached == null || cached.isStale(2 * 60 * 60 * 1000L)) WeatherWorker.refreshNow(context)
     }
@@ -67,9 +70,17 @@ object WidgetRenderer {
     private val GOLD = 0xFFFFD966.toInt()
     private val SUB_WHITE = 0xC7FFFFFF.toInt()
 
-    private enum class Size { SMALL, MEDIUM, LARGE }
+    /** Ba bố cục và kích thước nhỏ nhất (dp) mỗi bố cục cần để hiện đủ nội dung. */
+    private enum class Size(val layout: Int, val minW: Float, val minH: Float) {
+        SMALL(R.layout.widget_2x2, 110f, 110f),
+        MEDIUM(R.layout.widget_4x2, 200f, 110f),
+        LARGE(R.layout.widget_4x4, 200f, 260f),
+    }
 
-    /** Chọn bố cục theo kích thước ô widget (dp) mà launcher báo. */
+    /**
+     * Android 11 trở xuống: đoán bố cục theo kích thước launcher báo.
+     * MIN_HEIGHT là chiều cao khi xoay ngang (nhỏ hơn), dùng nó để bố cục 4×4 không bị cắt.
+     */
     private fun sizeOf(options: Bundle?): Size {
         val w = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_WIDTH, 0) ?: 0
         val h = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0) ?: 0
@@ -78,6 +89,17 @@ object WidgetRenderer {
             h >= 230 -> Size.LARGE
             else -> Size.MEDIUM
         }
+    }
+
+    /** Dữ liệu dùng chung cho mọi cỡ widget, tính một lần mỗi lượt vẽ. */
+    private class Snapshot(context: Context) {
+        val prefs = Prefs(context)
+        val today: LocalDate = LocalDate.now()
+        val now: LocalDateTime = LocalDateTime.now()
+        val lunar = LunarCalendar.convert(today)
+        val weather = WeatherRepo.load(context)
+        val upcoming = EventStore.upcoming(EventStore.load(context), today)
+        val tip = SuggestionEngine.build(today, now, weather, prefs.spiritual, upcoming).first()
     }
 
     private fun openApp(context: Context, target: String?, code: Int): PendingIntent {
@@ -91,21 +113,24 @@ object WidgetRenderer {
     }
 
     fun build(context: Context, options: Bundle? = null): RemoteViews {
-        val prefs = Prefs(context)
-        val today = LocalDate.now()
-        val now = LocalDateTime.now()
-        val lunar = LunarCalendar.convert(today)
-        val weather = WeatherRepo.load(context)
-        val upcoming = EventStore.upcoming(EventStore.load(context), today)
-        val tip = SuggestionEngine.build(today, now, weather, prefs.spiritual, upcoming).first()
-
-        val size = sizeOf(options)
-        val layout = when (size) {
-            Size.SMALL -> R.layout.widget_2x2
-            Size.MEDIUM -> R.layout.widget_4x2
-            Size.LARGE -> R.layout.widget_4x4
+        val snap = Snapshot(context)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            // Android 12+: gửi cả ba bố cục, launcher tự chọn bố cục lớn nhất vừa với kích thước thật
+            // (đúng cả khi màn hình dọc lẫn ngang, không phải đoán).
+            return RemoteViews(Size.values().associate { SizeF(it.minW, it.minH) to render(context, snap, it) })
         }
-        val views = RemoteViews(context.packageName, layout)
+        return render(context, snap, sizeOf(options))
+    }
+
+    private fun render(context: Context, snap: Snapshot, size: Size): RemoteViews {
+        val prefs = snap.prefs
+        val today = snap.today
+        val now = snap.now
+        val lunar = snap.lunar
+        val weather = snap.weather
+        val upcoming = snap.upcoming
+        val tip = snap.tip
+        val views = RemoteViews(context.packageName, size.layout)
 
         // Dòng 1: thứ, ngày dương, tuần trăng
         views.setTextViewText(
