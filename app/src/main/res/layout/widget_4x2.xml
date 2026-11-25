@@ -1,142 +1,164 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<!-- Widget 4×2 "Bầu trời": ngày âm kèm trăng, can chi / hoàng đạo / Tết; thời tiết bên phải; gợi ý.
+     Gốc dùng id @android:id/background để launcher Android 12+ bo góc và cắt phần trang trí theo viền. -->
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@android:id/background"
     android:clipToOutline="true"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/widget_bg_day"
-    android:orientation="vertical"
-    android:paddingStart="18dp"
-    android:paddingEnd="18dp"
-    android:paddingTop="14dp"
-    android:paddingBottom="14dp">
+    android:background="@drawable/widget_bg_day">
+
+    <!-- Mây cát tường dạng khối, cỡ và chỗ riêng cho từng cỡ widget -->
+    <ImageView
+        android:layout_width="170dp"
+        android:layout_height="68dp"
+        android:layout_gravity="bottom|end"
+        android:layout_marginEnd="-10dp"
+        android:layout_marginBottom="10dp"
+        android:src="@drawable/art_cloud"
+        android:scaleType="fitCenter"
+        android:importantForAccessibility="no" />
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
-        android:orientation="horizontal"
-        android:gravity="center_vertical">
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:paddingStart="18dp"
+        android:paddingEnd="18dp"
+        android:paddingTop="14dp"
+        android:paddingBottom="14dp">
 
         <LinearLayout
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
             android:layout_weight="1"
-            android:orientation="vertical">
-
-            <TextView
-                android:id="@+id/line_date"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:maxLines="1"
-                android:ellipsize="end"
-                android:textAllCaps="true"
-                android:letterSpacing="0.06"
-                android:fontFamily="sans-serif-medium"
-                android:textColor="#D9FFFFFF"
-                android:textSize="12sp"
-                android:shadowColor="#40000000"
-                android:shadowDy="1"
-                android:shadowRadius="2" />
+            android:orientation="horizontal"
+            android:gravity="center_vertical">
 
             <LinearLayout
-                android:layout_width="wrap_content"
+                android:layout_width="0dp"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="1dp"
-                android:orientation="horizontal"
-                android:gravity="center_vertical">
-
-                <!-- Trăng đúng tuần trăng của ngày âm (moon_0..moon_7), quầng sáng tràn ra lề -->
-                <ImageView
-                    android:id="@+id/moon"
-                    android:layout_width="36dp"
-                    android:layout_height="36dp"
-                    android:layout_marginStart="-8dp"
-                    android:layout_marginEnd="2dp"
-                    android:src="@drawable/moon_4"
-                    android:importantForAccessibility="no" />
+                android:layout_weight="1"
+                android:orientation="vertical">
 
                 <TextView
-                    android:id="@+id/line_lunar"
+                    android:id="@+id/line_date"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:maxLines="1"
                     android:ellipsize="end"
-                    android:fontFamily="serif"
+                    android:textAllCaps="true"
+                    android:letterSpacing="0.06"
+                    android:fontFamily="sans-serif-medium"
+                    android:textColor="#D9FFFFFF"
+                    android:textSize="12sp"
+                    android:shadowColor="#40000000"
+                    android:shadowDy="1"
+                    android:shadowRadius="2" />
+
+                <LinearLayout
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="2dp"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <!-- Trăng hình cầu đúng tuần trăng (moon_0..7); không dùng lề âm để khỏi bị cắt -->
+                    <ImageView
+                        android:id="@+id/moon"
+                        android:layout_width="32dp"
+                        android:layout_height="32dp"
+                        android:layout_marginEnd="4dp"
+                        android:src="@drawable/moon_4"
+                        android:importantForAccessibility="no" />
+
+                    <TextView
+                        android:id="@+id/line_lunar"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:maxLines="1"
+                        android:ellipsize="end"
+                        android:includeFontPadding="false"
+                        android:fontFamily="serif"
+                        android:textStyle="bold"
+                        android:textColor="#FFFFFFFF"
+                        android:textSize="22sp"
+                        android:shadowColor="#66000000"
+                        android:shadowDy="2"
+                        android:shadowRadius="4" />
+                </LinearLayout>
+
+                <TextView
+                    android:id="@+id/line_sub"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:layout_marginTop="2dp"
+                    android:fontFamily="sans-serif"
+                    android:textColor="#C7FFFFFF"
+                    android:textSize="12.5sp"
+                    android:shadowColor="#40000000"
+                    android:shadowDy="1"
+                    android:shadowRadius="2" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:orientation="vertical"
+                android:gravity="end">
+
+                <TextView
+                    android:id="@+id/line_temp"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:includeFontPadding="false"
+                    android:fontFamily="sans-serif"
                     android:textStyle="bold"
                     android:textColor="#FFFFFFFF"
-                    android:textSize="22sp"
-                    android:includeFontPadding="false"
+                    android:textSize="38sp"
                     android:shadowColor="#66000000"
                     android:shadowDy="2"
                     android:shadowRadius="4" />
+
+                <TextView
+                    android:id="@+id/line_wx"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:maxLines="1"
+                    android:ellipsize="end"
+                    android:maxWidth="150dp"
+                    android:gravity="end"
+                    android:fontFamily="sans-serif"
+                    android:textColor="#C7FFFFFF"
+                    android:textSize="12.5sp"
+                    android:shadowColor="#40000000"
+                    android:shadowDy="1"
+                    android:shadowRadius="2" />
             </LinearLayout>
-
-            <TextView
-                android:id="@+id/line_sub"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="2dp"
-                android:maxLines="1"
-                android:ellipsize="end"
-                android:textColor="#C7FFFFFF"
-                android:textSize="12.5sp"
-                android:shadowColor="#40000000"
-                android:shadowDy="1"
-                android:shadowRadius="2" />
         </LinearLayout>
 
-        <LinearLayout
-            android:layout_width="wrap_content"
+        <TextView
+            android:id="@+id/line_tip"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginStart="8dp"
-            android:orientation="vertical"
-            android:gravity="end">
-
-            <TextView
-                android:id="@+id/line_temp"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:maxLines="1"
-                android:fontFamily="sans-serif"
-                android:textStyle="bold"
-                android:textColor="#FFFFFFFF"
-                android:textSize="38sp"
-                android:includeFontPadding="false"
-                android:shadowColor="#66000000"
-                android:shadowDy="2"
-                android:shadowRadius="4" />
-
-            <TextView
-                android:id="@+id/line_wx"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:maxLines="1"
-                android:ellipsize="end"
-                android:textColor="#C7FFFFFF"
-                android:textSize="12.5sp"
-                android:shadowColor="#40000000"
-                android:shadowDy="1"
-                android:shadowRadius="2" />
-        </LinearLayout>
+            android:layout_marginTop="10dp"
+            android:background="@drawable/widget_pill"
+            android:paddingStart="12dp"
+            android:paddingEnd="12dp"
+            android:paddingTop="6dp"
+            android:paddingBottom="7.5dp"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif-medium"
+            android:textColor="#FFFFFFFF"
+            android:textSize="13.5sp"
+            android:shadowColor="#73000000"
+            android:shadowDy="1"
+            android:shadowRadius="2" />
     </LinearLayout>
-
-    <TextView
-        android:id="@+id/line_tip"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="10dp"
-        android:background="@drawable/widget_pill"
-        android:paddingStart="12dp"
-        android:paddingEnd="12dp"
-        android:paddingTop="7dp"
-        android:paddingBottom="7dp"
-        android:maxLines="1"
-        android:ellipsize="end"
-        android:fontFamily="sans-serif-medium"
-        android:textColor="#FFFFFFFF"
-        android:shadowColor="#73000000"
-        android:shadowDy="1"
-        android:shadowRadius="2"
-        android:textSize="13.5sp" />
-</LinearLayout>
+</FrameLayout>

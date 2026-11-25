@@ -80,12 +80,17 @@ object WidgetRenderer {
 
     private val GOLD = 0xFFFFD966.toInt()
     private val SUB_WHITE = 0xC7FFFFFF.toInt()
+    private val WHITE = 0xFFFFFFFF.toInt()
 
-    /** Ba bố cục và kích thước nhỏ nhất (dp) mỗi bố cục cần để hiện đủ nội dung. */
+    /**
+     * Bốn bố cục, mỗi cỡ một thiết kế riêng, kèm kích thước nhỏ nhất (dp) bố cục cần:
+     * 2×2 "Vầng trăng", 3×2 "Tờ lịch", 4×2 "Bầu trời", 4×4 "Toàn cảnh".
+     */
     private enum class Size(val layout: Int, val minW: Float, val minH: Float) {
         SMALL(R.layout.widget_2x2, 110f, 110f),
-        MEDIUM(R.layout.widget_4x2, 200f, 110f),
-        LARGE(R.layout.widget_4x4, 200f, 260f),
+        MEDIUM(R.layout.widget_3x2, 200f, 110f),
+        WIDE(R.layout.widget_4x2, 290f, 110f),
+        LARGE(R.layout.widget_4x4, 290f, 260f),
     }
 
     /**
@@ -97,8 +102,9 @@ object WidgetRenderer {
         val h = options?.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0) ?: 0
         return when {
             w in 1 until 200 -> Size.SMALL
+            w in 200 until 290 -> Size.MEDIUM
             h >= 230 -> Size.LARGE
-            else -> Size.MEDIUM
+            else -> Size.WIDE
         }
     }
 
@@ -126,7 +132,7 @@ object WidgetRenderer {
     fun build(context: Context, options: Bundle? = null): RemoteViews {
         val snap = Snapshot(context)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            // Android 12+: gửi cả ba bố cục, launcher tự chọn bố cục lớn nhất vừa với kích thước thật
+            // Android 12+: gửi cả bốn bố cục, launcher tự chọn bố cục lớn nhất vừa với kích thước thật
             // (đúng cả khi màn hình dọc lẫn ngang, không phải đoán).
             return RemoteViews(Size.values().associate { SizeF(it.minW, it.minH) to render(context, snap, it) })
         }
@@ -142,36 +148,41 @@ object WidgetRenderer {
         val upcoming = snap.upcoming
         val tip = snap.tip
         val views = RemoteViews(context.packageName, size.layout)
-
-        // Dòng 1: thứ, ngày dương
-        views.setTextViewText(R.id.line_date, "${dayOfWeek(today)}, ${today.dayOfMonth}/${today.monthValue}")
-
-        // Hình trăng đúng tuần trăng, cạnh ngày âm
-        views.setImageViewResource(R.id.moon, moonDrawable(lunar.day))
-
-        // Dòng 2: ngày âm (dòng chính)
-        val lunarText = StringBuilder("${lunar.day} tháng ${LunarCalendar.monthName(lunar.month)}")
-        if (lunar.leap) lunarText.append(" nhuận")
-        views.setTextViewText(R.id.line_lunar, lunarText.toString())
-
-        // Dòng 3: ngày đặc biệt (vàng), hoặc năm can chi + hoàng đạo + (đếm ngược Tết | tiết khí)
         val special = SuggestionEngine.specialDayName(lunar)
-        val daysToTet = ChronoUnit.DAYS.between(today, LunarCalendar.nextTet(today)).toInt()
-        val parts = mutableListOf<String>()
-        if (special != null) parts += "✦ $special" else parts += LunarCalendar.canChiYear(lunar.year)
-        if (prefs.spiritual) parts += if (LunarCalendar.isHoangDao(lunar)) "Hoàng đạo" else "Hắc đạo"
-        if (special == null) {
-            parts += if (daysToTet in 1..90) "Còn $daysToTet ngày đến Tết" else LunarCalendar.currentTietKhi(lunar.jd)
-        }
-        views.setTextViewText(R.id.line_sub, parts.joinToString(" · "))
-        views.setTextColor(R.id.line_sub, if (special != null) GOLD else SUB_WHITE)
+        val thu = dayOfWeek(today)
 
-        // Bên phải: nhiệt độ (+ mô tả ở bản 4×2 và 4×4)
-        if (weather != null) {
-            views.setTextViewText(R.id.line_temp, "${WeatherText.icon(weather.codeNow)} ${weather.tempNow}°")
-        } else {
-            views.setTextViewText(R.id.line_temp, "--°")
+        // Thứ và ngày dương: bản 3×2 chỉ ghi thứ vì số ngày đã in lớn ngay dưới
+        views.setTextViewText(R.id.line_date, when (size) {
+            Size.SMALL -> "$thu · ${today.dayOfMonth}/${today.monthValue}"
+            Size.MEDIUM -> "$thu · tháng ${today.monthValue}"
+            else -> "$thu, ${today.dayOfMonth}/${today.monthValue}"
+        })
+        if (size == Size.MEDIUM) views.setTextViewText(R.id.line_day, today.dayOfMonth.toString())
+
+        // Trăng đúng tuần trăng và ngày âm; ngày lễ, rằm, mùng 1 chữ vàng
+        views.setImageViewResource(R.id.moon, moonDrawable(lunar.day))
+        val lunarText = "${lunar.day} tháng ${LunarCalendar.monthName(lunar.month)}" + if (lunar.leap) " nhuận" else ""
+        views.setTextViewText(R.id.line_lunar, lunarText)
+        views.setTextColor(R.id.line_lunar, if (special != null && size != Size.WIDE && size != Size.LARGE) GOLD else WHITE)
+
+        // Dòng phụ (không có ở 3×2), tối đa hai phần cho khỏi bị cắt chữ:
+        // ngày đặc biệt (vàng) / "Tết còn N ngày" trong 90 ngày cuối năm / năm can chi, rồi hoàng hay hắc đạo.
+        // Bản 2×2 hẹp nên chỉ ghi phần đầu.
+        if (size != Size.MEDIUM) {
+            val daysToTet = ChronoUnit.DAYS.between(today, LunarCalendar.nextTet(today)).toInt()
+            val first = when {
+                special != null -> "✦ $special"
+                daysToTet in 1..90 && size != Size.SMALL -> "Tết còn $daysToTet ngày"
+                else -> LunarCalendar.canChiYear(lunar.year)
+            }
+            val parts = mutableListOf(first)
+            if (size != Size.SMALL && prefs.spiritual) parts += if (LunarCalendar.isHoangDao(lunar)) "Hoàng đạo" else "Hắc đạo"
+            views.setTextViewText(R.id.line_sub, parts.joinToString(" · "))
+            views.setTextColor(R.id.line_sub, if (special != null) GOLD else SUB_WHITE)
         }
+
+        // Nhiệt độ (+ mô tả và thành phố, trừ bản 2×2)
+        views.setTextViewText(R.id.line_temp, if (weather != null) "${WeatherText.icon(weather.codeNow)} ${weather.tempNow}°" else "--°")
         if (size != Size.SMALL) {
             views.setTextViewText(
                 R.id.line_wx,
@@ -179,8 +190,8 @@ object WidgetRenderer {
             )
         }
 
-        // Gợi ý
-        views.setTextViewText(R.id.line_tip, tip.short)
+        // Gợi ý (bản 2×2 không có chỗ)
+        if (size != Size.SMALL) views.setTextViewText(R.id.line_tip, tip.short)
 
         // Bản 4×4: dự báo 3 ngày tới + sự kiện sắp tới
         if (size == Size.LARGE) {

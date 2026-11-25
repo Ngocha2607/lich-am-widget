@@ -19,7 +19,7 @@ Màn hình app (số liệu thời tiết là mẫu):
 ## Tính năng
 
 **Widget**
-- Ba cỡ: 2×2 (ngày âm + nhiệt độ), 4×2 (thêm gợi ý), 4×4 (thêm dự báo 3 ngày và sự kiện sắp tới). Kéo giãn widget là tự đổi bố cục (Android 12+ do launcher chọn theo kích thước thật).
+- Bốn cỡ, mỗi cỡ một thiết kế: 2×2 "Vầng trăng" (trăng to, ngày âm, nhiệt độ), 3×2 "Tờ lịch" (số ngày dương lớn, ngày âm kèm trăng, thời tiết, gợi ý), 4×2 "Bầu trời" (ngày âm kèm trăng, Tết/hoàng đạo, thời tiết, gợi ý), 4×4 "Toàn cảnh" (thêm dự báo 3 ngày và sự kiện sắp tới). Kéo giãn widget là tự đổi bố cục (Android 12+ do launcher chọn theo kích thước thật).
 - Qua 0h widget tự đổi sang ngày mới (không đánh thức máy, vẽ lại khi bạn mở màn hình).
 - Nền là bầu trời đổi theo giờ mặt trời mọc/lặn của thành phố đã chọn (đêm có sao, sáng sớm, ban ngày, chiều tà có quầng nắng, xám xanh khi mưa), điểm mây cát tường dạng khối. Kiểu 3D: tấm nền có cạnh dày, viền sáng vát cạnh, ánh sáng loang từ trên; ô gợi ý là kính khói nổi.
 - Ngày âm chữ có chân (serif) đi cùng hình trăng vẽ đúng tuần trăng; ngày rằm, mùng 1, lễ Tết đổi chữ vàng; đếm ngược Tết trong 90 ngày cuối năm.
