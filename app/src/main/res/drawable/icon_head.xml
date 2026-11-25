@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Gáy đỏ son 3D của tờ lịch 1×1: khối đỏ, vệt bóng phía trên, mép dưới tối, hai vòng gáy vàng kim -->
+<!-- Gáy đỏ son 3D của tờ lịch 1×1: khối đỏ, vệt bóng phía trên, mép dưới tối.
+     Vòng gáy nằm trong layout (ImageView) để to nhỏ theo chiều cao gáy, cùng cỡ với chữ thứ. -->
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
     <item>
         <shape android:shape="rectangle">
@@ -16,5 +17,4 @@
     <item android:gravity="bottom|fill_horizontal" android:height="1dp">
         <shape android:shape="rectangle"><solid android:color="#55801A26" /></shape>
     </item>
-    <item android:drawable="@drawable/icon_rings" android:gravity="top|center_horizontal" android:width="34dp" android:height="7dp" />
 </layer-list>

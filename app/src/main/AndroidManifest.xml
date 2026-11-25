@@ -4,6 +4,15 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Nhập / xuất sự kiện với lịch trên máy (tài khoản Google đã đăng nhập); chỉ xin khi người dùng bấm -->
+    <uses-permission android:name="android.permission.READ_CALENDAR" />
+    <uses-permission android:name="android.permission.WRITE_CALENDAR" />
+    <!-- La bàn phong thủy AR: khung hình camera sau; máy không có camera vẫn dùng la bàn phẳng -->
+    <uses-permission android:name="android.permission.CAMERA" />
+
+    <uses-feature android:name="android.hardware.camera.any" android:required="false" />
+    <uses-feature android:name="android.hardware.sensor.compass" android:required="false" />
+    <uses-feature android:name="android.software.live_wallpaper" android:required="false" />
 
     <application
         android:allowBackup="true"
@@ -23,6 +32,7 @@
 
         <activity
             android:name=".MainActivity"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden|uiMode"
             android:exported="true"
             android:launchMode="singleTop">
             <intent-filter>
@@ -30,6 +40,35 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Lịch bloc xé tay (Compose) -->
+        <activity
+            android:name=".TearOffActivity"
+            android:exported="false"
+            android:label="@string/tear_name"
+            android:theme="@style/ImmersiveTheme" />
+
+        <!-- La bàn phong thủy AR (Compose + CameraX); khóa dọc vì lớp phủ tính theo trục máy khi cầm dọc -->
+        <activity
+            android:name=".CompassActivity"
+            android:exported="false"
+            android:label="@string/compass_name"
+            android:screenOrientation="portrait"
+            android:theme="@style/ImmersiveTheme" />
+
+        <!-- Hình nền động lịch âm -->
+        <service
+            android:name=".LunarWallpaperService"
+            android:exported="true"
+            android:label="@string/wallpaper_name"
+            android:permission="android.permission.BIND_WALLPAPER">
+            <intent-filter>
+                <action android:name="android.service.wallpaper.WallpaperService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.service.wallpaper"
+                android:resource="@xml/wallpaper" />
+        </service>
 
         <receiver
             android:name=".LichWidget"
@@ -56,6 +95,24 @@
                 android:resource="@xml/widget_icon_info" />
         </receiver>
 
+        <!-- Widget "Lịch bloc": tờ lịch ngày kèm câu ca dao, tục ngữ -->
+        <receiver
+            android:name=".LichBlocWidget"
+            android:exported="true"
+            android:label="@string/widget_bloc_name">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/widget_bloc_info" />
+        </receiver>
+
+        <!-- Báo thức nội bộ của app (không cho app khác gọi) -->
+        <receiver
+            android:name=".AlarmReceiver"
+            android:exported="false" />
+
         <receiver
             android:name=".ReminderReceiver"
             android:exported="true">
@@ -63,6 +120,8 @@
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.intent.action.TIME_SET" />
                 <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <!-- Sau khi cập nhật app: đặt lại báo thức ngay, không chờ lần mở app -->
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
             </intent-filter>
         </receiver>
     </application>

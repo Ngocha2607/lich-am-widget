@@ -41,7 +41,7 @@ data class Event(
         fun fromJson(j: JSONObject) = Event(
             id = j.optString("id").ifEmpty { UUID.randomUUID().toString() },
             title = j.optString("title").trim(),
-            icon = j.optString("icon").ifEmpty { "📌" },
+            icon = j.optString("icon").filter { it !in "<>&\"'`" && !it.isWhitespace() }.takeSafe(12).ifEmpty { "📌" },
             lunar = j.optBoolean("lunar", false),
             day = j.optInt("day", 1).coerceIn(1, 31),
             month = j.optInt("month", 1).coerceIn(1, 12),
@@ -59,6 +59,9 @@ data class Upcoming(val event: Event, val date: LocalDate, val daysLeft: Int)
 
 object EventStore {
     private const val KEY = "events_json"
+
+    /** Khóa cho mọi thao tác đọc-sửa-ghi (cầu nối JS, luồng nhập lịch Google, sổ giỗ có thể ghi cùng lúc). */
+    private val LOCK = Any()
 
     /** Id của sự kiện sinh nhật sinh ra từ hồ sơ (không lưu trong danh sách sự kiện). */
     const val BIRTHDAY_ID = "profile-birthday"
@@ -92,8 +95,20 @@ object EventStore {
         Prefs.get(ctx).edit().putString(KEY, arr.toString()).apply()
     }
 
-    fun upsert(ctx: Context, e: Event) {
+    fun upsert(ctx: Context, e: Event) = synchronized(LOCK) {
         save(ctx, load(ctx).filter { it.id != e.id } + e)
+    }
+
+    /** Thay toàn bộ sự kiện có id bắt đầu bằng [prefix] bằng [events] (một lượt, có khóa). */
+    fun replaceByPrefix(ctx: Context, prefix: String, events: List<Event>) = synchronized(LOCK) {
+        save(ctx, load(ctx).filter { !it.id.startsWith(prefix) } + events)
+    }
+
+    /** Thêm hoặc ghi đè nhiều sự kiện một lượt (trùng id thì ghi đè). */
+    fun upsertAll(ctx: Context, list: List<Event>) {
+        if (list.isEmpty()) return
+        val ids = list.map { it.id }.toSet()
+        synchronized(LOCK) { save(ctx, load(ctx).filter { it.id !in ids } + list) }
     }
 
     /** Nội dung file sao lưu. */
@@ -108,7 +123,7 @@ object EventStore {
         val arr = if (trimmed.startsWith("[")) JSONArray(trimmed) else JSONObject(trimmed).getJSONArray("events")
         val incoming = List(arr.length()) { Event.fromJson(arr.getJSONObject(it)) }.filter { it.title.isNotBlank() }
         val ids = incoming.map { it.id }.toSet()
-        save(ctx, load(ctx).filter { it.id !in ids } + incoming)
+        synchronized(LOCK) { save(ctx, load(ctx).filter { it.id !in ids } + incoming) }
         return incoming.size
     }
 
@@ -149,7 +164,7 @@ object EventStore {
         return sb.toString()
     }
 
-    fun delete(ctx: Context, id: String) {
+    fun delete(ctx: Context, id: String) = synchronized(LOCK) {
         save(ctx, load(ctx).filter { it.id != id })
     }
 

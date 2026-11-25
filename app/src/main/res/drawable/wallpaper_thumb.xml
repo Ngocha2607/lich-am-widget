@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Ảnh xem trước hình nền động: trời đêm, trăng rằm, núi và mặt nước -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="96dp"
+    android:height="160dp"
+    android:viewportWidth="96"
+    android:viewportHeight="160">
+    <path android:fillColor="#FF0E1636" android:pathData="M0,0h96v160h-96z" />
+    <path android:fillColor="#FF26335F" android:pathData="M0,70h96v60h-96z" />
+    <path android:fillColor="#33FFF3DD" android:pathData="M60,48m-22,0a22,22 0,1 1,44 0a22,22 0,1 1,-44 0" />
+    <path android:fillColor="#FFFFF1C9" android:pathData="M60,48m-9,0a9,9 0,1 1,18 0a9,9 0,1 1,-18 0" />
+    <path android:fillColor="#CCFFFFFF" android:pathData="M14,22m-1,0a1,1 0,1 1,2 0a1,1 0,1 1,-2 0M30,12m-0.8,0a0.8,0.8 0,1 1,1.6 0a0.8,0.8 0,1 1,-1.6 0M22,40m-0.7,0a0.7,0.7 0,1 1,1.4 0a0.7,0.7 0,1 1,-1.4 0M84,20m-0.8,0a0.8,0.8 0,1 1,1.6 0a0.8,0.8 0,1 1,-1.6 0" />
+    <path android:fillColor="#FF1E2A4E" android:pathData="M0,112 C12,96 22,92 34,102 C44,88 56,84 68,98 C78,92 88,94 96,104 L96,130 L0,130 Z" />
+    <path android:fillColor="#FF141C38" android:pathData="M0,120 C16,110 28,108 40,116 C54,106 70,108 96,118 L96,130 L0,130 Z" />
+    <path android:fillColor="#FF0E1426" android:pathData="M0,128h96v32h-96z" />
+    <path android:fillColor="#66F0C8A0" android:pathData="M56,134h8v1.2h-8zM55,140h10v1.2h-10zM57,146h6v1.2h-6zM58,152h4v1.2h-4z" />
+</vector>

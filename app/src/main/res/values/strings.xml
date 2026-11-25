@@ -3,7 +3,28 @@
     <string name="app_name">Lịch &amp; Thời tiết</string>
     <string name="widget_name">Lịch âm &amp; Thời tiết</string>
     <string name="widget_desc">Lịch âm, thời tiết và gợi ý hôm nay nên làm gì</string>
-    <string name="widget_icon_name">Lịch hôm nay (1×1)</string>
+    <string name="widget_icon_name">Lịch hôm nay</string>
     <string name="widget_icon_desc">Tờ lịch nhỏ như biểu tượng: thứ, ngày dương, ngày âm, tự đổi lúc 0h</string>
+    <string name="widget_bloc_name">Lịch bloc</string>
+    <string name="widget_bloc_desc">Tờ lịch ngày kiểu bloc: thứ, ngày lớn, ngày âm, can chi và câu ca dao, tục ngữ mỗi ngày</string>
+    <string name="tear_name">Lịch xé</string>
+    <string name="compass_name">La bàn phong thủy</string>
+    <string name="wallpaper_name">Lịch âm · trời trăng</string>
+    <string name="wallpaper_desc">Bầu trời đổi theo giờ, trăng đúng ngày âm (rằm tròn, đầu tháng lưỡi liềm), hiệu ứng theo tiết khí và thời tiết</string>
     <string name="add_widget_hint">Để thêm widget: giữ lâu trên màn hình chính → Widget → Lịch âm &amp; Thời tiết. Chạm vào widget để mở màn hình này.</string>
+    <!-- Chữ mẫu cho ảnh xem trước trong bảng chọn widget (lúc chạy app ghi đè bằng ngày thật) -->
+    <string name="preview_month" translatable="false">THÁNG 11 · 2026</string>
+    <string name="preview_weekday" translatable="false">THỨ TƯ</string>
+    <string name="preview_day" translatable="false">25</string>
+    <string name="preview_lunar" translatable="false">17 tháng 10 âm</string>
+    <string name="preview_canchi" translatable="false">Ngày Quý Mão · Năm Bính Ngọ</string>
+    <string name="preview_quote" translatable="false">Tre già măng mọc.</string>
+    <string name="preview_kind" translatable="false">— Tục ngữ —</string>
+    <string name="preview_lunar_short" translatable="false">17/10</string>
+    <string name="preview_date" translatable="false">Thứ Tư, 25/11</string>
+    <string name="preview_lunar_main" translatable="false">17 tháng 10</string>
+    <string name="preview_sub" translatable="false">Tết còn 73 ngày</string>
+    <string name="preview_temp" translatable="false">☀️ 24°</string>
+    <string name="preview_wx" translatable="false">Trời quang · Hà Nội</string>
+    <string name="preview_tip" translatable="false">✅ Ngày đẹp, hợp việc lớn</string>
 </resources>

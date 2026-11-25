@@ -2,6 +2,7 @@
 <!-- Widget 2×2 "Vầng trăng": thứ và ngày dương, trăng to, ngày âm chữ lớn, nhiệt độ.
      Gốc dùng id @android:id/background để launcher Android 12+ bo góc và cắt phần trang trí theo viền. -->
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:id="@android:id/background"
     android:clipToOutline="true"
     android:layout_width="match_parent"
@@ -88,10 +89,12 @@
             android:shadowDy="1"
             android:shadowRadius="2" />
 
-        <Space
+        <!-- Khoảng trống co giãn (widget không cho dùng Space, dùng FrameLayout rỗng) -->
+        <FrameLayout
             android:layout_width="match_parent"
             android:layout_height="0dp"
-            android:layout_weight="1" />
+            android:layout_weight="1"
+            tools:ignore="UselessLeaf" />
 
         <TextView
             android:id="@+id/line_temp"

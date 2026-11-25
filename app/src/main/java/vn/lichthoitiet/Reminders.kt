@@ -13,10 +13,21 @@ import java.time.LocalDateTime
 import java.time.ZoneId
 
 /**
- * Nhận báo thức hằng ngày (và sau khi khởi động máy) để gửi thông báo.
- * Mọi lần nhận (kể cả báo thức nửa đêm [Reminders.ACTION_MIDNIGHT]) đều đặt lại báo thức và vẽ lại widget.
+ * Sự kiện hệ thống (khởi động máy, đổi giờ, đổi múi giờ): đặt lại báo thức và vẽ lại widget.
+ * Bộ nhận này phải mở cho hệ thống gọi, nên không làm gì khác (app khác gửi vào cũng vô hại).
  */
 class ReminderReceiver : BroadcastReceiver() {
+    override fun onReceive(context: Context, intent: Intent) {
+        Reminders.schedule(context)
+        LichWidget.updateAll(context)
+    }
+}
+
+/**
+ * Báo thức của app (nhắc sự kiện, thời tiết, qua 0h) và thao tác vuốt bỏ lịch màn hình khóa.
+ * Không mở cho app khác: chỉ PendingIntent của chính app gọi được.
+ */
+class AlarmReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         when (intent.action) {
             Reminders.ACTION -> Reminders.notifyNow(context)
@@ -26,6 +37,7 @@ class ReminderReceiver : BroadcastReceiver() {
                     try { Reminders.notifyWeather(context) } finally { pending.finish() }
                 }.start()
             }
+            LockScreenDay.ACTION_DISMISSED -> LockScreenDay.dismissedToday(context)
         }
         Reminders.schedule(context)
         LichWidget.updateAll(context)
@@ -44,7 +56,7 @@ object Reminders {
     private const val ID_WEATHER = 4
 
     private fun alarmIntent(ctx: Context, action: String, code: Int): PendingIntent = PendingIntent.getBroadcast(
-        ctx, code, Intent(ctx, ReminderReceiver::class.java).setAction(action),
+        ctx, code, Intent(ctx, AlarmReceiver::class.java).setAction(action),
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
     )
 
@@ -54,10 +66,23 @@ object Reminders {
         return next.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli()
     }
 
+    /** Báo thức đặt bởi bản cài trước (nhắm vào ReminderReceiver): hủy để không bị bỏ qua lần nhắc nào. */
+    private fun cancelLegacy(ctx: Context, am: AlarmManager) {
+        for ((action, code) in listOf(ACTION to 100, ACTION_WEATHER to 101, ACTION_MIDNIGHT to 102)) {
+            val old = PendingIntent.getBroadcast(
+                ctx, code, Intent(ctx, ReminderReceiver::class.java).setAction(action),
+                PendingIntent.FLAG_NO_CREATE or PendingIntent.FLAG_IMMUTABLE,
+            ) ?: continue
+            am.cancel(old)
+            old.cancel()
+        }
+    }
+
     /** Đặt báo thức cho lần nhắc tiếp theo. Gọi lại sau mỗi lần chạy. */
     fun schedule(ctx: Context) {
         val prefs = Prefs(ctx)
         val am = ctx.getSystemService(AlarmManager::class.java) ?: return
+        cancelLegacy(ctx, am)
 
         val events = alarmIntent(ctx, ACTION, 100)
         am.cancel(events)
@@ -74,7 +99,8 @@ object Reminders {
         // Qua 0h vẽ lại widget để ngày dương, ngày âm đổi ngay. Báo thức RTC không đánh thức máy:
         // máy đang tắt màn hình thì chạy khi người dùng mở máy, đúng lúc cần nhìn widget.
         val midnight = LocalDate.now().plusDays(1).atStartOfDay().plusSeconds(5)
-        am.set(AlarmManager.RTC, midnight.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(), alarmIntent(ctx, ACTION_MIDNIGHT, 102))
+        // Cửa sổ 10 phút (không cần quyền báo thức chính xác) để ngày trên widget, màn hình khóa đổi kịp sau 0h
+        am.setWindow(AlarmManager.RTC, midnight.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli(), 10 * 60 * 1000L, alarmIntent(ctx, ACTION_MIDNIGHT, 102))
     }
 
     private fun manager(ctx: Context): NotificationManager {
@@ -91,8 +117,10 @@ object Reminders {
     }
 
     private fun post(ctx: Context, nm: NotificationManager, id: Int, title: String, text: String, channel: String = CHANNEL) {
+        // Mã yêu cầu riêng cho từng đích (widget dùng 0–3): PendingIntent khác nhau nên đích mở không bị ghi đè
         val open = PendingIntent.getActivity(
-            ctx, 0, Intent(ctx, MainActivity::class.java),
+            ctx, if (channel == CHANNEL_WEATHER) 21 else 20,
+            Intent(ctx, MainActivity::class.java).putExtra("target", if (channel == CHANNEL_WEATHER) "weather" else "events"),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
         val n = Notification.Builder(ctx, channel)
@@ -102,6 +130,7 @@ object Reminders {
             .setStyle(Notification.BigTextStyle().bigText(text))
             .setContentIntent(open)
             .setAutoCancel(true)
+            .setGroup("rem-$id")
             .build()
         try {
             nm.notify(id, n)

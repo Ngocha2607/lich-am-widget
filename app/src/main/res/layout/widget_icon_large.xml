@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget "Lịch hôm nay" cỡ từ 2×2 trở lên (Android 12+): tập lịch bloc 3D, tự đổi ngày lúc 0h.
+     Vòng gáy, chữ thứ, số ngày và trăng đều to nhỏ theo kích thước widget.
+     Không clipToOutline: các tờ chồng phía dưới nằm ngoài viền mặt giấy. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/icon_page"
+    android:orientation="vertical"
+    android:paddingBottom="4.5dp">
+
+    <!-- Gáy đỏ: vòng gáy ở trên, thứ ở dưới; cả hai chia theo tỉ lệ chiều cao gáy nên luôn cân nhau -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.30"
+        android:background="@drawable/icon_head"
+        android:orientation="vertical">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="0.42"
+            android:src="@drawable/icon_rings"
+            android:scaleType="fitCenter"
+            android:importantForAccessibility="no" />
+
+        <TextView
+            android:id="@+id/icon_head"
+        android:text="@string/preview_weekday"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="0.58"
+            android:gravity="center"
+            android:maxLines="1"
+            android:includeFontPadding="false"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
+            android:paddingBottom="1dp"
+            android:fontFamily="sans-serif-medium"
+            android:letterSpacing="0.1"
+            android:textColor="#FFFFFFFF"
+            android:shadowColor="#73501014"
+            android:shadowDy="1"
+            android:shadowRadius="1"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="10sp"
+            android:autoSizeMaxTextSize="20sp" />
+    </LinearLayout>
+
+    <!-- Ngày dương in chìm (letterpress): chàm đêm, đỏ son vào Chủ nhật và ngày lễ, rằm, mùng 1 -->
+    <TextView
+        android:id="@+id/icon_day"
+        android:text="@string/preview_day"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.48"
+        android:background="@drawable/icon_day_bg"
+        android:gravity="center"
+        android:maxLines="1"
+        android:includeFontPadding="false"
+        android:paddingTop="2dp"
+        android:fontFamily="serif"
+        android:textColor="#FF1C2A52"
+        android:shadowColor="#E6FFFFFF"
+        android:shadowDy="1"
+        android:shadowRadius="0.5"
+        android:autoSizeTextType="uniform"
+        android:autoSizeMinTextSize="30sp"
+        android:autoSizeMaxTextSize="96sp" />
+
+    <!-- Ngày âm kèm trăng 3D; trăng cao bằng dòng nên to theo widget -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.22"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:paddingBottom="5dp">
+
+        <ImageView
+            android:id="@+id/icon_moon"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="2dp"
+            android:adjustViewBounds="true"
+            android:scaleType="fitCenter"
+            android:src="@drawable/moonp_4"
+            android:importantForAccessibility="no" />
+
+        <TextView
+            android:id="@+id/icon_lunar"
+        android:text="@string/preview_lunar_short"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:maxLines="1"
+            android:fontFamily="sans-serif-medium"
+            android:letterSpacing="0.02"
+            android:textColor="#FF8A7A62"
+            android:textSize="14sp" />
+    </LinearLayout>
+</LinearLayout>

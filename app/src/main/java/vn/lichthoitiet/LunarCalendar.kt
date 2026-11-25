@@ -251,6 +251,9 @@ object LunarCalendar {
     /** Tiết khí đang diễn ra (tính ở cuối ngày). */
     fun currentTietKhi(jd: Int): String = TIET_KHI[tietKhiIndex(jd + 1.0)]
 
+    /** Chỉ số tiết khí (theo [TIET_KHI], 0 = Xuân phân) đang hiệu lực vào ngày có số Julius [jd]. */
+    fun tietKhiIndexAt(jd: Int): Int = tietKhiIndex(jd + 1.0)
+
     /** Tên tiết khí nếu tiết mới bắt đầu trong ngày hôm nay, ngược lại null. */
     fun tietKhiStartsToday(jd: Int): String? {
         val a = tietKhiIndex(jd.toDouble())

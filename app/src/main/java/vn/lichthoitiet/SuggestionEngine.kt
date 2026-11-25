@@ -28,10 +28,11 @@ object SuggestionEngine {
 
     /** Tên ngày đặc biệt theo âm lịch (lễ Tết, rằm, mùng 1), hoặc null nếu là ngày thường. */
     fun specialDayName(l: LunarDate): String? =
-        NGAY_LE[l.month to l.day]?.replaceFirstChar { it.uppercase() }
+        // Lễ Tết chỉ tính tháng thường; tháng nhuận cùng số không có lễ (rằm, mùng 1 thì vẫn có)
+        (if (l.leap) null else NGAY_LE[l.month to l.day])?.replaceFirstChar { it.uppercase() }
             ?: when (l.day) {
-                15 -> "Rằm tháng ${LunarCalendar.monthName(l.month)}"
-                1 -> "Mùng 1 tháng ${LunarCalendar.monthName(l.month)}"
+                15 -> "Rằm tháng ${LunarCalendar.monthName(l.month)}" + if (l.leap) " nhuận" else ""
+                1 -> "Mùng 1 tháng ${LunarCalendar.monthName(l.month)}" + if (l.leap) " nhuận" else ""
                 else -> null
             }
 
@@ -143,7 +144,7 @@ object SuggestionEngine {
         // 2. Ngày đặc biệt theo âm lịch
         val target = if (evening) lunarTomorrow else lunar
         val prefix = if (evening) "Mai là" else "Hôm nay"
-        val le = NGAY_LE[target.month to target.day]
+        val le = if (target.leap) null else NGAY_LE[target.month to target.day]
         when {
             le != null -> out += Suggestion(
                 "🧧 $prefix $le",
@@ -151,13 +152,13 @@ object SuggestionEngine {
                 Kind.SPECIAL,
             )
             target.day == 15 -> out += Suggestion(
-                "🙏 $prefix rằm tháng ${LunarCalendar.monthName(target.month)}",
-                "$prefix rằm tháng ${LunarCalendar.monthName(target.month)}. " + templeHint(weather, evening),
+                "🙏 $prefix rằm tháng ${LunarCalendar.monthName(target.month)}${if (target.leap) " nhuận" else ""}",
+                "$prefix rằm tháng ${LunarCalendar.monthName(target.month)}${if (target.leap) " nhuận" else ""}. " + templeHint(weather, evening),
                 Kind.SPECIAL,
             )
             target.day == 1 -> out += Suggestion(
-                "🙏 $prefix mùng 1 tháng ${LunarCalendar.monthName(target.month)}",
-                "$prefix mùng 1 tháng ${LunarCalendar.monthName(target.month)}. " + templeHint(weather, evening),
+                "🙏 $prefix mùng 1 tháng ${LunarCalendar.monthName(target.month)}${if (target.leap) " nhuận" else ""}",
+                "$prefix mùng 1 tháng ${LunarCalendar.monthName(target.month)}${if (target.leap) " nhuận" else ""}. " + templeHint(weather, evening),
                 Kind.SPECIAL,
             )
         }

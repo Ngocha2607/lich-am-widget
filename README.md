@@ -27,6 +27,17 @@ Màn hình app (số liệu thời tiết là mẫu):
 - Chạm vào nhiệt độ mở thẳng thẻ thời tiết, chạm phần còn lại mở lịch.
 - Widget 1×1 "Lịch hôm nay": tập lịch bloc 3D cỡ một biểu tượng (tờ chồng tạo độ dày, gáy đỏ son bóng có vòng gáy vàng kim, thứ trên gáy, ngày dương in chìm, ngày âm kèm trăng 3D đúng tuần trăng; số đỏ vào Chủ nhật, lễ, rằm, mùng 1; có biểu tượng khi hôm nay có sự kiện), tự đổi lúc 0h. Android không cho app tự đổi số ngày trên icon, nên đặt widget này thay icon app để có biểu tượng lịch đổi theo ngày. Trong app: Cài đặt → Widget → Thêm tờ lịch 1×1.
 
+- Widget "Lịch bloc": tờ lịch ngày kiểu bloc truyền thống (tháng năm trên gáy đỏ, thứ, ngày lớn, ngày âm kèm trăng, can chi ngày tháng) kèm một câu ca dao, tục ngữ mỗi ngày (120 câu dân gian, đi hết vòng mới lặp). Ghim nhanh trong Cài đặt → Widget. Chạm vào widget là mở lịch xé.
+
+**Lịch xé** (Công cụ → Lịch xé, hoặc chạm widget "Lịch bloc")
+- Tập lịch bloc dựng bằng Jetpack Compose: gáy đỏ có đinh tán, tờ giấy có thớ, mép răng cưa còn dính dưới gáy sau mỗi lần xé.
+- Kéo tờ trên cùng xuống hoặc sang ngang: tờ xoay quanh góc còn dính gáy và rách dần từ góc đang kéo, kèm tiếng giấy sột soạt và rung nhẹ theo từng nấc. Thả đủ xa hoặc vuốt nhanh thì tờ rời gáy, bay theo mô phỏng vật lý (giữ vận tốc lúc vuốt, trọng lực, lực cản không khí, xoay chậm dần, tờ giấy rung lật 3D) rồi mờ dần; không đủ thì tờ bật về như lò xo. Có nút "Xé tờ", "Hôm qua", "Hôm nay", tắt tiếng; máy để im lặng / rung thì không phát tiếng.
+- Tiếng giấy là âm thanh tự tổng hợp (nhiễu lọc dải và chuỗi xung thớ giấy đứt), không lấy từ nguồn ngoài.
+
+**Màn hình khóa & hình nền**
+- Lịch trên màn hình khóa: một thông báo im lặng (không kêu, không rung, không hiện nổi) luôn có ngày âm và câu ca dao hôm nay, tự đổi lúc 0h; máy có màn hình luôn bật (AOD) hiện thông báo thì thấy cả ở đó. Bật trong Cài đặt → Màn hình khóa & hình nền.
+- Hình nền động "Lịch âm · trời trăng" (màn hình chính và màn hình khóa): trời đổi màu theo giờ mọc, lặn thật của thành phố đang chọn; trăng vẽ đúng tuần trăng theo ngày âm (rằm tròn vành vạnh, đầu tháng lưỡi liềm) có bóng trăng trên mặt nước; hiệu ứng theo tiết khí: hoa đào bay mùa xuân, mưa phùn Vũ thủy, mưa rào Cốc vũ, đom đóm đêm hè, lá vàng rơi mùa thu, sương mỏng Bạch lộ / Hàn lộ, sương mù từ Sương giáng đến Đại hàn (Đông chí sương mù dày). Đang mưa hay có sương mù thật thì theo thời tiết. Núi trôi nhẹ khi vuốt giữa các trang màn hình chính; tùy chọn hiện ngày âm trên hình nền. Chỉ chuyển động khi đang hiện, tiết kiệm pin thì đứng yên.
+
 **Icon app**
 - Tập lịch bloc 3D trên nền trời đêm: tờ chồng, gáy đỏ son bóng, vòng gáy vàng kim, lưới ngày với ngày hôm nay là vầng trăng vàng phát sáng; có lớp đơn sắc cho icon theo chủ đề (Android 13+).
 
@@ -35,14 +46,21 @@ Màn hình app (số liệu thời tiết là mẫu):
 - Giao diện 3D (ánh sáng từ góc trên trái): thẻ và nút nổi khối, chạm thì lún xuống; ô hôm nay là nút đỏ nổi; chấm hoàng đạo là hạt vàng; trăng hình cầu, mây khối; số ngày trên khung trời có độ dày; khung trời nghiêng nhẹ và các lớp sao, trăng, mây dịch theo chiều sâu khi nghiêng máy hoặc rê ngón tay.
 - Mở app: màn chờ trời đêm có trăng thay cho màn trắng, rồi thẻ ngày hiện dần như một khung trời theo giờ (cùng màu với widget), trăng nhô lên đúng tuần trăng của ngày đang xem, mây cát tường trôi vào, sao lấp lánh ban đêm; các thẻ khác lần lượt hiện. Máy bật "giảm chuyển động" thì không chạy hiệu ứng.
 - Thẻ ngày: số ngày lớn, giờ can chi hiện tại, ngày/tháng/năm can chi, tiết khí, hoàng/hắc đạo, tuần trăng, hợp/xung với tuổi bạn (nếu đã nhập năm sinh).
+- Ghi chú nhanh theo ngày: danh sách việc cần làm ngay dưới thẻ ngày đang chọn (thêm, đánh dấu xong, xóa); ngày còn việc chưa xong có gạch xanh dưới ô lịch. Ghi chú có trong file sao lưu.
+- Câu ca dao, tục ngữ của ngày ở cuối thẻ ngày (cùng câu với widget "Lịch bloc").
 - Sự kiện: giỗ, sinh nhật, lịch hẹn theo âm hoặc dương lịch, lặp hằng năm, giờ, nhắc trước. Chọn ngày âm thì hiện luôn rơi vào ngày dương nào; giỗ 30 âm gặp tháng thiếu tự tính vào 29; sự kiện 29/2 dương lịch năm không nhuận tính vào 28/2.
 - Thời tiết 7 ngày: đường nhiệt độ cao nhất/thấp nhất, UV, cảm giác, độ ẩm, gió (hướng + cấp Beaufort), áp suất, tầm nhìn, thanh bình minh–hoàng hôn. Lưu nhiều thành phố, chuyển bằng chip.
 - Gợi ý hôm nay / cho ngày mai.
 - Xem ngày: trực (thập nhị kiến trừ) với việc nên làm, không nên; sao Nhị thập bát tú (tốt/xấu, nên/kỵ); sao tốt, sao xấu theo Ngọc Hạp thông thư (chạm tên sao để xem ý nghĩa); ngũ hành nạp âm; tuổi xung; hướng xuất hành (Hỷ thần, Tài thần); giờ xuất hành Lục Diệu.
 - Xem tuổi làm nhà, cưới hỏi: Kim Lâu, Hoang Ốc, Tam Tai, Thái Tuế cho 5 năm tới, theo năm sinh trong hồ sơ hoặc chọn năm khác (ví dụ tuổi cô dâu).
 - Chọn ngày tốt: cưới hỏi, khai trương, khởi công, nhập trạch, ký hợp đồng, mua xe, xuất hành, cúng lễ — chấm điểm theo hoàng đạo, trực, Lục Diệu, sao Nhị thập bát tú, loại ngày trực xấu và ngày xung tuổi.
-- Đếm ngược Tết; đổi lịch âm ↔ dương; chia sẻ ảnh "Hôm nay" lên Zalo, Facebook.
-- Hồ sơ: họ tên và ngày sinh (nhập theo âm hoặc dương lịch, hiện luôn ngày quy đổi). Tuổi can chi tính theo năm âm của ngày sinh, nên người sinh tháng 1–2 trước Tết vẫn đúng tuổi, dùng để xét hợp/xung tuổi và xem tuổi. Sinh nhật của bạn tự hiện trong sự kiện sắp tới, trên widget và được nhắc như sự kiện khác; app chào theo tên. Bật/tắt từng mục hiển thị, chọn giao diện sáng/tối.
+- Tết & tử vi: đếm ngược tới Tết theo ngày, giờ, phút; tuổi xông đất Tết năm tới theo năm sinh gia chủ (điểm 0–100 xét thiên can, địa chi, mệnh nạp âm với gia chủ và với năm mới, kèm lưu ý Tam Tai, Thái Tuế và tuổi nên tránh); cung hoàng đạo, con giáp, mệnh nạp âm theo ngày sinh trong hồ sơ.
+- Văn khấn cổ truyền (offline): mùng 1, ngày rằm, gia tiên, giỗ, khai trương, giao thừa ngoài trời / trong nhà, ông Công ông Táo, nhập trạch, Thần Tài. Tự điền ngày âm (theo ngày đang chọn), tên tín chủ, năm sinh, tuổi; chỗ còn lại để trống cho người dùng tự điền. Mỗi bài đối chiếu 3–5 nguồn.
+- La bàn phong thủy AR (Compose + CameraX + cảm biến xoay): giơ camera lên, các hướng hiện ngay đúng chỗ trong khung hình (thẻ hướng neo trên đường chân trời, hướng ngoài khung có mũi tên ở mép kèm số độ cần xoay, thước 24 sơn ở dưới). Bốn chế độ: Bàn thờ (4 hướng tốt Sinh Khí, Thiên Y, Diên Niên, Phục Vị để bàn thờ quay mặt về và 4 hướng xấu để tựa lưng, theo Bát trạch và cung phi của gia chủ), Xuất hành (Hỷ thần, Tài thần hôm nay), Tài lộc (hướng Sinh Khí của gia chủ và Tài thần hôm nay), Tám hướng. Cúi máy nằm ngang hoặc không cho quyền camera thì thành la bàn phẳng 24 sơn tô tám cung tốt xấu. Báo khi la bàn cần hiệu chỉnh (xoay hình số 8).
+- Sổ giỗ gia đình: tạo sổ (Nhà nội, Nhà ngoại…), ghi ngày giỗ âm lịch của từng người, năm mất, nơi an táng, người lo đồ cúng, ghi chú; ngày giỗ thành sự kiện âm lịch lặp hằng năm, hiện trên lịch, widget và được nhắc trước (chọn số ngày). "Gửi cho cả nhà" gửi qua Zalo, Messenger một tin nhắn có danh sách dễ đọc và một mã; người nhận mở Sổ giỗ gia đình → Nhập mã, dán tin nhắn là có cả sổ trên máy mình. Sửa (đổi người lo đồ cúng, thêm, xóa) rồi gửi lại: mỗi người lấy bản sửa sau cùng, việc xóa cũng được truyền đi. Không cần tài khoản hay máy chủ; sổ có trong file sao lưu.
+- Chế độ Zen ("Lịch Mù"): toàn màn hình nền giấy dó (có thớ giấy) hoặc mực đen, chỉ một con số ngày âm và một câu thơ mỗi ngày: 62 bài thơ ba dòng kiểu haiku viết riêng cho app và 44 trích đoạn thơ cổ Việt Nam đã hết thời hạn bảo hộ (Nguyễn Du, Nguyễn Khuyến, Bà Huyện Thanh Quan, Nguyễn Trãi, Hàn Mặc Tử, Nguyễn Bính, thơ thiền Trần Nhân Tông, Mãn Giác qua bản dịch Ngô Tất Tố…), mỗi đoạn đối chiếu nguyên văn ở hai nguồn. Vuốt ngang để đổi ngày, chạm để hiện nút. Có thể đặt mở app thẳng vào chế độ Zen.
+- Đổi lịch âm ↔ dương; chia sẻ ảnh "Hôm nay" lên Zalo, Facebook.
+- Hồ sơ: họ tên và ngày sinh (nhập theo âm hoặc dương lịch, hiện luôn ngày quy đổi). Tuổi can chi tính theo năm âm của ngày sinh, nên người sinh tháng 1–2 trước Tết vẫn đúng tuổi, dùng để xét hợp/xung tuổi và xem tuổi. Sinh nhật của bạn tự hiện trong sự kiện sắp tới, trên widget và được nhắc như sự kiện khác; app chào theo tên. Bật/tắt từng mục hiển thị, chọn giao diện sáng/tối, chọn hình nền lịch (tranh tự vẽ: hoa sen, vịnh Hạ Long, hoa đào, ruộng bậc thang, cá chép trông trăng theo phong cách tranh dân gian; hoặc ảnh của bạn).
 
 **Thông báo**
 - Nhắc sự kiện sắp tới vào giờ bạn chọn (mặc định 7:00), nhắc rằm/mùng 1/lễ Tết (hôm trước và đúng ngày), cảnh báo thời tiết ngày mai lúc 20:00 (mưa, dông, rét, nắng nóng).
@@ -50,6 +68,7 @@ Màn hình app (số liệu thời tiết là mẫu):
 
 **Dữ liệu**
 - Sao lưu sự kiện ra file JSON và khôi phục lại.
+- Google Calendar trên máy: nhập sự kiện 1 năm tới từ một lịch (tài khoản Google đã đồng bộ trên máy, không cần đăng nhập trong app) vào app; xuất sự kiện của app, kể cả giỗ âm lịch, thành từng ngày trong 5 năm tới sang lịch Google đã chọn. Xuất lại thì thay các mục đã xuất lần trước; sự kiện vừa nhập không bị xuất ngược. Cần quyền Lịch, chỉ xin khi bấm.
 - Xuất sự kiện sang Google Calendar bằng file .ics (mỗi lần diễn ra trong 5 năm là một mục, vì Google Calendar không lặp theo âm lịch).
 
 ## Build APK bằng GitHub (không cần cài Android Studio)
@@ -80,12 +99,26 @@ Mở `app/src/main/assets/index.html` bằng trình duyệt (hoặc chạy `pyth
 | `LunarCalendar.kt` | Đổi dương ↔ âm, can chi, hoàng đạo, giờ tốt, tiết khí, tuần trăng, Tết tiếp theo |
 | `Almanac.kt` | Trực ngày, việc nên/kỵ, nạp âm, tuổi hợp/xung, hướng xuất hành, Lục Diệu, Nhị thập bát tú, xem tuổi (Kim Lâu, Hoang Ốc, Tam Tai), chọn ngày tốt |
 | `NgocHap.kt` | Sao tốt, sao xấu theo Ngọc Hạp thông thư (bảng quy tắc sinh tự động, xem mục Nguồn tính toán) |
+| `NoteStore.kt` | Ghi chú việc cần làm theo ngày |
+| `Quotes.kt` | 120 câu ca dao, tục ngữ và cách chọn câu cho từng ngày |
+| `CalendarSync.kt` | Nhập / xuất sự kiện với lịch trên máy (gồm lịch Google) |
+| `Horoscope.kt` | Cung hoàng đạo, mệnh nạp âm theo năm, tuổi xông đất |
+| `TearOffActivity.kt` | Lịch xé (Compose): cử chỉ kéo, mô phỏng vật lý tờ bay, tiếng giấy, rung |
+| `CompassActivity.kt` | La bàn phong thủy AR (Compose + CameraX + cảm biến), la bàn phẳng |
+| `PhongThuy.kt` | Cung phi, tám hướng Bát trạch, 24 sơn, phép chiếu hướng lên khung camera |
+| `LunarWallpaperService.kt`, `SkyScene.kt` | Hình nền động: trạng thái bầu trời (giờ mọc lặn, tuần trăng, hiệu ứng theo tiết khí) và phần vẽ |
+| `LockScreenDay.kt` | Thông báo im lặng trên màn hình khóa |
+| `FamilyBook.kt` | Sổ giỗ gia đình: mã chia sẻ (nén + base64), gộp bản sửa, đổi thành sự kiện |
+| `ZenVerses.kt` | Thơ ba dòng và trích đoạn thơ cổ cho chế độ Zen |
+| `res/raw/paper_*.wav` | Tiếng giấy sột soạt, tiếng xé (tự tổng hợp) |
+| `BackgroundImage.kt` | Ảnh nền cá nhân: thu nhỏ, xoay đúng chiều, lưu trong app |
+| `assets/bg_art.js`, `assets/van_khan.js` | Tranh nền tự vẽ (SVG) và kho văn khấn |
 | `Profile.kt` | Ghép sinh nhật trong hồ sơ vào danh sách sự kiện để hiển thị và nhắc |
 | `Weather.kt` | Gọi Open-Meteo, lưu đệm theo thành phố, đổi mã thời tiết sang tiếng Việt |
 | `SuggestionEngine.kt` | Bảng quy tắc sinh gợi ý theo thứ tự ưu tiên |
 | `EventStore.kt` | Sự kiện cá nhân, sao lưu JSON, xuất .ics |
 | `Reminders.kt` | Báo thức hằng ngày và thông báo sự kiện / ngày lễ / thời tiết |
-| `LichWidget.kt` | Widget ba cỡ, widget 1×1 "Lịch hôm nay" (`LichIconWidget`) và phần vẽ giao diện |
+| `LichWidget.kt` | Widget bốn cỡ, widget 1×1 "Lịch hôm nay" (`LichIconWidget`) và phần vẽ giao diện |
 | `WeatherWorker.kt` | Cập nhật thời tiết ở nền (3 giờ/lần) |
 | `ShareCard.kt` | Vẽ ảnh "Hôm nay" để chia sẻ |
 | `MainActivity.kt` | WebView + cầu nối `Android.*` cho trang `assets/index.html` |

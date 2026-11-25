@@ -45,10 +45,36 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    // Jetpack Compose cho các màn hình native: lịch xé, la bàn AR (Compose Compiler 1.5.14 đi với Kotlin 1.9.24)
+    buildFeatures {
+        compose = true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.14"
+    }
+
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
 }
 
 dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.work:work-runtime-ktx:2.9.1")
+
+    // Compose: lịch xé (cử chỉ + hoạt ảnh vật lý), giao diện la bàn AR
+    implementation(platform("androidx.compose:compose-bom:2024.06.00"))
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.foundation:foundation")
+    implementation("androidx.activity:activity-compose:1.9.0")
+
+    // CameraX: khung hình camera cho la bàn AR
+    implementation("androidx.camera:camera-camera2:1.3.4")
+    implementation("androidx.camera:camera-lifecycle:1.3.4")
+    implementation("androidx.camera:camera-view:1.3.4")
+
     testImplementation("junit:junit:4.13.2")
+    // org.json thật cho unit test (android.jar chỉ có bản rỗng)
+    testImplementation("org.json:json:20240303")
 }

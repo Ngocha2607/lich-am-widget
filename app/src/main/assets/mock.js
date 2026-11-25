@@ -84,6 +84,8 @@
     { id: "e4", title: "Khám sức khỏe", icon: "🏥", lunar: false, day: 3, month: 12, year: null, yearly: false, time: "08:00", note: "", remind: 1 },
   ];
   const profile = { name: "", birth: null, birthYear: 0, birthLabel: "" };
+  const notes = { [iso(today)]: [{ id: "n1", text: "Mua hoa quả cúng rằm", done: false }, { id: "n2", text: "Gọi điện cho bà", done: true }] };
+  const noteKey = (y, m, d) => iso(new Date(y, m - 1, d));
   const dateLabel = e => (e.lunar ? `${e.day}/${e.month} âm` : `${e.day}/${e.month}`) + (e.yearly ? " · hằng năm" : `/${e.year}`);
   function occurs(e, t) {
     if (!e.lunar) return t.getDate() === e.day && t.getMonth() + 1 === e.month && (e.yearly || e.year === t.getFullYear());
@@ -109,12 +111,78 @@
     }),
   };
 
+  // Tuổi xông đất: cùng cách chấm với Horoscope.kt (mô hình thientue.vn)
+  const HANH = ["Kim", "Thủy", "Mộc", "Hỏa", "Thổ"];
+  const NAP_HANH = [0, 3, 2, 4, 0, 3, 1, 4, 0, 2, 1, 4, 3, 2, 1, 0, 3, 2, 4, 0, 3, 1, 4, 0, 2, 1, 4, 3, 2, 1];
+  const md = (a, n) => ((a % n) + n) % n;
+  const hanhOf = y => NAP_HANH[INT(md(y - 4, 60) / 2)], canOf = y => md(y - 4, 10), chiOf = y => md(y + 8, 12);
+  const napSc = (a, b) => [0.5, 1, 0, 0, 1][md(b - a, 5)];
+  const canSc = (a, b) => Math.abs(a - b) === 5 ? 1 : Math.abs(a - b) === 6 ? 0 : 0.5;
+  const inSame = (g, a, b) => g.some(x => x.includes(a) && x.includes(b));
+  const LUC_HOP = [[0, 1], [2, 11], [3, 10], [4, 9], [5, 8], [6, 7]], LUC_HAI = [[0, 7], [1, 6], [2, 5], [3, 4], [8, 11], [9, 10]];
+  const TAM_HOP = [[8, 0, 4], [11, 3, 7], [2, 6, 10], [5, 9, 1]], TU_XUNG = [[0, 6, 3, 9], [2, 8, 5, 11], [4, 10, 1, 7]];
+  const chiSc = (a, b) => a === b ? 0.5 : inSame(LUC_HOP, a, b) || inSame(TAM_HOP, a, b) ? 1
+    : md(a - b, 12) === 6 || inSame(LUC_HAI, a, b) || inSame(TU_XUNG, a, b) ? 0 : 0.5;
+  const chiRel = (a, b) => a === b ? null : inSame(LUC_HOP, a, b) ? "Lục hợp" : inSame(TAM_HOP, a, b) ? "Tam hợp" : null;
+  const xdLabel = v => v >= 88 ? "Rất nên mời" : v >= 75 ? "Hợp để ưu tiên" : v >= 62 ? "Có thể cân nhắc" : "Nên tránh ưu tiên";
+  function xongDat(owner, year) {
+    const oc = canOf(owner), oz = chiOf(owner), oh = hanhOf(owner), yc = canOf(year), yz = chiOf(year), yh = hanhOf(year);
+    const list = [];
+    for (let c = year - 65; c <= year - 18; c++) {
+      const cc = canOf(c), cz = chiOf(c), ch = hanhOf(c);
+      const score = Math.round(20 * canSc(cc, oc) + 22 * chiSc(cz, oz) + 14 * canSc(cc, yc) + 16 * chiSc(cz, yz) + 14 * napSc(ch, oh) + 14 * napSc(ch, yh));
+      const reasons = [], warnings = [], r1 = chiRel(cz, oz), r2 = chiRel(cz, yz);
+      if (r1) reasons.push(`${r1} với gia chủ`);
+      if (r2) reasons.push(`${r2} với năm`);
+      if (canSc(cc, oc) === 1) reasons.push("Can hợp gia chủ");
+      if (canSc(cc, yc) === 1) reasons.push("Can hợp năm");
+      if (napSc(ch, oh) === 1) reasons.push(`Mệnh ${HANH[ch]} hợp gia chủ (${HANH[oh]})`);
+      if (napSc(ch, yh) === 1) reasons.push(`Mệnh ${HANH[ch]} hợp năm (${HANH[yh]})`);
+      const tt = md(yz - [2, 11, 8, 5][cz % 4], 12), tue = md(yz - cz, 12);
+      if (tt <= 2) warnings.push(`phạm Tam Tai ${["năm đầu", "năm giữa", "năm cuối"][tt]}`);
+      if (tue === 0) warnings.push("năm tuổi"); else if (tue === 6) warnings.push("xung Thái Tuế");
+      list.push({ year: c, canChi: canChiYear(c), score, label: xdLabel(score), reasons, warnings });
+    }
+    list.sort((a, b) => b.score - a.score || a.warnings.length - b.warnings.length || b.year - a.year);
+    const avoid = [...new Set([md(oz + 6, 12), md(yz + 6, 12)])].map(i => CHI[i]);
+    const good = list.filter(x => x.score >= 62).slice(0, 8);
+    return { year, canChi: canChiYear(year), avoid, list: good.length ? good : list.slice(0, 3) };
+  }
+  window.__xongDat = xongDat;   // cho kiểm thử
+
+  // Câu thơ Zen mẫu (trên máy lấy từ ZenVerses.kt)
+  const ZEN = [
+    { text: "Mưa phùn đầu ngõ\nai phơi chiếc nón lá\nướt một vành trăng", by: "" },
+    { text: "Chuông chùa buổi sớm\nsương còn đọng trên lá\nchưa ai đánh thức", by: "" },
+    { text: "Sương giăng mặt hồ\ncây cầu son mất dấu\nchỉ còn tiếng chuông", by: "" },
+    { text: "Thu về rất khẽ\nmột sớm mở cửa ra\nthấy trời cao hơn", by: "" },
+    { text: "Không cần nói gì\nhai tách trà bên nhau\nhơi ấm đủ đầy", by: "" },
+  ];
+
+  // Sổ giỗ gia đình (giả lập, có tính ngày dương lần giỗ tới)
+  let fams = [{ id: "f1", name: "Nhà nội", remind: 3, u: 1, members: [
+    { id: "m1", name: "Nguyễn Văn An", rel: "Ông nội", d: 18, m: 10, y: 1998, place: "Nghĩa trang Văn Điển", who: "Chú Ba", note: "", u: 1 },
+    { id: "m2", name: "Trần Thị Bình", rel: "Bà nội", d: 5, m: 3, y: 2005, place: "", who: "", note: "", u: 1 }] }];
+  const famTitle = m => m.rel && m.name ? `Giỗ ${m.rel.toLowerCase()} (${m.name})` : `Giỗ ${(m.rel || m.name).toLowerCase()}`;
+  function famNext(m) {
+    const ly = toLunar(today.getDate(), today.getMonth() + 1, today.getFullYear()).y;
+    for (let y = ly; y <= ly + 2; y++) { const t = toSolar(m.d, m.m, y) || (m.d === 30 ? toSolar(29, m.m, y) : null); if (t && t >= today) return t; }
+    return null;
+  }
+  function famSync(g) {
+    events = events.filter(e => !String(e.id).startsWith(`fam-${g.id}-`));
+    if (fams.includes(g)) g.members.forEach(m => events.push({ id: `fam-${g.id}-${m.id}`, title: famTitle(m), icon: "🕯️", lunar: true, day: m.d, month: m.m,
+      year: null, yearly: true, time: "", note: [m.who ? "Lo đồ cúng: " + m.who : "", m.place, "Sổ giỗ " + g.name].filter(Boolean).join(" · "), remind: g.remind }));
+  }
+  famSync(fams[0]);
+
   window.Android = {
     month(y, m) {
       const n = new Date(y, m, 0).getDate(), days = [];
       for (let d = 1; d <= n; d++) {
         const t = new Date(y, m - 1, d), l = toLunar(d, m, y), ev = on(t);
-        days.push({ d, ld: l.d, lm: l.m, leap: l.leap, hd: hoangDao(l), ev: ev.length ? ev[0].icon : "", evn: ev.length });
+        const nt = (notes[iso(t)] || []).filter(n => !n.done).length;
+        days.push({ d, ld: l.d, lm: l.m, leap: l.leap, hd: hoangDao(l), ev: ev.length ? ev[0].icon : "", evn: ev.length, nt });
       }
       return JSON.stringify({ firstWeekday: new Date(y, m - 1, 1).getDay() || 7, days });
     },
@@ -127,6 +195,8 @@
         truc: "Thành", trucNen: ["Khai trương", "Cưới hỏi", "Nhập học"], trucKy: ["Kiện tụng"],
         napAm: "Thiên Hà Thủy", nguHanh: "Thủy", xung: CHI[((l.jd + 1) % 12 + 6) % 12], hyThan: "Chính Nam", taiThan: "Chính Tây",
         lucDieuDay: "Tiểu Cát", lucDieu: [{ name: "Đại An", hours: "23–1h (Tý), 11–13h (Ngọ)", good: true, desc: "Mọi việc đều tốt (số liệu mẫu)." }],
+        quote: "Một cây làm chẳng nên non,\nBa cây chụm lại nên hòn núi cao.", quoteKind: "Ca dao",
+        zen: ZEN[((l.jd % ZEN.length) + ZEN.length) % ZEN.length],
         tu, tuFull: tu + " (mẫu)", tuGood: true, tuNen: "khai trương, xuất hành", tuKy: "",
         ngocHap: [{ name: "Thiên Quan", good: true, desc: "Tốt mọi việc (mẫu)" }, { name: "Tục Thế", good: true, desc: "Tốt mọi việc, nhất là cưới hỏi (mẫu)" },
           { name: "Hoang Vu", good: false, desc: "Xấu mọi việc (mẫu)" }, { name: "Thiên Hỏa", good: false, desc: "Xấu về lợp nhà (mẫu)" }],
@@ -159,6 +229,18 @@
       }
       return JSON.stringify(out);
     },
+    calendarList: () => JSON.stringify([{ id: "1", name: "Cá nhân", account: "ban@gmail.com", color: "#4285F4", writable: true },
+      { id: "2", name: "Ngày lễ ở Việt Nam", account: "ban@gmail.com", color: "#0B8043", writable: false }]),
+    importCalendar() { window.onStatus && window.onStatus("(xem trước) Đã nhập 3 sự kiện từ lịch trên máy."); },
+    exportCalendar() { window.onStatus && window.onStatus("(xem trước) Đã xuất 12 mục sang lịch đã chọn."); },
+    tuvi: () => profile.birth ? JSON.stringify({ sign: "Song Ngư", symbol: "♓", element: "Nước", range: "19/2 – 20/3",
+      traits: "Nhạy cảm, giàu trí tưởng tượng, dễ đồng cảm với người khác.", canChi: profile.birthLabel || "Canh Ngọ",
+      animal: "Ngựa", menh: "Lộ Bàng Thổ", hanh: "Thổ" }) : "null",
+    xongDat: owner => { const l = toLunar(today.getDate(), today.getMonth() + 1, today.getFullYear()); return JSON.stringify(xongDat(owner, l.y + 1)); },
+    notes: (y, m, d) => JSON.stringify(notes[noteKey(y, m, d)] || []),
+    addNote(y, m, d, text) { const k = noteKey(y, m, d); (notes[k] = notes[k] || []).push({ id: "n" + Date.now(), text: text.trim().slice(0, 200), done: false }); return JSON.stringify(notes[k]); },
+    toggleNote(y, m, d, id) { const k = noteKey(y, m, d); (notes[k] || []).forEach(n => { if (n.id === id) n.done = !n.done; }); return JSON.stringify(notes[k] || []); },
+    deleteNote(y, m, d, id) { const k = noteKey(y, m, d); notes[k] = (notes[k] || []).filter(n => n.id !== id); return JSON.stringify(notes[k]); },
     lunarToSolar(d, m, y) { const t = toSolar(d, m, y); return t ? iso(t) : ""; },
     saveEvent(json) { const e = JSON.parse(json); e.id = e.id || "e" + Date.now(); events = events.filter(x => x.id !== e.id).concat(e); return e.id; },
     deleteEvent(id) { events = events.filter(e => e.id !== id); },
@@ -172,22 +254,56 @@
     },
     clearProfile() { Object.assign(profile, { name: "", birth: null, birthYear: 0, birthLabel: "" }); setTimeout(push); },
     setTheme(v) { prefs.theme = v; setTimeout(push); },
+    setBackground(k) { prefs.bg = k; setTimeout(push); },
+    pickBackground() { window.onStatus && window.onStatus("(xem trước) Trên máy sẽ mở trình chọn ảnh."); },
+    backgroundPhoto: () => "",
     setSpiritual(v) { prefs.spiritual = v; },
+    families: () => JSON.stringify(fams.map(g => ({ ...g, members: g.members.slice().sort((a, b) => a.m - b.m || a.d - b.d).map(m => {
+      const t = famNext(m);
+      return { ...m, title: famTitle(m), ...(t ? { next: `${t.getDate()}/${t.getMonth() + 1}/${t.getFullYear()}`, daysLeft: Math.round((t - today) / 864e5) } : {}) };
+    }) }))),
+    familyCreate(name) { const g = { id: "f" + Date.now(), name: name.trim() || "Gia đình", remind: 3, u: Date.now(), members: [] }; fams.push(g); return g.id; },
+    familyUpdate(id, name, remind) { const g = fams.find(x => x.id === id); if (g) { g.name = name.trim() || g.name; g.remind = remind; famSync(g); } },
+    familySaveMember(gid, json) {
+      const g = fams.find(x => x.id === gid); if (!g) return false;
+      const m = JSON.parse(json); m.id = m.id || "m" + Date.now(); m.u = Date.now();
+      g.members = g.members.filter(x => x.id !== m.id).concat(m); famSync(g); return true;
+    },
+    familyDeleteMember(gid, mid) { const g = fams.find(x => x.id === gid); if (g) { g.members = g.members.filter(x => x.id !== mid); famSync(g); } },
+    familyDelete(id) { const g = fams.find(x => x.id === id); fams = fams.filter(x => x.id !== id); if (g) famSync(g); },
+    familyShare() { window.onStatus && window.onStatus("(xem trước) Trên máy sẽ mở Zalo, Messenger… với tin nhắn có mã LICHGIAPHA1:…"); },
+    familyImport(text) {
+      if (!/LICHGIAPHA1:[A-Za-z0-9_-]+/.test(text)) return JSON.stringify({ error: "Không tìm thấy mã sổ giỗ hợp lệ trong nội dung đã dán." });
+      const g = { id: "f" + Date.now(), name: "Nhà ngoại (mẫu)", remind: 3, u: Date.now(), members: [
+        { id: "m9", name: "Lê Văn Cường", rel: "Ông ngoại", d: 2, m: 1, y: 2010, place: "", who: "Cậu Tư", note: "", u: 1 }] };
+      fams.push(g); famSync(g);
+      return JSON.stringify({ id: g.id, name: g.name, added: 1, updated: 0, isNew: true });
+    },
+    clipboardText: () => "Sổ giỗ \"Nhà ngoại\"\nLICHGIAPHA1:eJxLyEzJTM1LSVWyUkpKLMpUMlSyUsrJz0tXqgUAeQ8IyA",
+    openTearOff(iso) { window.onStatus && window.onStatus(`(xem trước) Trên máy sẽ mở lịch xé từ ngày ${iso}.`); },
+    openCompass() { window.onStatus && window.onStatus("(xem trước) Trên máy sẽ mở la bàn phong thủy AR (camera + cảm biến)."); },
+    setLiveWallpaper() { prefs.wpActive = true; window.onStatus && window.onStatus("(xem trước) Trên máy sẽ mở màn hình đặt hình nền động."); setTimeout(push); },
+    setWallpaperText(v) { prefs.wpText = v; },
+    setLockNote(v) { prefs.lockNote = v; return true; },
+    setSystemBars() {},
+    openNotificationSettings() { window.onStatus && window.onStatus("(xem trước) Trên máy sẽ mở cài đặt thông báo của app."); },
+    setZen(start, paper) { prefs.zenStart = start; prefs.zenPaper = paper; },
     searchCity(q) { setTimeout(() => window.onCityResults([{ name: q, region: "Việt Nam (mẫu)", lat: 21, lon: 105.8 }]), 200); },
   };
   ["setSections", "setNotify", "testNotify", "setNotifyWeather", "addCity", "setActiveCity", "removeCity", "exportEvents",
-    "exportIcs", "importEvents", "shareToday", "setCity", "refresh", "pinWidget", "pinIconWidget", "openUrl"].forEach(k => {
+    "exportIcs", "importEvents", "shareToday", "setCity", "refresh", "pinWidget", "pinIconWidget", "pinBlocWidget", "openUrl"].forEach(k => {
     window.Android[k] = () => window.onStatus && window.onStatus(`(xem trước) Android.${k}()`);
   });
 
   const prefs = { city: "Hà Nội", spiritual: true, theme: "system", showAlmanac: true, showLucDieu: true, showHuong: true, showGoodDays: true,
-    notifyEvents: true, notifyLunar: true, notifyHour: 7, notifyWeather: true, notifyWeatherHour: 20 };
+    notifyEvents: true, notifyLunar: true, notifyHour: 7, notifyWeather: true, notifyWeatherHour: 20, bg: "none", bgVer: 0,
+    lockNote: false, notifAllowed: true, wpText: true, wpActive: false, zenStart: false, zenPaper: "auto" };
   function push() {
     const n = new Date(), l = toLunar(today.getDate(), today.getMonth() + 1, today.getFullYear());
     const tet = toSolar(1, 1, l.y + 1), dark = prefs.theme === "dark" || (prefs.theme === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
     window.onState({
       today: { y: today.getFullYear(), m: today.getMonth() + 1, d: today.getDate() }, hour: n.getHours(), minute: n.getMinutes(),
-      dark, version: "xem trước", tet: { date: iso(tet), daysLeft: Math.round((tet - today) / 864e5), name: "Tết " + canChiYear(l.y + 1) },
+      dark, zenLaunch: true, version: "xem trước", tet: { date: iso(tet), daysLeft: Math.round((tet - today) / 864e5), name: "Tết " + canChiYear(l.y + 1) },
       cities: [{ name: "Hà Nội", lat: 21.03, lon: 105.85 }, { name: "Đà Nẵng", lat: 16.05, lon: 108.2 }],
       prefs: { ...prefs, ...profile }, weather,
     });

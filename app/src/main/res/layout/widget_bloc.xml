@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Widget "Lịch bloc": tờ lịch ngày kiểu bloc truyền thống, kèm câu ca dao / tục ngữ của ngày.
+     Cùng chất liệu 3D với tờ lịch 1×1 (giấy chồng, gáy đỏ son, vòng gáy vàng kim). Các cỡ chữ chính tự co theo widget. -->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@android:id/background"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/icon_page"
+    android:orientation="vertical"
+    android:paddingBottom="4.5dp">
+
+    <!-- Gáy đỏ: vòng gáy + tháng, năm -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.15"
+        android:background="@drawable/icon_head"
+        android:orientation="vertical">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="0.42"
+            android:src="@drawable/icon_rings"
+            android:scaleType="fitCenter"
+            android:importantForAccessibility="no" />
+
+        <TextView
+            android:id="@+id/bloc_head"
+        android:text="@string/preview_month"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="0.58"
+            android:gravity="center"
+            android:maxLines="1"
+            android:includeFontPadding="false"
+            android:paddingStart="6dp"
+            android:paddingEnd="6dp"
+            android:paddingBottom="1dp"
+            android:fontFamily="sans-serif-medium"
+            android:letterSpacing="0.12"
+            android:textColor="#FFFFFFFF"
+            android:shadowColor="#73501014"
+            android:shadowDy="1"
+            android:shadowRadius="1"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="7sp"
+            android:autoSizeMaxTextSize="14sp" />
+    </LinearLayout>
+
+    <!-- Thứ -->
+    <TextView
+        android:id="@+id/bloc_wd"
+        android:text="@string/preview_weekday"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
+        android:gravity="center"
+        android:maxLines="1"
+        android:fontFamily="sans-serif-medium"
+        android:letterSpacing="0.14"
+        android:textColor="#FF1C2A52"
+        android:textSize="11sp" />
+
+    <!-- Ngày dương lớn, in chìm -->
+    <TextView
+        android:id="@+id/bloc_day"
+        android:text="@string/preview_day"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.33"
+        android:gravity="center"
+        android:maxLines="1"
+        android:includeFontPadding="false"
+        android:fontFamily="serif"
+        android:textColor="#FF1C2A52"
+        android:shadowColor="#E6FFFFFF"
+        android:shadowDy="1"
+        android:shadowRadius="0.5"
+        android:autoSizeTextType="uniform"
+        android:autoSizeMinTextSize="28sp"
+        android:autoSizeMaxTextSize="110sp" />
+
+    <!-- Ngày âm kèm trăng -->
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp">
+
+        <ImageView
+            android:id="@+id/bloc_moon"
+            android:layout_width="15dp"
+            android:layout_height="15dp"
+            android:layout_marginEnd="3dp"
+            android:src="@drawable/moonp_4"
+            android:importantForAccessibility="no" />
+
+        <TextView
+            android:id="@+id/bloc_lunar"
+        android:text="@string/preview_lunar"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:maxLines="1"
+            android:ellipsize="end"
+            android:fontFamily="serif"
+            android:textStyle="bold"
+            android:textColor="#FF7A6A52"
+            android:textSize="11.5sp" />
+    </LinearLayout>
+
+    <!-- Can chi ngày, tháng -->
+    <TextView
+        android:id="@+id/bloc_canchi"
+        android:text="@string/preview_canchi"
+        android:layout_width="match_parent"
+        android:layout_height="14dp"
+        android:layout_marginTop="1dp"
+        android:autoSizeMaxTextSize="9.5sp"
+        android:autoSizeMinTextSize="7sp"
+        android:autoSizeStepGranularity="0.5sp"
+        android:autoSizeTextType="uniform"
+        android:gravity="center"
+        android:maxLines="1"
+        android:paddingStart="8dp"
+        android:paddingEnd="8dp"
+        android:textColor="#FF9A8A72"
+        android:textSize="9.5sp" />
+
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginStart="22dp"
+        android:layout_marginEnd="22dp"
+        android:layout_marginTop="7dp"
+        android:src="@drawable/bloc_divider"
+        android:scaleType="fitXY"
+        android:importantForAccessibility="no" />
+
+    <!-- Câu ca dao, tục ngữ của ngày -->
+    <TextView
+        android:id="@+id/bloc_quote"
+        android:text="@string/preview_quote"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="0.30"
+        android:gravity="center"
+        android:paddingStart="12dp"
+        android:paddingEnd="12dp"
+        android:paddingTop="4dp"
+        android:maxLines="4"
+        android:ellipsize="end"
+        android:fontFamily="serif"
+        android:textStyle="italic"
+        android:textColor="#FF5C4E3A"
+        android:lineSpacingMultiplier="1.08"
+        android:autoSizeTextType="uniform"
+        android:autoSizeMinTextSize="8.5sp"
+        android:autoSizeMaxTextSize="15sp" />
+
+    <TextView
+        android:id="@+id/bloc_kind"
+        android:text="@string/preview_kind"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:paddingBottom="5dp"
+        android:maxLines="1"
+        android:fontFamily="sans-serif-medium"
+        android:letterSpacing="0.06"
+        android:textColor="#FFA8987E"
+        android:textSize="8.5sp" />
+</LinearLayout>

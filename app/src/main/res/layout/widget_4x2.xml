@@ -43,6 +43,7 @@
 
                 <TextView
                     android:id="@+id/line_date"
+                    android:text="@string/preview_date"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:maxLines="1"
@@ -74,6 +75,7 @@
 
                     <TextView
                         android:id="@+id/line_lunar"
+                    android:text="@string/preview_lunar_main"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:maxLines="1"
@@ -90,6 +92,7 @@
 
                 <TextView
                     android:id="@+id/line_sub"
+                    android:text="@string/preview_sub"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:maxLines="1"
@@ -112,6 +115,7 @@
 
                 <TextView
                     android:id="@+id/line_temp"
+                    android:text="@string/preview_temp"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:maxLines="1"
@@ -127,6 +131,7 @@
 
                 <TextView
                     android:id="@+id/line_wx"
+                    android:text="@string/preview_wx"
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:maxLines="1"
@@ -144,6 +149,7 @@
 
         <TextView
             android:id="@+id/line_tip"
+                    android:text="@string/preview_tip"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="10dp"

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Widget 1×1 "Lịch hôm nay": tập lịch bloc 3D cỡ một biểu tượng app, tự đổi ngày lúc 0h.
+<!-- Widget "Lịch hôm nay" cỡ 1×1: tập lịch bloc 3D, tự đổi ngày lúc 0h.
+     Vòng gáy, chữ thứ, số ngày và trăng đều to nhỏ theo kích thước widget.
      Không clipToOutline: các tờ chồng phía dưới nằm ngoài viền mặt giấy. -->
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:id="@android:id/background"
@@ -9,32 +10,49 @@
     android:orientation="vertical"
     android:paddingBottom="4.5dp">
 
-    <!-- Thứ trên gáy đỏ, nằm dưới hai vòng gáy -->
-    <TextView
-        android:id="@+id/icon_head"
+    <!-- Gáy đỏ: vòng gáy ở trên, thứ ở dưới; cả hai chia theo tỉ lệ chiều cao gáy nên luôn cân nhau -->
+    <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="0.30"
         android:background="@drawable/icon_head"
-        android:gravity="bottom|center_horizontal"
-        android:maxLines="1"
-        android:paddingStart="4dp"
-        android:paddingEnd="4dp"
-        android:paddingTop="6dp"
-        android:paddingBottom="2dp"
-        android:fontFamily="sans-serif-medium"
-        android:letterSpacing="0.1"
-        android:textColor="#FFFFFFFF"
-        android:shadowColor="#73501014"
-        android:shadowDy="1"
-        android:shadowRadius="1"
-        android:autoSizeTextType="uniform"
-        android:autoSizeMinTextSize="7sp"
-        android:autoSizeMaxTextSize="11sp" />
+        android:orientation="vertical">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="0.42"
+            android:src="@drawable/icon_rings"
+            android:scaleType="fitCenter"
+            android:importantForAccessibility="no" />
+
+        <TextView
+            android:id="@+id/icon_head"
+        android:text="@string/preview_weekday"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="0.58"
+            android:gravity="center"
+            android:maxLines="1"
+            android:includeFontPadding="false"
+            android:paddingStart="4dp"
+            android:paddingEnd="4dp"
+            android:paddingBottom="1dp"
+            android:fontFamily="sans-serif-medium"
+            android:letterSpacing="0.1"
+            android:textColor="#FFFFFFFF"
+            android:shadowColor="#73501014"
+            android:shadowDy="1"
+            android:shadowRadius="1"
+            android:autoSizeTextType="uniform"
+            android:autoSizeMinTextSize="7sp"
+            android:autoSizeMaxTextSize="12sp" />
+    </LinearLayout>
 
     <!-- Ngày dương in chìm (letterpress): chàm đêm, đỏ son vào Chủ nhật và ngày lễ, rằm, mùng 1 -->
     <TextView
         android:id="@+id/icon_day"
+        android:text="@string/preview_day"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="0.48"
@@ -52,7 +70,7 @@
         android:autoSizeMinTextSize="14sp"
         android:autoSizeMaxTextSize="46sp" />
 
-    <!-- Ngày âm kèm trăng 3D đúng tuần trăng -->
+    <!-- Ngày âm kèm trăng 3D; trăng cao bằng dòng nên to theo widget -->
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="0dp"
@@ -63,14 +81,17 @@
 
         <ImageView
             android:id="@+id/icon_moon"
-            android:layout_width="13dp"
-            android:layout_height="13dp"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
             android:layout_marginEnd="2dp"
+            android:adjustViewBounds="true"
+            android:scaleType="fitCenter"
             android:src="@drawable/moonp_4"
             android:importantForAccessibility="no" />
 
         <TextView
             android:id="@+id/icon_lunar"
+        android:text="@string/preview_lunar_short"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:maxLines="1"

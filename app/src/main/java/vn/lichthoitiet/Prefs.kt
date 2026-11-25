@@ -106,6 +106,16 @@ class Prefs(ctx: Context) {
             sp.edit().putString("cities", a.toString()).apply()
         }
 
+    /** Hình nền lịch: "none", tranh có sẵn (sen, halong, dao, ruong, cachep) hoặc "photo" (ảnh của người dùng). */
+    var background: String
+        get() = sp.getString("bg", "none") ?: "none"
+        set(v) = sp.edit().putString("bg", v).apply()
+
+    /** Tăng mỗi lần đổi ảnh nền cá nhân để trang biết tải lại ảnh. */
+    var backgroundVersion: Int
+        get() = sp.getInt("bgVer", 0)
+        set(v) = sp.edit().putInt("bgVer", v).apply()
+
     /** Giao diện màn hình app: "system", "light" hoặc "dark". */
     var theme: String
         get() = sp.getString("theme", "system") ?: "system"

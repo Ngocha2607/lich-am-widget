@@ -53,7 +53,19 @@ class LichWidget : AppWidgetProvider() {
             }
             val iconIds = manager.getAppWidgetIds(ComponentName(context, LichIconWidget::class.java))
             if (iconIds.isNotEmpty()) manager.updateAppWidget(iconIds, WidgetRenderer.buildIcon(context))
+            val blocIds = manager.getAppWidgetIds(ComponentName(context, LichBlocWidget::class.java))
+            if (blocIds.isNotEmpty()) manager.updateAppWidget(blocIds, WidgetRenderer.buildBloc(context))
+            // Mỗi lần vẽ lại widget (0h, mở máy, cập nhật thời tiết 3 giờ/lần) cũng làm mới lịch trên màn hình khóa
+            LockScreenDay.update(context)
         }
+    }
+}
+
+/** Widget "Lịch bloc": tờ lịch ngày kiểu bloc truyền thống kèm câu ca dao, tục ngữ của ngày. */
+class LichBlocWidget : AppWidgetProvider() {
+    override fun onUpdate(context: Context, manager: AppWidgetManager, ids: IntArray) {
+        manager.updateAppWidget(ids, WidgetRenderer.buildBloc(context))
+        Reminders.schedule(context) // gồm báo thức nửa đêm để sang tờ mới đúng lúc
     }
 }
 
@@ -154,15 +166,26 @@ object WidgetRenderer {
         // Thứ và ngày dương: bản 3×2 chỉ ghi thứ vì số ngày đã in lớn ngay dưới
         views.setTextViewText(R.id.line_date, when (size) {
             Size.SMALL -> "$thu · ${today.dayOfMonth}/${today.monthValue}"
-            Size.MEDIUM -> "$thu · tháng ${today.monthValue}"
+            Size.MEDIUM -> "$thu · T${today.monthValue}"
             else -> "$thu, ${today.dayOfMonth}/${today.monthValue}"
         })
         if (size == Size.MEDIUM) views.setTextViewText(R.id.line_day, today.dayOfMonth.toString())
 
         // Trăng đúng tuần trăng và ngày âm; ngày lễ, rằm, mùng 1 chữ vàng
         views.setImageViewResource(R.id.moon, moonDrawable(lunar.day))
-        val lunarText = "${lunar.day} tháng ${LunarCalendar.monthName(lunar.month)}" + if (lunar.leap) " nhuận" else ""
+        // Bản 3×2 hẹp: ngày âm dạng số; các bản khác ghi chữ
+        val lunarText = if (size == Size.MEDIUM) "${lunar.day}/${lunar.month}${if (lunar.leap) "N" else ""} âm"
+        else "${lunar.day} tháng ${LunarCalendar.monthName(lunar.month)}" + if (lunar.leap) " nhuận" else ""
         views.setTextViewText(R.id.line_lunar, lunarText)
+        // Ngày âm dài (tháng 10–12, tháng nhuận) ở bản rộng: chữ nhỏ lại cho khỏi bị cắt
+        if (size == Size.WIDE || size == Size.LARGE) {
+            val sp = when {
+                lunarText.length > 13 -> 16f
+                lunarText.length > 10 -> 19f
+                else -> 22f
+            }
+            views.setTextViewTextSize(R.id.line_lunar, android.util.TypedValue.COMPLEX_UNIT_DIP, sp)
+        }
         views.setTextColor(R.id.line_lunar, if (special != null && size != Size.WIDE && size != Size.LARGE) GOLD else WHITE)
 
         // Dòng phụ (không có ở 3×2), tối đa hai phần cho khỏi bị cắt chữ:
@@ -176,7 +199,8 @@ object WidgetRenderer {
                 else -> LunarCalendar.canChiYear(lunar.year)
             }
             val parts = mutableListOf(first)
-            if (size != Size.SMALL && prefs.spiritual) parts += if (LunarCalendar.isHoangDao(lunar)) "Hoàng đạo" else "Hắc đạo"
+            // Phần đầu đã dài (đếm ngược Tết, tên lễ) thì bỏ hoàng / hắc đạo để dòng không bị cắt
+            if (size != Size.SMALL && prefs.spiritual && first.length <= 12) parts += if (LunarCalendar.isHoangDao(lunar)) "Hoàng đạo" else "Hắc đạo"
             views.setTextViewText(R.id.line_sub, parts.joinToString(" · "))
             views.setTextColor(R.id.line_sub, if (special != null) GOLD else SUB_WHITE)
         }
@@ -221,13 +245,56 @@ object WidgetRenderer {
         R.drawable.moonp_4, R.drawable.moonp_5, R.drawable.moonp_6, R.drawable.moonp_7,
     )
 
-    /** Tờ lịch 1×1: thứ trên gáy đỏ, ngày dương lớn (đỏ vào Chủ nhật, lễ, rằm, mùng 1), ngày âm kèm trăng. */
+    /**
+     * Tờ lịch "Lịch hôm nay": thứ trên gáy đỏ, ngày dương lớn (đỏ vào Chủ nhật, lễ, rằm, mùng 1), ngày âm kèm trăng.
+     * Android 12+: gửi hai bố cục, launcher chọn bản chữ lớn khi widget được kéo từ khoảng 2×2 trở lên.
+     */
     fun buildIcon(context: Context): RemoteViews {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+            return RemoteViews(mapOf(
+                SizeF(40f, 40f) to renderIcon(context, R.layout.widget_icon),
+                SizeF(110f, 110f) to renderIcon(context, R.layout.widget_icon_large),
+            ))
+        }
+        return renderIcon(context, R.layout.widget_icon)
+    }
+
+    /** Tờ lịch bloc: tháng năm trên gáy, thứ, ngày lớn, ngày âm kèm trăng, can chi, câu ca dao / tục ngữ của ngày. */
+    fun buildBloc(context: Context): RemoteViews {
+        val today = LocalDate.now()
+        val lunar = LunarCalendar.convert(today)
+        val special = SuggestionEngine.specialDayName(lunar)
+        val red = today.dayOfWeek == DayOfWeek.SUNDAY || special != null
+        val quote = Quotes.forDate(today)
+        val views = RemoteViews(context.packageName, R.layout.widget_bloc)
+        views.setTextViewText(R.id.bloc_head, "THÁNG ${today.monthValue} · ${today.year}")
+        views.setTextViewText(R.id.bloc_wd, dayOfWeek(today).uppercase(java.util.Locale("vi")))
+        views.setTextColor(R.id.bloc_wd, if (red) RED else INK)
+        views.setTextViewText(R.id.bloc_day, today.dayOfMonth.toString())
+        views.setTextColor(R.id.bloc_day, if (red) RED else INK)
+        views.setImageViewResource(R.id.bloc_moon, PAPER_MOONS[moonPhase(lunar.day)])
+        // Tờ bloc hẹp: ngày âm (hoặc tên ngày lễ) trên một dòng; năm can chi xuống dòng can chi
+        val lunarText = special ?: ("${lunar.day} tháng ${LunarCalendar.monthName(lunar.month)}" + (if (lunar.leap) " nhuận" else "") + " âm")
+        views.setTextViewText(R.id.bloc_lunar, lunarText)
+        views.setTextColor(R.id.bloc_lunar, if (special != null) RED else LUNAR_INK)
+        views.setTextViewText(R.id.bloc_canchi, "Ngày ${LunarCalendar.canChiDay(lunar.jd)} · Năm ${LunarCalendar.canChiYear(lunar.year)}")
+        views.setTextViewText(R.id.bloc_quote, quote.text)
+        views.setTextViewText(R.id.bloc_kind, "— ${quote.kind} —")
+        // Chạm vào tờ lịch bloc: mở lịch xé tay
+        val tear = Intent(context, TearOffActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP }
+        views.setOnClickPendingIntent(
+            android.R.id.background,
+            PendingIntent.getActivity(context, 3, tear, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE),
+        )
+        return views
+    }
+
+    private fun renderIcon(context: Context, layout: Int): RemoteViews {
         val today = LocalDate.now()
         val lunar = LunarCalendar.convert(today)
         val special = SuggestionEngine.specialDayName(lunar)
         val todayEvent = EventStore.eventsOn(Profile.eventsWithBirthday(context), today).firstOrNull()
-        val views = RemoteViews(context.packageName, R.layout.widget_icon)
+        val views = RemoteViews(context.packageName, layout)
 
         views.setTextViewText(R.id.icon_head, dayOfWeek(today).uppercase(java.util.Locale("vi")))
         views.setTextViewText(R.id.icon_day, today.dayOfMonth.toString())
@@ -239,7 +306,9 @@ object WidgetRenderer {
             1 -> "Mùng 1"
             else -> "${lunar.day}/${lunar.month}"
         }
-        views.setTextViewText(R.id.icon_lunar, (todayEvent?.icon?.plus(" ") ?: "") + lunarText)
+        // Tờ 1×1 quá hẹp cho cả biểu tượng sự kiện lẫn ngày âm (chữ bị đẩy xuống dòng, mất ngày âm): chỉ bản lớn có biểu tượng
+        val eventIcon = if (layout == R.layout.widget_icon_large) todayEvent?.icon?.plus(" ") ?: "" else ""
+        views.setTextViewText(R.id.icon_lunar, eventIcon + lunarText)
         views.setTextColor(R.id.icon_lunar, if (special != null) RED else LUNAR_INK)
         views.setImageViewResource(R.id.icon_moon, PAPER_MOONS[moonPhase(lunar.day)])
 

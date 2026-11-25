@@ -3,7 +3,9 @@ package vn.lichthoitiet
 import android.Manifest
 import android.annotation.SuppressLint
 import android.app.Activity
+import android.app.WallpaperManager
 import android.appwidget.AppWidgetManager
+import android.content.ClipboardManager
 import android.content.ComponentName
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -34,6 +36,10 @@ class MainActivity : Activity() {
     private var pendingTarget: String? = null
     /** Nội dung chờ ghi ra file khi người dùng chọn nơi lưu. */
     private var pendingDoc: String? = null
+    /** Vừa xin quyền thông báo vì người dùng bật lịch màn hình khóa (để mở cài đặt nếu bị từ chối hẳn). */
+    private var lockNoteAsked = false
+    /** Lần mở app này có nên vào thẳng chế độ Zen không (chỉ khi mở mới, không mở từ vùng chạm widget). */
+    private var zenOnLaunch = false
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -46,6 +52,10 @@ class MainActivity : Activity() {
         web.setBackgroundColor(Color.TRANSPARENT)
         web.addJavascriptInterface(Bridge(), "Android")
         web.webViewClient = object : WebViewClient() {
+            // Không cho trang điều hướng ra ngoài (trang ngoài sẽ có cầu nối Android.*)
+            override fun shouldOverrideUrlLoading(view: WebView, request: android.webkit.WebResourceRequest): Boolean =
+                !request.url.toString().startsWith("file:///android_asset/")
+
             override fun onPageFinished(view: WebView, url: String) {
                 pageReady = true
                 pushState()
@@ -53,12 +63,52 @@ class MainActivity : Activity() {
             }
         }
         setContentView(web)
+        applySystemBars()
         web.loadUrl("file:///android_asset/index.html")
-        pendingTarget = intent?.getStringExtra("target")
+        // Dựng lại activity (đổi ngôn ngữ, cỡ chữ máy…) thì không cuộn lại theo intent cũ, không hỏi quyền lại
+        pendingTarget = if (savedInstanceState == null) intent?.getStringExtra("target") else null
+        zenOnLaunch = savedInstanceState == null && pendingTarget == null
 
         if (WeatherRepo.load(this) == null) refreshWeather()
         Reminders.schedule(this)
-        if (prefs.notifyEvents || prefs.notifyLunar || prefs.notifyWeather) ensureNotificationPermission()
+        if (savedInstanceState == null && (prefs.notifyEvents || prefs.notifyLunar || prefs.notifyWeather)) ensureNotificationPermission()
+    }
+
+    override fun onDestroy() {
+        (web.parent as? android.view.ViewGroup)?.removeView(web)
+        web.destroy()
+        super.onDestroy()
+    }
+
+    /** Mở màn hình của app khác / hệ thống; máy không có app phù hợp thì báo thay vì sập. */
+    private fun tryStart(i: Intent, request: Int? = null) {
+        try {
+            @Suppress("DEPRECATION")
+            if (request != null) startActivityForResult(i, request) else startActivity(i)
+        } catch (e: android.content.ActivityNotFoundException) {
+            status("Máy không có ứng dụng để mở mục này.")
+        }
+    }
+
+    /** Thanh trạng thái, thanh điều hướng cùng màu nền trang theo giao diện sáng / tối đang dùng. */
+    private fun applySystemBars() {
+        val dark = isDark()
+        val bg = if (dark) 0xFF0F1115.toInt() else 0xFFEEF2F7.toInt()
+        @Suppress("DEPRECATION")
+        window.statusBarColor = bg
+        @Suppress("DEPRECATION")
+        window.navigationBarColor = bg
+        androidx.core.view.WindowCompat.getInsetsController(window, window.decorView).apply {
+            isAppearanceLightStatusBars = !dark
+            isAppearanceLightNavigationBars = !dark
+        }
+    }
+
+    /** Xoay màn hình, đổi giao diện sáng / tối: giữ nguyên trang (tháng đang xem, nội dung đang nhập), chỉ báo trạng thái mới. */
+    override fun onConfigurationChanged(newConfig: Configuration) {
+        super.onConfigurationChanged(newConfig)
+        applySystemBars()
+        if (pageReady) pushState()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -75,8 +125,10 @@ class MainActivity : Activity() {
             "events" -> "evCard"
             else -> null
         }
+        val today = pendingTarget == "today"
         pendingTarget = null
         if (card != null) runOnUiThread { web.evaluateJavascript("window.scrollToCard && scrollToCard('$card')", null) }
+        if (today) runOnUiThread { web.evaluateJavascript("window.openToday && openToday()", null) }
     }
 
     private fun createDocument(mime: String, name: String, content: String) {
@@ -86,7 +138,7 @@ class MainActivity : Activity() {
             type = mime
             putExtra(Intent.EXTRA_TITLE, name)
         }
-        startActivityForResult(i, REQ_EXPORT)
+        tryStart(i, REQ_EXPORT)
     }
 
     @Deprecated("Deprecated in Java")
@@ -105,17 +157,83 @@ class MainActivity : Activity() {
                     status("Không lưu được file: ${e.message}")
                 }
             }
+            REQ_BG -> {
+                status("Đang xử lý ảnh…")
+                Thread {
+                    // Ảnh quá lớn có thể hết bộ nhớ khi giải mã: báo lỗi thay vì làm sập app
+                    val ok = try { BackgroundImage.saveFrom(this, uri) } catch (e: Throwable) { false }
+                    if (ok) {
+                        prefs.background = "photo"
+                        prefs.backgroundVersion = prefs.backgroundVersion + 1
+                        pushState()
+                        status("Đã đặt ảnh làm hình nền.")
+                    } else {
+                        status("Không đọc được ảnh này.")
+                    }
+                }.start()
+            }
             REQ_IMPORT -> {
                 try {
                     val text = contentResolver.openInputStream(uri)?.bufferedReader()?.readText() ?: ""
                     val n = EventStore.importJson(this, text)
-                    status("Đã nhập $n sự kiện.")
+                    val notes = try { JSONObject(text.trim()).optJSONObject("notes") } catch (e: Exception) { null }
+                    val nn = if (notes != null) NoteStore.importAll(this, notes) else 0
+                    val fams = try { JSONObject(text.trim()).optJSONArray("families") } catch (e: Exception) { null }
+                    val nf = if (fams != null) FamilyStore.importAll(this, fams) else 0
+                    val parts = mutableListOf("$n sự kiện")
+                    if (nn > 0) parts += "$nn ghi chú"
+                    if (nf > 0) parts += "$nf sổ giỗ"
+                    status("Đã nhập " + parts.joinToString(", ") + ".")
                     LichWidget.updateAll(this)
                     pushState()
                 } catch (e: Exception) {
                     status("File không đúng định dạng sao lưu.")
                 }
             }
+        }
+    }
+
+    /** Kết quả xin quyền lịch: báo trang để tải lại danh sách lịch. */
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        // Vừa được cho phép thông báo: hiện ngay lịch trên màn hình khóa nếu đã bật.
+        // Bị từ chối hẳn (hệ thống không hỏi nữa) khi đang bật lịch màn hình khóa: mở cài đặt thông báo của app.
+        if (requestCode == 1) {
+            val granted = grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
+            if (!granted && lockNoteAsked && Build.VERSION.SDK_INT >= 33 &&
+                !shouldShowRequestPermissionRationale(Manifest.permission.POST_NOTIFICATIONS)
+            ) openNotificationSettingsScreen()
+            lockNoteAsked = false
+            LockScreenDay.update(this)
+            if (pageReady) pushState()
+        }
+        if (requestCode == REQ_CAL) {
+            val ok = grantResults.isNotEmpty() && grantResults.all { it == PackageManager.PERMISSION_GRANTED }
+            web.evaluateJavascript("window.onCalendarPermission && onCalendarPermission($ok)", null)
+        }
+    }
+
+    private fun notificationsAllowed(): Boolean {
+        val nm = getSystemService(android.app.NotificationManager::class.java) ?: return false
+        val ch = nm.getNotificationChannel(LockScreenDay.CHANNEL_ID)
+        return nm.areNotificationsEnabled() && (ch == null || ch.importance != android.app.NotificationManager.IMPORTANCE_NONE)
+    }
+
+    private fun openNotificationSettingsScreen() {
+        val nm = getSystemService(android.app.NotificationManager::class.java)
+        val channelOff = nm != null && nm.areNotificationsEnabled() &&
+            nm.getNotificationChannel(LockScreenDay.CHANNEL_ID)?.importance == android.app.NotificationManager.IMPORTANCE_NONE
+        try {
+            // Chỉ kênh "lịch màn hình khóa" bị tắt: mở thẳng trang của kênh đó
+            if (channelOff) {
+                startActivity(Intent(android.provider.Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS)
+                    .putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, packageName)
+                    .putExtra(android.provider.Settings.EXTRA_CHANNEL_ID, LockScreenDay.CHANNEL_ID))
+                return
+            }
+            startActivity(Intent(android.provider.Settings.ACTION_APP_NOTIFICATION_SETTINGS).putExtra(android.provider.Settings.EXTRA_APP_PACKAGE, packageName))
+        } catch (e: Exception) {
+            startActivity(Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:$packageName")))
         }
     }
 
@@ -130,6 +248,7 @@ class MainActivity : Activity() {
 
     override fun onResume() {
         super.onResume()
+        LockScreenDay.update(this)
         if (pageReady) pushState()
     }
 
@@ -188,6 +307,8 @@ class MainActivity : Activity() {
             put("hour", now.hour)
             put("minute", now.minute)
             put("dark", isDark())
+            put("zenLaunch", zenOnLaunch && pageReady)
+            if (pageReady) zenOnLaunch = false
             put("version", versionName())
             put("tet", JSONObject()
                 .put("date", tet.toString())
@@ -203,9 +324,39 @@ class MainActivity : Activity() {
                 .put("notifyEvents", prefs.notifyEvents).put("notifyLunar", prefs.notifyLunar).put("notifyHour", prefs.notifyHour)
                 .put("notifyWeather", prefs.notifyWeather).put("notifyWeatherHour", prefs.notifyWeatherHour)
                 .put("birthYear", prefs.birthYear).put("birthLabel", birthLabel())
-                .put("name", prefs.profileName).put("birth", birthJson()))
+                .put("name", prefs.profileName).put("birth", birthJson())
+                .put("bg", prefs.background).put("bgVer", prefs.backgroundVersion)
+                .put("lockNote", Prefs.get(this@MainActivity).getBoolean(LockScreenDay.PREF, false))
+                .put("notifAllowed", notificationsAllowed())
+                .put("wpText", Prefs.get(this@MainActivity).getBoolean("wpText", true))
+                .put("wpActive", liveWallpaperActive())
+                .put("zenStart", Prefs.get(this@MainActivity).getBoolean("zenStart", false))
+                .put("zenPaper", Prefs.get(this@MainActivity).getString("zenPaper", "auto") ?: "auto"))
             put("weather", if (w == null) JSONObject.NULL else weatherJson(w))
         }.toString()
+    }
+
+    /** Hình nền đang dùng có phải hình nền động của app không. */
+    private fun liveWallpaperActive(): Boolean = try {
+        WallpaperManager.getInstance(this).wallpaperInfo?.packageName == packageName
+    } catch (e: Exception) {
+        false
+    }
+
+    /** Sổ giỗ dạng JSON cho trang: thêm ngày dương lần giỗ tới và số ngày còn lại. */
+    private fun familyJson(g: FamilyGroup): JSONObject {
+        val today = LocalDate.now()
+        val j = g.toJson()
+        val arr = JSONArray()
+        g.active.sortedWith(compareBy({ it.lunarMonth }, { it.lunarDay })).forEach { m ->
+            val o = m.toJson()
+            FamilyBook.nextDate(m, today)?.let { d ->
+                o.put("next", "${d.dayOfMonth}/${d.monthValue}/${d.year}").put("daysLeft", ChronoUnit.DAYS.between(today, d))
+            }
+            o.put("title", m.eventTitle)
+            arr.put(o)
+        }
+        return j.put("members", arr)
     }
 
     private fun weatherJson(w: WeatherData): JSONObject = JSONObject().apply {
@@ -236,6 +387,9 @@ class MainActivity : Activity() {
         val CON_GIAP = listOf("🐭", "🐮", "🐯", "🐱", "🐲", "🐍", "🐴", "🐐", "🐵", "🐔", "🐶", "🐷")
         const val REQ_EXPORT = 11
         const val REQ_IMPORT = 12
+        const val REQ_CAL = 13
+        const val REQ_BG = 14
+        val BACKGROUNDS = setOf("none", "sen", "halong", "dao", "ruong", "cachep", "photo")
     }
 
     private fun refreshWeather() {
@@ -254,6 +408,7 @@ class MainActivity : Activity() {
         fun month(y: Int, m: Int): String {
             val ym = YearMonth.of(y, m)
             val events = Profile.eventsWithBirthday(this@MainActivity)
+            val openNotes = NoteStore.openCountsInMonth(this@MainActivity, "%04d-%02d".format(y, m))
             val days = JSONArray()
             for (d in 1..ym.lengthOfMonth()) {
                 val date = LocalDate.of(y, m, d)
@@ -262,7 +417,8 @@ class MainActivity : Activity() {
                 days.put(
                     JSONObject().put("d", d).put("ld", l.day).put("lm", l.month)
                         .put("leap", l.leap).put("hd", LunarCalendar.isHoangDao(l))
-                        .put("ev", ev.firstOrNull()?.icon ?: "").put("evn", ev.size),
+                        .put("ev", ev.firstOrNull()?.icon ?: "").put("evn", ev.size)
+                        .put("nt", openNotes[date.toString()] ?: 0),
                 )
             }
             return JSONObject().put("firstWeekday", ym.atDay(1).dayOfWeek.value).put("days", days).toString()
@@ -304,6 +460,10 @@ class MainActivity : Activity() {
                 put("hyThan", a.hyThan); put("taiThan", a.taiThan); put("lucDieuDay", a.lucDieuDay)
                 put("tu", a.tu.name); put("tuFull", a.tu.fullName); put("tuGood", a.tu.good)
                 put("tuNen", a.tu.nen); put("tuKy", a.tu.ky)
+                val q = Quotes.forDate(date)
+                put("quote", q.text); put("quoteKind", q.kind)
+                val z = ZenVerses.forDate(date)
+                put("zen", JSONObject().put("text", z.text).put("by", z.by))
                 put("ngocHap", JSONArray().apply {
                     NgocHap.of(l).forEach { put(JSONObject().put("name", it.name).put("good", it.good).put("desc", it.desc)) }
                 })
@@ -323,6 +483,100 @@ class MainActivity : Activity() {
                 put("isTomorrow", date == today.plusDays(1))
             }.toString()
         }
+
+        // ---- Tử vi cơ bản ----
+
+        /** Cung hoàng đạo, con giáp, mệnh theo ngày sinh trong hồ sơ; "null" nếu chưa nhập ngày sinh. */
+        @JavascriptInterface
+        fun tuvi(): String {
+            val birth = try { LocalDate.parse(prefs.birthDate) } catch (e: Exception) { return "null" }
+            val h = Horoscope.basic(birth)
+            return JSONObject()
+                .put("sign", h.sign.name).put("symbol", h.sign.symbol).put("element", h.sign.element)
+                .put("range", h.sign.range).put("traits", h.sign.traits)
+                .put("canChi", h.canChi).put("animal", h.animal).put("menh", h.menh).put("hanh", h.hanh).toString()
+        }
+
+        /** Tuổi xông đất Tết sắp tới cho gia chủ sinh năm âm [owner]. */
+        @JavascriptInterface
+        fun xongDat(owner: Int): String {
+            val year = LunarCalendar.convert(LunarCalendar.nextTet(LocalDate.now())).year
+            val r = Horoscope.xongDat(owner, year)
+            val list = JSONArray()
+            r.picks.forEach { p ->
+                list.put(JSONObject().put("year", p.year).put("canChi", p.canChi).put("score", p.score).put("label", p.label)
+                    .put("reasons", JSONArray(p.reasons)).put("warnings", JSONArray(p.warnings)))
+            }
+            return JSONObject().put("year", r.year).put("canChi", r.canChi).put("avoid", JSONArray(r.avoid)).put("list", list).toString()
+        }
+
+        // ---- Lịch trên máy (gồm lịch Google đã đồng bộ) ----
+
+        /** Danh sách lịch trên máy; chưa có quyền thì xin quyền và trả "null" (trang chờ onCalendarPermission). */
+        @JavascriptInterface
+        fun calendarList(): String {
+            if (!CalendarSync.hasPermission(this@MainActivity)) {
+                runOnUiThread { requestPermissions(arrayOf(Manifest.permission.READ_CALENDAR, Manifest.permission.WRITE_CALENDAR), REQ_CAL) }
+                return "null"
+            }
+            val arr = JSONArray()
+            try {
+                CalendarSync.calendars(this@MainActivity).forEach {
+                    arr.put(JSONObject().put("id", it.id.toString()).put("name", it.name).put("account", it.account)
+                        .put("color", String.format("#%06X", it.color and 0xFFFFFF)).put("writable", it.writable))
+                }
+            } catch (e: Exception) {
+                status("Không đọc được danh sách lịch: ${e.message}")
+            }
+            return arr.toString()
+        }
+
+        /** Nhập sự kiện 1 năm tới từ lịch [calId] vào app (chạy nền). */
+        @JavascriptInterface
+        fun importCalendar(calId: String) {
+            Thread {
+                try {
+                    val n = CalendarSync.importFrom(this@MainActivity, calId.toLong(), LocalDate.now(), 365)
+                    status(if (n > 0) "Đã nhập $n sự kiện từ lịch trên máy." else "Lịch này không có sự kiện nào trong 1 năm tới.")
+                    pushState()
+                    LichWidget.updateAll(this@MainActivity)
+                } catch (e: Exception) {
+                    status("Không nhập được: ${e.message}")
+                }
+            }.start()
+        }
+
+        /** Xuất sự kiện của app (5 năm tới) sang lịch [calId]; thay các mục đã xuất lần trước (chạy nền). */
+        @JavascriptInterface
+        fun exportCalendar(calId: String) {
+            Thread {
+                try {
+                    val n = CalendarSync.exportTo(this@MainActivity, calId.toLong(), LocalDate.now(), 5)
+                    status(if (n > 0) "Đã xuất $n mục sang lịch đã chọn. Lịch Google sẽ tự đồng bộ." else "Chưa có sự kiện nào để xuất.")
+                } catch (e: Exception) {
+                    status("Không xuất được: ${e.message}")
+                }
+            }.start()
+        }
+
+        // ---- Ghi chú theo ngày ----
+
+        private fun iso(y: Int, m: Int, d: Int) = LocalDate.of(y, m, d).toString()
+
+        @JavascriptInterface
+        fun notes(y: Int, m: Int, d: Int): String = NoteStore.toJsonArray(NoteStore.forDate(this@MainActivity, iso(y, m, d))).toString()
+
+        @JavascriptInterface
+        fun addNote(y: Int, m: Int, d: Int, text: String): String =
+            NoteStore.toJsonArray(NoteStore.add(this@MainActivity, iso(y, m, d), text)).toString()
+
+        @JavascriptInterface
+        fun toggleNote(y: Int, m: Int, d: Int, id: String): String =
+            NoteStore.toJsonArray(NoteStore.toggle(this@MainActivity, iso(y, m, d), id)).toString()
+
+        @JavascriptInterface
+        fun deleteNote(y: Int, m: Int, d: Int, id: String): String =
+            NoteStore.toJsonArray(NoteStore.delete(this@MainActivity, iso(y, m, d), id)).toString()
 
         // ---- Xem ngày ----
 
@@ -453,7 +707,10 @@ class MainActivity : Activity() {
 
         @JavascriptInterface
         fun exportEvents() = runOnUiThread {
-            createDocument("application/json", "lich-su-kien-${LocalDate.now()}.json", EventStore.exportJson(EventStore.load(this@MainActivity)))
+            val backup = JSONObject(EventStore.exportJson(EventStore.load(this@MainActivity)))
+                .put("notes", NoteStore.exportAll(this@MainActivity))
+                .put("families", FamilyStore.exportAll(this@MainActivity))
+            createDocument("application/json", "lich-su-kien-${LocalDate.now()}.json", backup.toString(2))
         }
 
         @JavascriptInterface
@@ -467,7 +724,7 @@ class MainActivity : Activity() {
                 addCategory(Intent.CATEGORY_OPENABLE)
                 type = "*/*"
             }
-            startActivityForResult(i, REQ_IMPORT)
+            tryStart(i, REQ_IMPORT)
         }
 
         // ---- Chia sẻ ----
@@ -547,9 +804,31 @@ class MainActivity : Activity() {
             LichWidget.updateAll(this@MainActivity)
         }
 
+        /** Chọn hình nền lịch (tranh có sẵn hoặc "none"); "photo" chỉ đặt lại được khi đã có ảnh. */
+        @JavascriptInterface
+        fun setBackground(kind: String) {
+            prefs.background = if (kind in BACKGROUNDS && (kind != "photo" || BackgroundImage.dataUrl(this@MainActivity).isNotEmpty())) kind else "none"
+            pushState()
+        }
+
+        /** Mở trình chọn ảnh để đặt ảnh của người dùng làm hình nền. */
+        @JavascriptInterface
+        fun pickBackground() = runOnUiThread {
+            val i = Intent(Intent.ACTION_OPEN_DOCUMENT).apply {
+                addCategory(Intent.CATEGORY_OPENABLE)
+                type = "image/*"
+            }
+            tryStart(i, REQ_BG)
+        }
+
+        /** Ảnh nền của người dùng dạng data URL (rỗng nếu chưa có). */
+        @JavascriptInterface
+        fun backgroundPhoto(): String = BackgroundImage.dataUrl(this@MainActivity)
+
         @JavascriptInterface
         fun setTheme(mode: String) {
             prefs.theme = if (mode in listOf("light", "dark")) mode else "system"
+            runOnUiThread { applySystemBars() }
             pushState()
         }
 
@@ -567,6 +846,17 @@ class MainActivity : Activity() {
             }
         }
 
+        /** Ghim widget "Lịch bloc" (tờ lịch ngày kèm câu ca dao, tục ngữ). */
+        @JavascriptInterface
+        fun pinBlocWidget() = runOnUiThread {
+            val mgr = AppWidgetManager.getInstance(this@MainActivity)
+            if (mgr.isRequestPinAppWidgetSupported) {
+                mgr.requestPinAppWidget(ComponentName(this@MainActivity, LichBlocWidget::class.java), null, null)
+            } else {
+                status("Máy không hỗ trợ thêm nhanh. Giữ lâu màn hình chính → Widget → Lịch bloc.")
+            }
+        }
+
         /** Ghim tờ lịch 1×1 "Lịch hôm nay" (đặt thay icon app để có biểu tượng lịch đổi theo ngày). */
         @JavascriptInterface
         fun pinIconWidget() = runOnUiThread {
@@ -574,13 +864,186 @@ class MainActivity : Activity() {
             if (mgr.isRequestPinAppWidgetSupported) {
                 mgr.requestPinAppWidget(ComponentName(this@MainActivity, LichIconWidget::class.java), null, null)
             } else {
-                status("Máy không hỗ trợ thêm nhanh. Giữ lâu màn hình chính → Widget → Lịch hôm nay (1×1).")
+                status("Máy không hỗ trợ thêm nhanh. Giữ lâu màn hình chính → Widget → Lịch hôm nay.")
+            }
+        }
+
+        // ---- Lịch xé, la bàn AR ----
+
+        /** Mở lịch bloc xé tay, bắt đầu từ ngày [iso] ("2026-11-25"). */
+        @JavascriptInterface
+        fun openTearOff(iso: String) = runOnUiThread {
+            startActivity(Intent(this@MainActivity, TearOffActivity::class.java).putExtra(TearOffActivity.EXTRA_DATE, iso))
+        }
+
+        @JavascriptInterface
+        fun openCompass() = runOnUiThread {
+            startActivity(Intent(this@MainActivity, CompassActivity::class.java))
+        }
+
+        // ---- Hình nền động, màn hình khóa, Zen ----
+
+        /** Mở màn hình đặt hình nền động của máy với hình nền lịch âm đã chọn sẵn. */
+        @JavascriptInterface
+        fun setLiveWallpaper() = runOnUiThread {
+            val direct = Intent(WallpaperManager.ACTION_CHANGE_LIVE_WALLPAPER)
+                .putExtra(WallpaperManager.EXTRA_LIVE_WALLPAPER_COMPONENT, ComponentName(this@MainActivity, LunarWallpaperService::class.java))
+            try {
+                startActivity(direct)
+            } catch (e: Exception) {
+                try {
+                    startActivity(Intent(WallpaperManager.ACTION_LIVE_WALLPAPER_CHOOSER))
+                    status("Chọn \"Lịch âm · trời trăng\" trong danh sách hình nền động.")
+                } catch (e2: Exception) {
+                    status("Máy không hỗ trợ hình nền động.")
+                }
+            }
+        }
+
+        @JavascriptInterface
+        fun setWallpaperText(on: Boolean) {
+            Prefs.get(this@MainActivity).edit().putBoolean("wpText", on).apply()
+            pushState()
+        }
+
+        /** Bật / tắt lịch trên màn hình khóa (thông báo im lặng); trả về máy có đang cho app gửi thông báo không. */
+        @JavascriptInterface
+        fun setLockNote(on: Boolean): Boolean {
+            Prefs.get(this@MainActivity).edit().putBoolean(LockScreenDay.PREF, on).remove("lockNoteDismissed").apply()
+            val allowed = notificationsAllowed()
+            if (on && !allowed) runOnUiThread {
+                if (Build.VERSION.SDK_INT >= 33 &&
+                    checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED
+                ) {
+                    lockNoteAsked = true
+                    requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
+                } else {
+                    // Đã có quyền nhưng thông báo của app bị tắt trong cài đặt máy
+                    openNotificationSettingsScreen()
+                }
+            }
+            LockScreenDay.update(this@MainActivity)
+            pushState()
+            return allowed
+        }
+
+        @JavascriptInterface
+        fun openNotificationSettings() = runOnUiThread { openNotificationSettingsScreen() }
+
+        /** Màu thanh hệ thống theo lớp đang phủ (Zen giấy dó / mực đen); chuỗi rỗng = về màu theo giao diện. */
+        @JavascriptInterface
+        fun setSystemBars(color: String, lightBars: Boolean) = runOnUiThread {
+            val c = try { if (color.isBlank()) null else Color.parseColor(color) } catch (e: Exception) { null }
+            if (c == null) { applySystemBars(); return@runOnUiThread }
+            @Suppress("DEPRECATION")
+            window.statusBarColor = c
+            @Suppress("DEPRECATION")
+            window.navigationBarColor = c
+            androidx.core.view.WindowCompat.getInsetsController(window, window.decorView).apply {
+                isAppearanceLightStatusBars = lightBars
+                isAppearanceLightNavigationBars = lightBars
+            }
+        }
+
+        @JavascriptInterface
+        fun setZen(start: Boolean, paper: String) {
+            Prefs.get(this@MainActivity).edit()
+                .putBoolean("zenStart", start)
+                .putString("zenPaper", if (paper in listOf("paper", "ink")) paper else "auto")
+                .apply()
+            pushState()
+        }
+
+        // ---- Sổ giỗ gia đình ----
+
+        @JavascriptInterface
+        fun families(): String = JSONArray().apply {
+            FamilyStore.load(this@MainActivity).sortedBy { it.name }.forEach { put(familyJson(it)) }
+        }.toString()
+
+        /** Tạo sổ mới; trả về id. */
+        @JavascriptInterface
+        fun familyCreate(name: String): String {
+            val g = FamilyStore.create(this@MainActivity, name)
+            LichWidget.updateAll(this@MainActivity)
+            return g.id
+        }
+
+        @JavascriptInterface
+        fun familyUpdate(id: String, name: String, remind: Int) {
+            val now = System.currentTimeMillis()
+            FamilyStore.update(this@MainActivity, id) { g -> FamilyBook.updateMeta(g, name, remind, now) }
+            LichWidget.updateAll(this@MainActivity)
+        }
+
+        /** Thêm hoặc sửa một người trong sổ (id rỗng = thêm mới). */
+        @JavascriptInterface
+        fun familySaveMember(groupId: String, json: String): Boolean {
+            val now = System.currentTimeMillis()
+            // fromJson tự cấp id mới khi id rỗng và lọc id về chữ, số
+            val raw = try { JSONObject(json) } catch (e: Exception) { return false }
+            val parsed = FamilyMember.fromJson(raw)
+            if (parsed.name.isBlank() && parsed.relation.isBlank()) return false
+            // Người thêm mới: id ngẫu nhiên (id theo nội dung chỉ dành cho mã soạn tay thiếu id)
+            val base = if (raw.optString("id").isBlank()) parsed.copy(id = FamilyBook.newId()) else parsed
+            FamilyStore.update(this@MainActivity, groupId) { g -> FamilyBook.saveMember(g, base, now) } ?: return false
+            LichWidget.updateAll(this@MainActivity)
+            return true
+        }
+
+        @JavascriptInterface
+        fun familyDeleteMember(groupId: String, memberId: String) {
+            val now = System.currentTimeMillis()
+            // Giữ dấu xóa để khi gửi lại mã, máy khác cũng xóa theo
+            FamilyStore.update(this@MainActivity, groupId) { g -> FamilyBook.deleteMember(g, memberId, now) }
+            LichWidget.updateAll(this@MainActivity)
+        }
+
+        @JavascriptInterface
+        fun familyDelete(id: String) {
+            FamilyStore.delete(this@MainActivity, id)
+            LichWidget.updateAll(this@MainActivity)
+        }
+
+        /** Gửi sổ cho cả nhà qua Zalo, Messenger… (tin nhắn có danh sách và mã nhập). */
+        @JavascriptInterface
+        fun familyShare(id: String) = runOnUiThread {
+            val g = FamilyStore.get(this@MainActivity, id) ?: return@runOnUiThread
+            val send = Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_SUBJECT, FamilyBook.safe("Sổ giỗ ${g.name}"))
+                putExtra(Intent.EXTRA_TEXT, FamilyBook.shareText(g, LocalDate.now()))
+            }
+            tryStart(Intent.createChooser(send, "Gửi sổ giỗ cho cả nhà"))
+        }
+
+        /** Nhập mã từ tin nhắn đã dán; trả về JSON kết quả hoặc {"error": …}. */
+        @JavascriptInterface
+        fun familyImport(text: String): String {
+            val all = FamilyStore.importText(this@MainActivity, text)
+            if (all.isEmpty()) return JSONObject().put("error", "Không tìm thấy mã sổ giỗ hợp lệ trong nội dung đã dán.").toString()
+            val r = all.last()
+            Reminders.schedule(this@MainActivity)
+            LichWidget.updateAll(this@MainActivity)
+            return JSONObject().put("id", r.group.id).put("name", r.group.name).put("added", r.added)
+                .put("updated", r.updated).put("removed", r.removed).put("isNew", r.isNew)
+                .put("metaChanged", r.metaChanged).put("books", all.size).toString()
+        }
+
+        /** Chữ đang có trong bộ nhớ tạm (để dán mã sổ giỗ bằng một chạm). */
+        @JavascriptInterface
+        fun clipboardText(): String {
+            val cm = getSystemService(ClipboardManager::class.java) ?: return ""
+            return try {
+                cm.primaryClip?.takeIf { it.itemCount > 0 }?.getItemAt(0)?.coerceToText(this@MainActivity)?.toString() ?: ""
+            } catch (e: Exception) {
+                ""
             }
         }
 
         @JavascriptInterface
         fun openUrl(url: String) {
-            if (url.startsWith("https://")) runOnUiThread { startActivity(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
+            if (url.startsWith("https://")) runOnUiThread { tryStart(Intent(Intent.ACTION_VIEW, Uri.parse(url))) }
         }
     }
 }
