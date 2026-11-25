@@ -13,14 +13,15 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-java@v4
+      - uses: actions/setup-java@v6
         with:
           distribution: temurin
           java-version: '17'
 
-      - uses: gradle/actions/setup-gradle@v4
+      # Giữ v5: từ v6 phần cache của setup-gradle không còn mã nguồn mở
+      - uses: gradle/actions/setup-gradle@v5
         with:
           gradle-version: '8.9'
 
@@ -33,13 +34,15 @@ jobs:
       - name: Đổi tên APK
         run: cp app/build/outputs/apk/debug/app-debug.apk LichThoiTiet.apk
 
-      - uses: actions/upload-artifact@v4
+      # Nhánh nào cũng có APK để tải trong tab Actions (mục Artifacts)
+      - uses: actions/upload-artifact@v7
         with:
           name: LichThoiTiet-apk
           path: LichThoiTiet.apk
 
-      # Tạo Release để tải APK trực tiếp trên điện thoại (không phải giải nén zip)
-      - uses: softprops/action-gh-release@v2
+      # Chỉ nhánh main mới tạo Release (tải APK trực tiếp trên điện thoại, không phải giải nén zip)
+      - uses: softprops/action-gh-release@v3
+        if: github.ref == 'refs/heads/main'
         with:
           tag_name: build-${{ github.run_number }}
           name: Bản build ${{ github.run_number }}
