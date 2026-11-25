@@ -123,6 +123,10 @@ h2 { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: u
 .chips2 span { font-size: 12.5px; padding: 4px 10px; border-radius: 999px; background: var(--chip); }
 .chips2.nen span { background: var(--good-soft); color: var(--good); font-weight: 600; }
 .chips2.ky span { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.tu { font-size: 13.5px; line-height: 1.55; color: var(--muted); }
+.tu .nm { font-weight: 700; color: var(--text); }
+.tu .good { color: var(--good); font-weight: 600; }
+.tu .bad { color: var(--accent); font-weight: 600; }
 .ld { display: flex; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); align-items: flex-start; }
 .ld:first-child { border-top: 0; }
 .ld .n { font-weight: 700; flex: 0 0 88px; } .ld .n.good { color: var(--good); }
@@ -346,10 +350,11 @@ button.item:active { background: var(--chip); }
   <div id="almTruc">
     <div class="lbl2">Việc nên làm</div><div class="chips2 nen" id="almNen"></div>
     <div class="lbl2">Không nên</div><div class="chips2 ky" id="almKy"></div>
+    <div class="lbl2">Nhị thập bát tú</div><div class="tu" id="almTu"></div>
   </div>
   <div id="almHuongWrap"><div class="lbl2">Hướng xuất hành</div><div class="kv" id="almHuong"></div></div>
   <div id="almLdWrap"><div class="lbl2">Giờ xuất hành (Lục Diệu) · ngày <span id="ldDay"></span></div><div id="almLd"></div></div>
-  <p class="muted small" style="margin:12px 0 0">Tính theo trực ngày (thập nhị kiến trừ), can chi ngày và phép Lục Diệu. Chỉ để tham khảo.</p>
+  <p class="muted small" style="margin:12px 0 0">Tính theo trực ngày (thập nhị kiến trừ), sao Nhị thập bát tú, can chi ngày và phép Lục Diệu. Chỉ để tham khảo.</p>
 </section>
 
 <section class="card col" id="gdCard">
@@ -379,8 +384,7 @@ button.item:active { background: var(--chip); }
 
   <div class="g-title">Hồ sơ</div>
   <div class="group">
-    <div class="item"><span class="ico">🎂</span><span class="body"><span class="lbl">Năm sinh (âm lịch)</span><span class="val" id="birthVal">Để xét hợp, xung tuổi với từng ngày</span></span>
-      <input class="in" type="number" id="birthYear" inputmode="numeric" min="1900" max="2100" placeholder="1990" style="width:92px;flex:none;padding:8px 10px"><button class="act" id="birthSave" style="padding:6px 2px 6px 6px">Lưu</button></div>
+    <button class="item" id="profileRow"><span class="ico">👤</span><span class="body"><span class="lbl" id="profName">Thông tin của bạn</span><span class="val" id="profVal">Họ tên, ngày sinh để xét hợp, xung tuổi</span></span><span class="chev">›</span></button>
   </div>
 
   <div class="g-title">Hiển thị</div>
@@ -388,7 +392,7 @@ button.item:active { background: var(--chip); }
     <label class="item" for="spiritual"><span class="ico">✦</span><span class="body"><span class="lbl">Ngày hoàng đạo, giờ tốt</span><span class="val">Hiện trên widget và trong app</span></span><input type="checkbox" class="switch" id="spiritual"></label>
     <div class="item"><span class="ico">🌓</span><span class="body"><span class="lbl">Giao diện</span></span>
       <div class="seg" id="themeSeg"><button data-v="system">Hệ thống</button><button data-v="light">Sáng</button><button data-v="dark">Tối</button></div></div>
-    <label class="item" for="showAlmanac"><span class="ico">📖</span><span class="body"><span class="lbl">Việc nên làm, không nên</span><span class="val">Trực ngày, ngũ hành, tuổi xung</span></span><input type="checkbox" class="switch" id="showAlmanac"></label>
+    <label class="item" for="showAlmanac"><span class="ico">📖</span><span class="body"><span class="lbl">Việc nên làm, không nên</span><span class="val">Trực ngày, sao Nhị thập bát tú, ngũ hành, tuổi xung</span></span><input type="checkbox" class="switch" id="showAlmanac"></label>
     <label class="item" for="showHuong"><span class="ico">🧭</span><span class="body"><span class="lbl">Hướng xuất hành</span><span class="val">Hỷ thần, Tài thần theo can ngày</span></span><input type="checkbox" class="switch" id="showHuong"></label>
     <label class="item" for="showLucDieu"><span class="ico">⏱️</span><span class="body"><span class="lbl">Giờ xuất hành Lục Diệu</span><span class="val">Đại An, Tốc Hỷ, Tiểu Cát…</span></span><input type="checkbox" class="switch" id="showLucDieu"></label>
     <label class="item" for="showGoodDays"><span class="ico">🗓️</span><span class="body"><span class="lbl">Chọn ngày tốt</span><span class="val">Cưới hỏi, khai trương, khởi công…</span></span><input type="checkbox" class="switch" id="showGoodDays"></label>
@@ -451,6 +455,18 @@ button.item:active { background: var(--chip); }
   </div>
   <div class="conv-res" id="convRes"></div>
   <div class="actions"><button class="btn ghost" id="convClose">Đóng</button></div>
+</div>
+<div class="sheet-bg" id="profBg" hidden></div>
+<div class="sheet" id="profSheet" hidden role="dialog" aria-label="Hồ sơ">
+  <h3>Hồ sơ của bạn</h3>
+  <div class="field"><label for="profNameIn">Họ và tên</label><input class="in" id="profNameIn" placeholder="Ví dụ: Nguyễn Văn An" maxlength="60" autocomplete="name" autocapitalize="words"></div>
+  <div class="field"><label>Ngày sinh theo</label><div class="seg" id="profCal"><button data-v="solar">Dương lịch</button><button data-v="lunar">Âm lịch</button></div></div>
+  <div class="field">
+    <div class="row3"><select class="in" id="profDay" aria-label="Ngày sinh"></select><select class="in" id="profMonth" aria-label="Tháng sinh"></select><select class="in" id="profYear" aria-label="Năm sinh"></select></div>
+    <div class="hint" id="profHint"></div>
+  </div>
+  <p class="muted small" style="margin:12px 0 0">Tuổi (can chi) tính theo năm âm lịch của ngày sinh, dùng để xét ngày hợp, xung tuổi. Thông tin chỉ lưu trên máy.</p>
+  <div class="actions"><button class="btn danger" id="profClear" hidden>Xóa</button><button class="btn ghost" id="profCancel">Hủy</button><button class="btn" id="profSave">Lưu</button></div>
 </div>
 <div class="toast" id="toast" role="status"></div>
 
@@ -694,12 +710,15 @@ function renderAlmanac(d) {
   const p = state.prefs;
   const show = p.showAlmanac || p.showHuong || p.showLucDieu;
   $("almCard").style.display = show ? "" : "none";
-  $("almSum").textContent = `Trực ${d.truc} · ${d.napAm} · xung ${d.xung}`;
+  $("almSum").textContent = `Trực ${d.truc} · sao ${d.tu} · ${d.napAm} · xung ${d.xung}`;
   if (!show) return;
   $("almKv").innerHTML = `<span>Trực <b>${esc(d.truc)}</b></span><span>Ngũ hành <b>${esc(d.napAm)}</b></span><span>Tuổi xung <b>${esc(d.xung)}</b></span>`;
   $("almTruc").style.display = p.showAlmanac ? "" : "none";
   $("almNen").innerHTML = d.trucNen.map(x => `<span>${esc(x)}</span>`).join("");
   $("almKy").innerHTML = d.trucKy.map(x => `<span>${esc(x)}</span>`).join("");
+  $("almTu").innerHTML = `<span class="nm">Sao ${esc(d.tuFull)}</span> · <span class="${d.tuGood ? "good" : "bad"}">${d.tuGood ? "sao tốt" : "sao xấu"}</span><br>` +
+    (d.tuNen ? `Nên ${esc(d.tuNen)}. ` : "Không hợp việc lớn. ") +
+    (d.tuKy ? `Kỵ ${esc(d.tuKy)}.` : "Không kỵ việc gì.");
   $("almHuongWrap").style.display = p.showHuong ? "" : "none";
   $("almHuong").innerHTML = `<span>Hỷ thần <b>${esc(d.hyThan)}</b></span><span>Tài thần <b>${esc(d.taiThan)}</b></span>`;
   $("almLdWrap").style.display = p.showLucDieu ? "" : "none";
@@ -878,8 +897,7 @@ function renderCities() {
 }
 function renderSettings() {
   renderCities();
-  $("birthYear").value = state.prefs.birthYear || "";
-  $("birthVal").textContent = state.prefs.birthLabel ? `Tuổi ${state.prefs.birthLabel}` : "Để xét hợp, xung tuổi với từng ngày";
+  profileSummary();
   const wh = $("notifyWeatherHour");
   if (!wh.options.length) [18, 19, 20, 21].forEach(h => { const o = document.createElement("option"); o.value = h; o.textContent = h + ":00"; wh.appendChild(o); });
   wh.value = String(state.prefs.notifyWeatherHour ?? 20);
@@ -905,10 +923,71 @@ $("notifyHour").onchange = e => { state.prefs.notifyHour = +e.target.value; push
 $("testNotify").onclick = () => { Android.testNotify(); toast("Đã gửi thông báo thử, kéo thanh trạng thái xuống xem"); };
 $("notifyWeather").onchange = e => { state.prefs.notifyWeather = e.target.checked; Android.setNotifyWeather(e.target.checked, +(state.prefs.notifyWeatherHour ?? 20)); };
 $("notifyWeatherHour").onchange = e => { state.prefs.notifyWeatherHour = +e.target.value; Android.setNotifyWeather(!!state.prefs.notifyWeather, +e.target.value); toast(`Sẽ báo thời tiết lúc ${e.target.value}:00`); };
-$("birthSave").onclick = () => {
-  const y = +$("birthYear").value;
-  if (y && (y < 1900 || y > 2100)) { toast("Năm sinh không hợp lệ"); return; }
-  Android.setBirthYear(y || 0); toast(y ? `Đã lưu năm sinh ${y}` : "Đã xóa năm sinh");
+// ---- Hồ sơ: họ tên, ngày sinh (âm hoặc dương lịch) ----
+let profLunar = false;
+function animalOf(canChi) { return CON_GIAP[String(canChi).split(" ")[1]] || ""; }
+function profileSummary() {
+  const p = state.prefs, b = p.birth;
+  $("profName").textContent = p.name || "Thông tin của bạn";
+  $("profVal").textContent = b
+    ? `Sinh ${b.sd}/${b.sm}/${b.sy} (${b.ld}/${b.lm}${b.leap ? " nhuận" : ""} âm lịch) · tuổi ${p.birthLabel}`
+    : p.birthYear ? `Năm sinh âm lịch ${p.birthYear} · tuổi ${p.birthLabel}. Chạm để nhập đủ ngày sinh`
+    : "Họ tên, ngày sinh để xét hợp, xung tuổi";
+}
+function setProfCal(lunar, d, m, y) {
+  profLunar = lunar;
+  document.querySelectorAll("#profCal button").forEach(b => b.classList.toggle("on", (b.dataset.v === "lunar") === lunar));
+  fillSelect($("profDay"), 1, lunar ? 30 : 31, Math.min(d, lunar ? 30 : 31));
+  fillSelect($("profMonth"), 1, 12, m, "Tháng ");
+  fillSelect($("profYear"), 1900, state.today.y, y);
+  profHint();
+}
+/** Hiện ngày sinh quy sang lịch còn lại; trả về false nếu ngày không hợp lệ. */
+function profHint() {
+  const d = +$("profDay").value, m = +$("profMonth").value, y = +$("profYear").value, h = $("profHint");
+  let sy = y, sm = m, sd = d;
+  if (profLunar) {
+    const s = Android.lunarToSolar(d, m, y);
+    if (!s) { h.textContent = `Năm ${y} tháng ${m} âm lịch không có ngày ${d}.`; return false; }
+    [sy, sm, sd] = s.split("-").map(Number);
+  } else if (new Date(y, m - 1, d).getDate() !== d) { h.textContent = `Tháng ${m}/${y} không có ngày ${d}.`; return false; }
+  const t = state.today;
+  if (dateKey(sy, sm, sd) > dateKey(t.y, t.m, t.d)) { h.textContent = "Ngày sinh không được sau hôm nay."; return false; }
+  const r = JSON.parse(Android.day(sy, sm, sd));
+  h.textContent = profLunar
+    ? `Tức ${r.weekday}, ${sd}/${sm}/${sy} dương lịch · tuổi ${r.canChiYear} ${animalOf(r.canChiYear)}`
+    : `Tức ${r.ld}/${r.lm}${r.leap ? " nhuận" : ""} âm lịch · tuổi ${r.canChiYear} ${animalOf(r.canChiYear)}`;
+  return true;
+}
+function openProfile() {
+  const p = state.prefs, b = p.birth;
+  $("profNameIn").value = p.name || "";
+  if (b) b.lunarInput ? setProfCal(true, b.ld, b.lm, b.ly) : setProfCal(false, b.sd, b.sm, b.sy);
+  else setProfCal(!!p.birthYear, 1, 1, p.birthYear || 1990);   // bản cũ chỉ có năm âm lịch
+  $("profClear").hidden = !(p.name || b || p.birthYear); $("profClear").textContent = "Xóa"; delete $("profClear").dataset.arm;
+  $("profBg").hidden = false; $("profSheet").hidden = false;
+}
+function closeProfile() { $("profSheet").hidden = true; $("profBg").hidden = true; }
+$("profileRow").onclick = openProfile;
+$("profCancel").onclick = closeProfile; $("profBg").onclick = closeProfile;
+$("profCal").onclick = e => {
+  const b = e.target.closest("button"); if (!b || (b.dataset.v === "lunar") === profLunar) return;
+  // Đổi kiểu lịch: giữ nguyên ngày sinh, chỉ đổi cách nhập
+  const ok = profHint(), d = +$("profDay").value, m = +$("profMonth").value, y = +$("profYear").value;
+  if (!ok) return setProfCal(!profLunar, d, m, y);
+  if (profLunar) { const [sy, sm, sd] = Android.lunarToSolar(d, m, y).split("-").map(Number); setProfCal(false, sd, sm, sy); }
+  else { const r = JSON.parse(Android.day(y, m, d)); setProfCal(true, r.ld, r.lm, r.ly); }
+};
+["profDay", "profMonth", "profYear"].forEach(id => $(id).onchange = profHint);
+$("profSave").onclick = () => {
+  if (!profHint()) { toast($("profHint").textContent); return; }
+  const err = Android.setProfile($("profNameIn").value.trim(), profLunar, +$("profDay").value, +$("profMonth").value, +$("profYear").value);
+  if (err) { toast(err); return; }
+  closeProfile(); toast("Đã lưu hồ sơ");
+};
+$("profClear").onclick = () => {
+  if (!$("profClear").dataset.arm) { $("profClear").dataset.arm = "1"; $("profClear").textContent = "Xóa thật?"; return; }
+  Android.clearProfile(); closeProfile(); toast("Đã xóa hồ sơ");
 };
 $("exportRow").onclick = () => Android.exportEvents();
 $("importRow").onclick = () => Android.importEvents();
@@ -918,6 +997,7 @@ function closeSettings() { $("settings").classList.remove("open"); $("citySearch
 window.closeSettingsIfOpen = function () {
   if (!$("sheet").hidden) { closeSheet(); return true; }
   if (!$("convSheet").hidden) { closeConv(); return true; }
+  if (!$("profSheet").hidden) { closeProfile(); return true; }
   if ($("settings").classList.contains("open")) { closeSettings(); return true; }
   return false;
 };

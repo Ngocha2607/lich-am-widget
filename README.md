@@ -19,7 +19,8 @@ Màn hình app (số liệu thời tiết là mẫu):
 ## Tính năng
 
 **Widget**
-- Ba cỡ: 2×2 (ngày âm + nhiệt độ), 4×2 (thêm gợi ý), 4×4 (thêm dự báo 3 ngày và sự kiện sắp tới). Kéo giãn widget là tự đổi bố cục.
+- Ba cỡ: 2×2 (ngày âm + nhiệt độ), 4×2 (thêm gợi ý), 4×4 (thêm dự báo 3 ngày và sự kiện sắp tới). Kéo giãn widget là tự đổi bố cục (Android 12+ do launcher chọn theo kích thước thật).
+- Qua 0h widget tự đổi sang ngày mới (không đánh thức máy, vẽ lại khi bạn mở màn hình).
 - Nền gradient đổi theo giờ mặt trời mọc/lặn của thành phố đã chọn (đêm, sáng sớm, ban ngày, chiều tà) và chuyển xám xanh khi mưa.
 - Dòng ngày âm nổi bật kèm tuần trăng 🌒🌕🌘; ngày rằm, mùng 1, lễ Tết đổi chữ vàng; đếm ngược Tết trong 90 ngày cuối năm.
 - Dòng gợi ý theo thứ tự ưu tiên: sự kiện cá nhân → cảnh báo thời tiết → rằm/mùng 1/lễ → tiết khí → hoàng đạo. Sau 18h nói về ngày mai.
@@ -31,10 +32,10 @@ Màn hình app (số liệu thời tiết là mẫu):
 - Sự kiện: giỗ, sinh nhật, lịch hẹn theo âm hoặc dương lịch, lặp hằng năm, giờ, nhắc trước. Chọn ngày âm thì hiện luôn rơi vào ngày dương nào; giỗ 30 âm gặp tháng thiếu tự tính vào 29.
 - Thời tiết 7 ngày: đường nhiệt độ cao nhất/thấp nhất, UV, cảm giác, độ ẩm, gió (hướng + cấp Beaufort), áp suất, tầm nhìn, thanh bình minh–hoàng hôn. Lưu nhiều thành phố, chuyển bằng chip.
 - Gợi ý hôm nay / cho ngày mai.
-- Xem ngày: trực (thập nhị kiến trừ) với việc nên làm, không nên; ngũ hành nạp âm; tuổi xung; hướng xuất hành (Hỷ thần, Tài thần); giờ xuất hành Lục Diệu.
-- Chọn ngày tốt: cưới hỏi, khai trương, khởi công, nhập trạch, ký hợp đồng, mua xe, xuất hành, cúng lễ — chấm điểm theo hoàng đạo, trực, Lục Diệu, loại ngày trực xấu và ngày xung tuổi.
+- Xem ngày: trực (thập nhị kiến trừ) với việc nên làm, không nên; sao Nhị thập bát tú (tốt/xấu, nên/kỵ); ngũ hành nạp âm; tuổi xung; hướng xuất hành (Hỷ thần, Tài thần); giờ xuất hành Lục Diệu.
+- Chọn ngày tốt: cưới hỏi, khai trương, khởi công, nhập trạch, ký hợp đồng, mua xe, xuất hành, cúng lễ — chấm điểm theo hoàng đạo, trực, Lục Diệu, sao Nhị thập bát tú, loại ngày trực xấu và ngày xung tuổi.
 - Đếm ngược Tết; đổi lịch âm ↔ dương; chia sẻ ảnh "Hôm nay" lên Zalo, Facebook.
-- Hồ sơ: nhập năm sinh âm lịch để xét hợp/xung tuổi. Bật/tắt từng mục hiển thị, chọn giao diện sáng/tối.
+- Hồ sơ: họ tên và ngày sinh (nhập theo âm hoặc dương lịch, hiện luôn ngày quy đổi). Tuổi can chi tính theo năm âm của ngày sinh, nên người sinh tháng 1–2 trước Tết vẫn đúng tuổi, dùng để xét hợp/xung tuổi. Bật/tắt từng mục hiển thị, chọn giao diện sáng/tối.
 
 **Thông báo**
 - Nhắc sự kiện sắp tới vào giờ bạn chọn (mặc định 7:00), nhắc rằm/mùng 1/lễ Tết (hôm trước và đúng ngày), cảnh báo thời tiết ngày mai lúc 20:00 (mưa, dông, rét, nắng nóng).
@@ -85,8 +86,9 @@ Mỗi lần sửa code và `git push`, GitHub tự build bản mới (sửa `doc
 - Ngũ hành ngày: nạp âm 60 hoa giáp.
 - Hướng xuất hành: Hỷ thần, Tài thần theo can ngày.
 - Hợp/xung tuổi: lục xung, tam hợp, lục hợp theo chi.
+- Nhị thập bát tú: chu kỳ 28 ngày liên tục gắn với tuần (sao Giác luôn vào thứ Năm). Ngày mốc đối chiếu khớp với lichngaytot.com, xemlicham.com, lichvannien.net, licham.vn và hoàng lịch Trung Quốc (值日星宿); tốt/xấu theo xemlicham.com và lichngaytot.com (khớp nhau cả 28 sao). Một vài trang lịch khác (ngaydep.com, chogia.vn) lệch chu kỳ nên không dùng làm mốc.
 
-Chưa có: sao tốt/sao xấu theo Ngọc Hạp thông thư và nhị thập bát tú, vì chưa có bảng tra đủ tin cậy để đưa vào. Các mục xem ngày chỉ để tham khảo.
+Chưa có: sao tốt/sao xấu theo Ngọc Hạp thông thư, vì chưa có bảng tra đủ tin cậy để đưa vào. Các mục xem ngày chỉ để tham khảo.
 
 ## Lưu ý
 

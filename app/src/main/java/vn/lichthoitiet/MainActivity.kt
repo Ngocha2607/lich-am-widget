@@ -168,6 +168,16 @@ class MainActivity : Activity() {
         return "${LunarCalendar.canChiYear(y)} ${CON_GIAP[Almanac.birthChi(y)]}"
     }
 
+    /** Ngày sinh cả hai lịch để trang hiện và điền sẵn khi sửa; null nếu chưa nhập. */
+    private fun birthJson(): Any {
+        val solar = try { LocalDate.parse(prefs.birthDate) } catch (e: Exception) { return JSONObject.NULL }
+        val l = LunarCalendar.convert(solar)
+        return JSONObject()
+            .put("sd", solar.dayOfMonth).put("sm", solar.monthValue).put("sy", solar.year)
+            .put("ld", l.day).put("lm", l.month).put("ly", l.year).put("leap", l.leap)
+            .put("lunarInput", prefs.birthLunarInput)
+    }
+
     private fun stateJson(): String {
         val now = LocalDateTime.now()
         val today = now.toLocalDate()
@@ -192,7 +202,8 @@ class MainActivity : Activity() {
                 .put("showHuong", prefs.showHuong).put("showGoodDays", prefs.showGoodDays)
                 .put("notifyEvents", prefs.notifyEvents).put("notifyLunar", prefs.notifyLunar).put("notifyHour", prefs.notifyHour)
                 .put("notifyWeather", prefs.notifyWeather).put("notifyWeatherHour", prefs.notifyWeatherHour)
-                .put("birthYear", prefs.birthYear).put("birthLabel", birthLabel()))
+                .put("birthYear", prefs.birthYear).put("birthLabel", birthLabel())
+                .put("name", prefs.profileName).put("birth", birthJson()))
             put("weather", if (w == null) JSONObject.NULL else weatherJson(w))
         }.toString()
     }
@@ -291,6 +302,8 @@ class MainActivity : Activity() {
                 put("truc", a.truc); put("trucNen", JSONArray(a.nen)); put("trucKy", JSONArray(a.ky))
                 put("napAm", a.napAm); put("nguHanh", a.nguHanh); put("xung", a.xung)
                 put("hyThan", a.hyThan); put("taiThan", a.taiThan); put("lucDieuDay", a.lucDieuDay)
+                put("tu", a.tu.name); put("tuFull", a.tu.fullName); put("tuGood", a.tu.good)
+                put("tuNen", a.tu.nen); put("tuKy", a.tu.ky)
                 put("lucDieu", JSONArray().apply {
                     a.lucDieu.forEach { put(JSONObject().put("name", it.name).put("hours", it.hours).put("good", it.good).put("desc", it.desc)) }
                 })
@@ -363,9 +376,28 @@ class MainActivity : Activity() {
 
         // ---- Hồ sơ ----
 
+        /**
+         * Lưu họ tên và ngày sinh (nhập theo âm hoặc dương lịch). Năm sinh âm lịch để xét tuổi
+         * được tính từ ngày sinh. Trả về "" nếu lưu được, ngược lại là câu báo lỗi.
+         */
         @JavascriptInterface
-        fun setBirthYear(year: Int) {
-            prefs.birthYear = if (year in 1900..2100) year else 0
+        fun setProfile(name: String, lunar: Boolean, d: Int, m: Int, y: Int): String {
+            val birth = Almanac.birthToSolar(lunar, d, m, y, LocalDate.now())
+                ?: return if (lunar) "Năm $y không có ngày $d tháng $m âm lịch." else "Ngày sinh không hợp lệ."
+            prefs.profileName = name.trim().take(60)
+            prefs.birthDate = birth.toString()
+            prefs.birthLunarInput = lunar
+            prefs.birthYear = LunarCalendar.convert(birth).year
+            pushState()
+            return ""
+        }
+
+        @JavascriptInterface
+        fun clearProfile() {
+            prefs.profileName = ""
+            prefs.birthDate = ""
+            prefs.birthLunarInput = false
+            prefs.birthYear = 0
             pushState()
         }
 

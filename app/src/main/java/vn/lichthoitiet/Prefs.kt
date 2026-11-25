@@ -63,10 +63,28 @@ class Prefs(ctx: Context) {
         get() = sp.getInt("notifyWeatherHour", 20)
         set(v) = sp.edit().putInt("notifyWeatherHour", v).apply()
 
-    /** Năm sinh âm lịch để xét hợp/xung tuổi; 0 = chưa đặt. */
+    /**
+     * Năm sinh âm lịch để xét hợp/xung tuổi; 0 = chưa đặt.
+     * Có [birthDate] thì giá trị này được tính từ ngày sinh; bản cũ chỉ lưu mỗi năm.
+     */
     var birthYear: Int
         get() = sp.getInt("birthYear", 0)
         set(v) = sp.edit().putInt("birthYear", v).apply()
+
+    /** Họ tên đầy đủ trong hồ sơ. */
+    var profileName: String
+        get() = sp.getString("profileName", "") ?: ""
+        set(v) = sp.edit().putString("profileName", v).apply()
+
+    /** Ngày sinh dương lịch dạng "1990-03-12"; "" = chưa nhập. */
+    var birthDate: String
+        get() = sp.getString("birthDate", "") ?: ""
+        set(v) = sp.edit().putString("birthDate", v).apply()
+
+    /** Người dùng nhập ngày sinh theo âm lịch (để mở lại đúng kiểu lịch khi sửa). */
+    var birthLunarInput: Boolean
+        get() = bool("birthLunarInput", false)
+        set(v) = put("birthLunarInput", v)
 
     /** Các thành phố đã lưu; luôn chứa thành phố đang chọn ở đầu. */
     var cities: List<CityPref>

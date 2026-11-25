@@ -4,6 +4,9 @@ import java.time.LocalDate
 
 data class LucDieuHour(val name: String, val hours: String, val good: Boolean, val desc: String)
 
+/** Một sao trong Nhị thập bát tú. [nen]/[ky] rỗng nghĩa là "không hợp việc gì" / "không kỵ gì". */
+data class Tu(val name: String, val fullName: String, val good: Boolean, val nen: String, val ky: String)
+
 /** Thông tin xem ngày tính theo trực (thập nhị kiến trừ), can chi và phép Lục Diệu. */
 data class DayAlmanac(
     val truc: String,
@@ -16,6 +19,7 @@ data class DayAlmanac(
     val taiThan: String,
     val lucDieuDay: String,
     val lucDieu: List<LucDieuHour>,
+    val tu: Tu,
 )
 
 data class GoodDayTask(val key: String, val name: String, val icon: String, val good: Set<Int>, val bad: Set<Int>)
@@ -64,6 +68,49 @@ object Almanac {
         "Xấu, cầu tài không lợi, hay bị trái ý; việc quan không thuận, kiện cáo bất lợi.",
     )
 
+    /**
+     * Nhị thập bát tú theo thứ tự, bắt đầu từ sao Giác. Tốt/xấu theo xemlicham.com và lichngaytot.com
+     * (hai nguồn khớp nhau cả 28 sao); việc nên/kỵ tóm tắt từ xemlicham.com.
+     */
+    val NHI_THAP_BAT_TU = listOf(
+        Tu("Giác", "Giác Mộc Giao", true, "tạo tác, cưới hỏi, cầu công danh, thi cử", "chôn cất, sửa mộ"),
+        Tu("Cang", "Cang Kim Long", false, "cắt may", "chôn cất, cưới gả, kiện tụng"),
+        Tu("Đê", "Đê Thổ Lạc", false, "", "khởi công, chôn cất, cưới gả, xuất hành, đi đường thủy"),
+        Tu("Phòng", "Phòng Nhật Thố", true, "mọi việc: cưới gả, xuất hành, xây nhà, chôn cất, mua bán", ""),
+        Tu("Tâm", "Tâm Nguyệt Hồ", false, "", "cưới gả, đóng giường, xây cất, chôn cất, kiện tụng"),
+        Tu("Vĩ", "Vĩ Hỏa Hổ", true, "khởi tạo, cưới gả, xây cất, chôn cất, thủy lợi", "đóng giường, đi thuyền, mua sắm"),
+        Tu("Cơ", "Cơ Thủy Báo", true, "khai trương, xuất hành, chôn cất, tu bổ mộ, thủy lợi", "đóng giường, đi thuyền"),
+        Tu("Đẩu", "Đẩu Mộc Giải", true, "xây đắp, sửa mộ, thủy lợi, may mặc, kinh doanh", "đi thuyền"),
+        Tu("Ngưu", "Ngưu Kim Ngưu", false, "đi thuyền, cắt may", "khởi công, xây nhà, cưới gả, xuất hành"),
+        Tu("Nữ", "Nữ Thổ Bức", false, "may áo, kết màn", "khởi công, tháo nước, trổ cửa, kiện cáo, chôn cất"),
+        Tu("Hư", "Hư Nhật Thử", false, "", "xây nhà, khai trương, cưới gả, trổ cửa"),
+        Tu("Nguy", "Nguy Nguyệt Yến", false, "lót giường, chôn cất", "dựng nhà, gác đòn dông, tháo nước, đi thuyền"),
+        Tu("Thất", "Thất Hỏa Trư", true, "mọi việc: xây nhà, cưới gả, chôn cất, thủy lợi", ""),
+        Tu("Bích", "Bích Thủy Du", true, "mọi việc: khai trương, xuất hành, xây nhà, cưới gả, chôn cất", ""),
+        Tu("Khuê", "Khuê Mộc Lang", false, "nhập học, cắt áo, dựng nhà, cầu công danh", "chôn cất, khai trương, trổ cửa, đào giếng, kiện tụng"),
+        Tu("Lâu", "Lâu Kim Cẩu", true, "dựng cột, cưới gả, cất lầu, thủy lợi", "đóng giường, đi đường thủy"),
+        Tu("Vị", "Vị Thổ Trĩ", true, "cưới gả, xây cất, gieo trồng", "đi thuyền"),
+        Tu("Mão", "Mão Nhật Kê", false, "xây dựng", "chôn cất, cưới gả, khai trương, xuất hành"),
+        Tu("Tất", "Tất Nguyệt Ô", true, "trổ cửa, thủy lợi, cưới gả, chôn cất, đào giếng", "đi thuyền"),
+        Tu("Chủy", "Chủy Hỏa Hầu", false, "", "chôn cất, sửa mộ"),
+        Tu("Sâm", "Sâm Thủy Viên", true, "xây nhà, trổ cửa, nhập học, thủy lợi, đi thuyền", "cưới gả, đóng giường, chôn cất"),
+        Tu("Tỉnh", "Tỉnh Mộc Hãn", true, "trổ cửa, đào giếng, xây cất, nhậm chức, nhập học", "chôn cất, tu bổ mộ"),
+        Tu("Quỷ", "Quỷ Kim Dương", false, "chôn cất, cắt áo", "xây nhà, cưới gả, động thổ, trổ cửa"),
+        Tu("Liễu", "Liễu Thổ Chướng", false, "", "thủy lợi, chôn cất, trổ cửa, xây đắp"),
+        Tu("Tinh", "Tinh Nhật Mã", false, "xây phòng mới", "chôn cất, cưới gả, khơi đường nước"),
+        Tu("Trương", "Trương Nguyệt Lộc", true, "mọi việc: xây nhà, cưới gả, chôn cất, làm ruộng", "sửa thuyền, hạ thủy thuyền"),
+        Tu("Dực", "Dực Hỏa Xà", false, "cắt áo", "chôn cất, xây nhà, cưới gả, trổ cửa, thủy lợi"),
+        Tu("Chẩn", "Chẩn Thủy Dẫn", true, "cưới gả, xây lầu, chôn cất, xuất hành", "đi thuyền"),
+    )
+
+    /**
+     * Sao Nhị thập bát tú của ngày: chu kỳ 28 ngày liên tục gắn với tuần (sao Giác luôn vào thứ Năm).
+     * Mốc đối chiếu: 26/11/2026 sao Khuê, 1/1/2000 sao Vị (lichngaytot, xemlicham, hoàng lịch 值日星宿).
+     */
+    fun tuIndex(jd: Int): Int = ((jd + 11) % 28 + 28) % 28
+
+    fun tu(jd: Int): Tu = NHI_THAP_BAT_TU[tuIndex(jd)]
+
     /** Nạp âm 60 hoa giáp, mỗi mục ứng với hai can chi liên tiếp. */
     val NAP_AM = listOf(
         "Hải Trung Kim", "Lư Trung Hỏa", "Đại Lâm Mộc", "Lộ Bàng Thổ", "Kiếm Phong Kim",
@@ -93,6 +140,16 @@ object Almanac {
 
     private val TAM_HOP = listOf(setOf(8, 0, 4), setOf(5, 9, 1), setOf(2, 6, 10), setOf(11, 3, 7))
     private val LUC_HOP = mapOf(0 to 1, 1 to 0, 2 to 11, 11 to 2, 3 to 10, 10 to 3, 4 to 9, 9 to 4, 5 to 8, 8 to 5, 6 to 7, 7 to 6)
+
+    /**
+     * Ngày sinh dương lịch từ ngày người dùng nhập theo âm ([lunar] = true) hoặc dương lịch.
+     * Trả về null nếu ngày không tồn tại (31/2, 30 của tháng âm thiếu) hoặc ở sau [today].
+     */
+    fun birthToSolar(lunar: Boolean, d: Int, m: Int, y: Int, today: LocalDate): LocalDate? {
+        val date = if (lunar) LunarCalendar.toSolar(d, m, y)
+        else try { LocalDate.of(y, m, d) } catch (e: Exception) { null }
+        return date?.takeIf { !it.isAfter(today) }
+    }
 
     /** Chi của tuổi theo năm sinh âm lịch. */
     fun birthChi(lunarYear: Int): Int = ((lunarYear + 8) % 12 + 12) % 12
@@ -136,6 +193,7 @@ object Almanac {
             xung = LunarCalendar.CHI[(z + 6) % 12],
             hyThan = HY_THAN[c], taiThan = TAI_THAN[c],
             lucDieuDay = LUC_DIEU[ld], lucDieu = hours,
+            tu = tu(l.jd),
         )
     }
 
@@ -157,6 +215,8 @@ object Almanac {
             if (hd) { score += 2; reasons += "Hoàng đạo" }
             if (t in task.good) { score += 2; reasons += "Trực ${TRUC[t]}" }
             if (ld in LUC_DIEU_GOOD) { score += 1; reasons += LUC_DIEU[ld] }
+            val tu = tu(l.jd)
+            if (tu.good) { score += 1; reasons += "Sao ${tu.name}" }
             if (rel > 0) { score += 1; reasons += "Hợp tuổi" }
             if (score >= 3) out += GoodDay(d, score, reasons, TRUC[t], hd)
         }

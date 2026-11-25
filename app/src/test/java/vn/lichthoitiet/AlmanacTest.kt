@@ -1,8 +1,10 @@
 package vn.lichthoitiet
 
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.DayOfWeek
 import java.time.LocalDate
 
 class AlmanacTest {
@@ -36,6 +38,48 @@ class AlmanacTest {
         val a = Almanac.of(day)
         assertEquals("Sửu", a.xung)
         assertEquals("Chính Nam", a.hyThan)   // can Đinh
+    }
+
+    private fun tuOn(y: Int, m: Int, d: Int) = Almanac.tu(LunarCalendar.jdFromDate(d, m, y)).name
+
+    @Test
+    fun nhiThapBatTuNgayMoc() {
+        // Đối chiếu lichngaytot, xemlicham, lichvannien.net, licham.vn và hoàng lịch 值日星宿
+        assertEquals("Giác", tuOn(2026, 5, 28))
+        assertEquals("Bích", tuOn(2026, 11, 25))
+        assertEquals("Khuê", tuOn(2026, 11, 26))
+        assertEquals("Tỉnh", tuOn(2026, 12, 3))
+        assertEquals("Quỷ", tuOn(2027, 1, 1))
+        assertEquals("Đê", tuOn(2027, 2, 6))
+        assertEquals("Vị", tuOn(2000, 1, 1))
+    }
+
+    @Test
+    fun nhiThapBatTuGanVoiThuTrongTuan() {
+        // Giác (Mộc) luôn thứ Năm, Cang (Kim) thứ Sáu, ... Cơ (Thủy) thứ Tư
+        var d = LocalDate.of(2026, 1, 1)
+        repeat(800) {
+            val i = Almanac.tuIndex(LunarCalendar.jdFromDate(d.dayOfMonth, d.monthValue, d.year))
+            assertEquals(DayOfWeek.THURSDAY.plus((i % 7).toLong()), d.dayOfWeek)
+            d = d.plusDays(1)
+        }
+        assertEquals(28, Almanac.NHI_THAP_BAT_TU.size)
+        assertEquals(14, Almanac.NHI_THAP_BAT_TU.count { it.good })
+    }
+
+    @Test
+    fun ngaySinh() {
+        val today = LocalDate.of(2026, 11, 25)
+        // Mùng 1 Tết Canh Ngọ là 27/1/1990
+        assertEquals(LocalDate.of(1990, 1, 27), Almanac.birthToSolar(true, 1, 1, 1990, today))
+        assertEquals(LocalDate.of(1990, 3, 12), Almanac.birthToSolar(false, 12, 3, 1990, today))
+        // Sinh 20/1/1990 dương lịch là trước Tết: vẫn tuổi Kỷ Tỵ (năm âm 1989), không phải Canh Ngọ
+        val l = LunarCalendar.convert(Almanac.birthToSolar(false, 20, 1, 1990, today)!!)
+        assertEquals(1989, l.year)
+        assertEquals(5, Almanac.birthChi(l.year)) // Tỵ
+        // Ngày không tồn tại hoặc ở tương lai
+        assertNull(Almanac.birthToSolar(false, 31, 2, 1990, today))
+        assertNull(Almanac.birthToSolar(false, 26, 11, 2026, today))
     }
 
     @Test
