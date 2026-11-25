@@ -83,6 +83,49 @@ class AlmanacTest {
     }
 
     @Test
+    fun kimLau() {
+        // Tuổi mụ 37 (sinh 1990, năm 2026) dư 1: Kim Lâu Thân; 52 không phạm; 33 Kim Lâu Tử; 35 Lục Súc; 30 Thê
+        assertEquals(37, Almanac.checkYear(1990, 2026).tuoi)
+        assertTrue(Almanac.checkYear(1990, 2026).kimLau!!.startsWith("Kim Lâu Thân"))
+        assertNull(Almanac.checkYear(1982, 2033).kimLau)
+        assertTrue(Almanac.checkYear(1994, 2026).kimLau!!.startsWith("Kim Lâu Tử"))
+        assertTrue(Almanac.checkYear(1992, 2026).kimLau!!.startsWith("Kim Lâu Lục Súc"))
+        assertTrue(Almanac.checkYear(1997, 2026).kimLau!!.startsWith("Kim Lâu Thê"))
+        assertNull(Almanac.checkYear(2002, 2026).kimLau)  // 25 tuổi
+    }
+
+    @Test
+    fun hoangOc() {
+        fun cung(tuoi: Int) = Almanac.checkYear(2026 - tuoi + 1, 2026).hoangOc
+        assertEquals("Nhì Nghi", cung(26))
+        assertEquals("Tam Địa Sát", cung(27))
+        assertEquals("Tứ Tấn Tài", cung(28))
+        assertEquals("Ngũ Thọ Tử", cung(29))
+        assertEquals("Lục Hoang Ốc", cung(33))
+        assertEquals("Nhất Cát", cung(52))
+        assertEquals("Tứ Tấn Tài", cung(37))
+        // Danh sách tuổi phạm Hoang Ốc (batdongsan) từ 12 đến 75
+        val pham = listOf(12, 14, 15, 18, 21, 23, 24, 27, 29, 30, 32, 33, 36, 38, 39, 41, 42, 45, 47, 48, 50, 51, 54, 56, 57, 60, 63, 65, 66, 69, 72, 74, 75)
+        for (t in 12..75) assertEquals("tuổi $t", t in pham, Almanac.checkYear(2026 - t + 1, 2026).hoangOcBad)
+        assertNull(cung(5))
+    }
+
+    @Test
+    fun tamTaiThaiTue() {
+        // 2026 (Ngọ): Hợi, Mão, Mùi phạm Tam Tai (năm giữa)
+        assertEquals("Tam Tai năm giữa", Almanac.checkYear(1995, 2026).tamTai) // Ất Hợi
+        assertEquals("Tam Tai năm giữa", Almanac.checkYear(1999, 2026).tamTai) // Kỷ Mão
+        assertNull(Almanac.checkYear(1990, 2026).tamTai)                      // Canh Ngọ
+        // Bính Tý 1996: Tam Tai 2022 (Dần), 2023 (Mão), 2024 (Thìn)
+        assertEquals("Tam Tai năm đầu", Almanac.checkYear(1996, 2022).tamTai)
+        assertEquals("Tam Tai năm cuối", Almanac.checkYear(1996, 2024).tamTai)
+        assertNull(Almanac.checkYear(1996, 2025).tamTai)
+        assertEquals("Năm tuổi (phạm Thái Tuế)", Almanac.checkYear(1990, 2026).thaiTue)
+        assertEquals("Xung Thái Tuế", Almanac.checkYear(1996, 2026).thaiTue)  // Tý xung Ngọ
+        assertTrue(Almanac.checkYear(1990, 2026).badForHouse)
+    }
+
+    @Test
     fun chiTuoi() {
         assertEquals(4, Almanac.birthChi(2000)) // Canh Thìn
     }

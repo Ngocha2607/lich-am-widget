@@ -22,6 +22,24 @@ data class DayAlmanac(
     val tu: Tu,
 )
 
+/**
+ * Xem tuổi một năm âm lịch cho người sinh năm âm [birthYear].
+ * [kimLau]/[thaiTue] null nghĩa là không phạm; [hoangOc] là tên cung, [hoangOcBad] cung xấu.
+ */
+data class YearCheck(
+    val year: Int,
+    val canChi: String,
+    val tuoi: Int,
+    val kimLau: String?,
+    val hoangOc: String?,
+    val hoangOcBad: Boolean,
+    val tamTai: String?,
+    val thaiTue: String?,
+) {
+    /** Phạm Kim Lâu, Hoang Ốc hoặc Tam Tai: không nên tự đứng tên làm nhà. */
+    val badForHouse get() = kimLau != null || hoangOcBad || tamTai != null
+}
+
 data class GoodDayTask(val key: String, val name: String, val icon: String, val good: Set<Int>, val bad: Set<Int>)
 data class GoodDay(val date: LocalDate, val score: Int, val reasons: List<String>, val truc: String, val hoangDao: Boolean)
 
@@ -149,6 +167,44 @@ object Almanac {
         val date = if (lunar) LunarCalendar.toSolar(d, m, y)
         else try { LocalDate.of(y, m, d) } catch (e: Exception) { null }
         return date?.takeIf { !it.isAfter(today) }
+    }
+
+    private val KIM_LAU = mapOf(
+        1 to "Kim Lâu Thân (hại bản thân)", 3 to "Kim Lâu Thê (hại vợ/chồng)",
+        6 to "Kim Lâu Tử (hại con cái)", 8 to "Kim Lâu Lục Súc (hại vật nuôi, tài sản)",
+    )
+    val HOANG_OC = listOf("Nhất Cát", "Nhì Nghi", "Tam Địa Sát", "Tứ Tấn Tài", "Ngũ Thọ Tử", "Lục Hoang Ốc")
+    private val HOANG_OC_BAD = setOf(2, 4, 5)
+    private val TAM_TAI_LABEL = listOf("năm đầu", "năm giữa", "năm cuối")
+
+    /**
+     * Kim Lâu, Hoang Ốc, Tam Tai, Thái Tuế của năm âm [year] với người sinh năm âm [birthYear].
+     * Dùng tuổi mụ = năm xem − năm sinh + 1 (đối chiếu dienmayxanh, batdongsan, chogia, vnreview).
+     * - Kim Lâu: tuổi mụ chia 9 dư 1, 3, 6, 8.
+     * - Hoang Ốc: 10 tuổi ở Nhất Cát, mỗi chục tiến một cung, mỗi năm lẻ tiến tiếp một cung (vòng 6 cung).
+     * - Tam Tai: ba năm liền theo nhóm tam hợp của tuổi (Thân Tý Thìn → Dần Mão Thìn, ...).
+     * - Thái Tuế: năm tuổi (trùng chi) hoặc năm xung (chi đối).
+     */
+    fun checkYear(birthYear: Int, year: Int): YearCheck {
+        val tuoi = year - birthYear + 1
+        val bChi = birthChi(birthYear)
+        val yChi = birthChi(year)
+        val hoangOc = if (tuoi >= 10) Math.floorMod(tuoi / 10 - 1 + tuoi % 10, 6) else -1
+        // Năm bắt đầu Tam Tai theo nhóm tam hợp: Thân Tý Thìn → Dần, Tỵ Dậu Sửu → Hợi, Dần Ngọ Tuất → Thân, Hợi Mão Mùi → Tỵ
+        val tamTaiStart = intArrayOf(2, 11, 8, 5)[bChi % 4]
+        val tt = (yChi - tamTaiStart + 12) % 12
+        return YearCheck(
+            year = year, canChi = LunarCalendar.canChiYear(year), tuoi = tuoi,
+            kimLau = if (tuoi > 0) KIM_LAU[tuoi % 9] else null,
+            hoangOc = if (hoangOc >= 0) HOANG_OC[hoangOc] else null,
+            hoangOcBad = hoangOc in HOANG_OC_BAD,
+            tamTai = if (tt <= 2) "Tam Tai ${TAM_TAI_LABEL[tt]}" else null,
+            thaiTue = when ((yChi - bChi + 12) % 12) {
+                0 -> "Năm tuổi (phạm Thái Tuế)"
+                6 -> "Xung Thái Tuế"
+                else -> null
+            },
+        )
     }
 
     /** Chi của tuổi theo năm sinh âm lịch. */

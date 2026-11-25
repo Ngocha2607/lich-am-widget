@@ -27,6 +27,27 @@ class EventStoreTest {
     }
 
     @Test
+    fun ngay29Thang2() {
+        val e = ev(lunar = false, d = 29, m = 2)
+        assertTrue(EventStore.occursOn(e, LocalDate.of(2028, 2, 29)))   // năm nhuận: đúng ngày
+        assertFalse(EventStore.occursOn(e, LocalDate.of(2028, 2, 28)))
+        assertTrue(EventStore.occursOn(e, LocalDate.of(2027, 2, 28)))   // năm thường: làm vào 28/2
+        assertFalse(EventStore.occursOn(ev(lunar = false, d = 28, m = 2), LocalDate.of(2027, 3, 1)))
+    }
+
+    @Test
+    fun sinhNhatTuHoSo() {
+        // Sinh 12/3/1990 dương lịch = 16/2 âm lịch năm Canh Ngọ
+        val duong = EventStore.birthdayEvent("1990-03-12", lunar = false)!!
+        assertEquals(EventStore.BIRTHDAY_ID, duong.id)
+        assertTrue(EventStore.occursOn(duong, LocalDate.of(2027, 3, 12)))
+        val am = EventStore.birthdayEvent("1990-03-12", lunar = true)!!
+        assertEquals(16, am.day); assertEquals(2, am.month); assertTrue(am.lunar)
+        assertTrue(EventStore.occursOn(am, LunarCalendar.toSolar(16, 2, 2027)!!))
+        assertEquals(null, EventStore.birthdayEvent("", lunar = false))
+    }
+
+    @Test
     fun xuatIcsCaNgay() {
         val e = Event("x", "Giỗ, ông", "🕯️", true, 18, 10, null, true, "", "Về quê; sớm", 3)
         val ics = EventStore.toIcs(listOf(e), LocalDate.of(2026, 11, 24), 1)

@@ -98,7 +98,7 @@ object WidgetRenderer {
         val now: LocalDateTime = LocalDateTime.now()
         val lunar = LunarCalendar.convert(today)
         val weather = WeatherRepo.load(context)
-        val upcoming = EventStore.upcoming(EventStore.load(context), today)
+        val upcoming = EventStore.upcoming(Profile.eventsWithBirthday(context), today)
         val tip = SuggestionEngine.build(today, now, weather, prefs.spiritual, upcoming).first()
     }
 

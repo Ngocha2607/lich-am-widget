@@ -118,7 +118,7 @@ object Reminders {
         val nm = manager(ctx)
 
         if (prefs.notifyEvents) {
-            EventStore.upcoming(EventStore.load(ctx), today, 30)
+            EventStore.upcoming(Profile.eventsWithBirthday(ctx), today, 30)
                 .filter { it.daysLeft <= it.event.remind }
                 .forEach { u ->
                     val e = u.event

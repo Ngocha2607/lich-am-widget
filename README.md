@@ -29,13 +29,14 @@ Màn hình app (số liệu thời tiết là mẫu):
 **Màn hình app**
 - Lưới tháng có ngày âm dưới ngày dương, chấm vàng ngày hoàng đạo, chấm xanh ngày có sự kiện; thu gọn thành một hàng tuần được.
 - Thẻ ngày: số ngày lớn, giờ can chi hiện tại, ngày/tháng/năm can chi, tiết khí, hoàng/hắc đạo, tuần trăng, hợp/xung với tuổi bạn (nếu đã nhập năm sinh).
-- Sự kiện: giỗ, sinh nhật, lịch hẹn theo âm hoặc dương lịch, lặp hằng năm, giờ, nhắc trước. Chọn ngày âm thì hiện luôn rơi vào ngày dương nào; giỗ 30 âm gặp tháng thiếu tự tính vào 29.
+- Sự kiện: giỗ, sinh nhật, lịch hẹn theo âm hoặc dương lịch, lặp hằng năm, giờ, nhắc trước. Chọn ngày âm thì hiện luôn rơi vào ngày dương nào; giỗ 30 âm gặp tháng thiếu tự tính vào 29; sự kiện 29/2 dương lịch năm không nhuận tính vào 28/2.
 - Thời tiết 7 ngày: đường nhiệt độ cao nhất/thấp nhất, UV, cảm giác, độ ẩm, gió (hướng + cấp Beaufort), áp suất, tầm nhìn, thanh bình minh–hoàng hôn. Lưu nhiều thành phố, chuyển bằng chip.
 - Gợi ý hôm nay / cho ngày mai.
-- Xem ngày: trực (thập nhị kiến trừ) với việc nên làm, không nên; sao Nhị thập bát tú (tốt/xấu, nên/kỵ); ngũ hành nạp âm; tuổi xung; hướng xuất hành (Hỷ thần, Tài thần); giờ xuất hành Lục Diệu.
+- Xem ngày: trực (thập nhị kiến trừ) với việc nên làm, không nên; sao Nhị thập bát tú (tốt/xấu, nên/kỵ); sao tốt, sao xấu theo Ngọc Hạp thông thư (chạm tên sao để xem ý nghĩa); ngũ hành nạp âm; tuổi xung; hướng xuất hành (Hỷ thần, Tài thần); giờ xuất hành Lục Diệu.
+- Xem tuổi làm nhà, cưới hỏi: Kim Lâu, Hoang Ốc, Tam Tai, Thái Tuế cho 5 năm tới, theo năm sinh trong hồ sơ hoặc chọn năm khác (ví dụ tuổi cô dâu).
 - Chọn ngày tốt: cưới hỏi, khai trương, khởi công, nhập trạch, ký hợp đồng, mua xe, xuất hành, cúng lễ — chấm điểm theo hoàng đạo, trực, Lục Diệu, sao Nhị thập bát tú, loại ngày trực xấu và ngày xung tuổi.
 - Đếm ngược Tết; đổi lịch âm ↔ dương; chia sẻ ảnh "Hôm nay" lên Zalo, Facebook.
-- Hồ sơ: họ tên và ngày sinh (nhập theo âm hoặc dương lịch, hiện luôn ngày quy đổi). Tuổi can chi tính theo năm âm của ngày sinh, nên người sinh tháng 1–2 trước Tết vẫn đúng tuổi, dùng để xét hợp/xung tuổi. Bật/tắt từng mục hiển thị, chọn giao diện sáng/tối.
+- Hồ sơ: họ tên và ngày sinh (nhập theo âm hoặc dương lịch, hiện luôn ngày quy đổi). Tuổi can chi tính theo năm âm của ngày sinh, nên người sinh tháng 1–2 trước Tết vẫn đúng tuổi, dùng để xét hợp/xung tuổi và xem tuổi. Sinh nhật của bạn tự hiện trong sự kiện sắp tới, trên widget và được nhắc như sự kiện khác; app chào theo tên. Bật/tắt từng mục hiển thị, chọn giao diện sáng/tối.
 
 **Thông báo**
 - Nhắc sự kiện sắp tới vào giờ bạn chọn (mặc định 7:00), nhắc rằm/mùng 1/lễ Tết (hôm trước và đúng ngày), cảnh báo thời tiết ngày mai lúc 20:00 (mưa, dông, rét, nắng nóng).
@@ -60,14 +61,20 @@ Màn hình app (số liệu thời tiết là mẫu):
    Lần đầu ColorOS sẽ hỏi cho phép cài từ nguồn không xác định, bấm cho phép.
 5. Giữ lâu trên màn hình chính → Widget → "Lịch âm & Thời tiết", hoặc trong app vào Cài đặt → "Thêm widget vào màn hình chính".
 
-Mỗi lần sửa code và `git push`, GitHub tự build bản mới (sửa `docs/` hay README thì không build). Các bản sau cài đè được lên bản trước vì dùng chung khóa ký.
+Mỗi lần sửa code và `git push`, GitHub tự build bản mới (sửa `docs/` hay README thì không build). Chỉ nhánh `main` mới tạo Release; nhánh khác vẫn build và để APK ở mục Artifacts của lần chạy trong tab Actions. Các bản sau cài đè được lên bản trước vì dùng chung khóa ký.
+
+## Xem trước giao diện trên máy tính
+
+Mở `app/src/main/assets/index.html` bằng trình duyệt (hoặc chạy `python -m http.server` trong thư mục đó rồi mở `http://localhost:8000`). Khi không chạy trong app, trang tự nạp `mock.js` để giả lập cầu nối `Android`: ngày âm tính thật, còn thời tiết, trực, giờ tốt, sao Ngọc Hạp là số liệu mẫu. Trong app thật `mock.js` không được tải.
 
 ## Cấu trúc
 
 | File | Vai trò |
 |---|---|
 | `LunarCalendar.kt` | Đổi dương ↔ âm, can chi, hoàng đạo, giờ tốt, tiết khí, tuần trăng, Tết tiếp theo |
-| `Almanac.kt` | Trực ngày, việc nên/kỵ, nạp âm, tuổi hợp/xung, hướng xuất hành, Lục Diệu, chọn ngày tốt |
+| `Almanac.kt` | Trực ngày, việc nên/kỵ, nạp âm, tuổi hợp/xung, hướng xuất hành, Lục Diệu, Nhị thập bát tú, xem tuổi (Kim Lâu, Hoang Ốc, Tam Tai), chọn ngày tốt |
+| `NgocHap.kt` | Sao tốt, sao xấu theo Ngọc Hạp thông thư (bảng quy tắc sinh tự động, xem mục Nguồn tính toán) |
+| `Profile.kt` | Ghép sinh nhật trong hồ sơ vào danh sách sự kiện để hiển thị và nhắc |
 | `Weather.kt` | Gọi Open-Meteo, lưu đệm theo thành phố, đổi mã thời tiết sang tiếng Việt |
 | `SuggestionEngine.kt` | Bảng quy tắc sinh gợi ý theo thứ tự ưu tiên |
 | `EventStore.kt` | Sự kiện cá nhân, sao lưu JSON, xuất .ics |
@@ -77,6 +84,7 @@ Mỗi lần sửa code và `git push`, GitHub tự build bản mới (sửa `doc
 | `ShareCard.kt` | Vẽ ảnh "Hôm nay" để chia sẻ |
 | `MainActivity.kt` | WebView + cầu nối `Android.*` cho trang `assets/index.html` |
 | `assets/index.html` | Toàn bộ giao diện app (HTML/CSS/JS), xem trước được trên trình duyệt |
+| `assets/mock.js` | Giả lập cầu nối `Android` khi mở trang trên trình duyệt |
 
 ## Nguồn tính toán
 
@@ -88,7 +96,10 @@ Mỗi lần sửa code và `git push`, GitHub tự build bản mới (sửa `doc
 - Hợp/xung tuổi: lục xung, tam hợp, lục hợp theo chi.
 - Nhị thập bát tú: chu kỳ 28 ngày liên tục gắn với tuần (sao Giác luôn vào thứ Năm). Ngày mốc đối chiếu khớp với lichngaytot.com, xemlicham.com, lichvannien.net, licham.vn và hoàng lịch Trung Quốc (值日星宿); tốt/xấu theo xemlicham.com và lichngaytot.com (khớp nhau cả 28 sao). Một vài trang lịch khác (ngaydep.com, chogia.vn) lệch chu kỳ nên không dùng làm mốc.
 
-Chưa có: sao tốt/sao xấu theo Ngọc Hạp thông thư, vì chưa có bảng tra đủ tin cậy để đưa vào. Các mục xem ngày chỉ để tham khảo.
+- Sao Ngọc Hạp thông thư (91 sao): quy tắc từng sao được suy ra từ danh sách sao hằng ngày của lichngaytot.com và xemlicham.com cả năm 2026, chỉ giữ sao có quy tắc khớp 100% ở cả hai trang, rồi kiểm lại trên tháng 7–9/2025 (có tháng 6 nhuận) cũng khớp 100%. Kết quả trùng bảng tra truyền thống (ví dụ Thiên Đức tháng Giêng ngày Đinh, Nguyệt Đức tháng Giêng ngày Bính). Sao tính theo tháng âm (tháng nhuận như tháng thường) kết hợp chi, can hoặc can chi của ngày. Không đưa vào các sao hai trang ghi khác nhau hoặc chỉ một trang có (Nguyệt Phá, Thiên Đức Hợp, Thiên Xá, Thiên Ân...) và 12 sao trực thần đã có ở phần hoàng đạo.
+- Xem tuổi (đối chiếu dienmayxanh, batdongsan, chogia, vnreview): tuổi mụ = năm âm xem − năm âm sinh + 1. Kim Lâu khi tuổi mụ chia 9 dư 1, 3, 6, 8. Hoang Ốc: 10 tuổi ở Nhất Cát, mỗi chục tiến một cung, mỗi năm lẻ tiến tiếp một cung; Tam Địa Sát, Ngũ Thọ Tử, Lục Hoang Ốc là xấu. Tam Tai theo nhóm tam hợp (Thân Tý Thìn gặp Dần Mão Thìn...). Thái Tuế: năm tuổi hoặc năm xung.
+
+Các mục xem ngày, xem tuổi chỉ để tham khảo.
 
 ## Lưu ý
 

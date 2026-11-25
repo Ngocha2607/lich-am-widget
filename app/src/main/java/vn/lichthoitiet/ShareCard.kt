@@ -49,7 +49,7 @@ object ShareCard {
         val now = LocalDateTime.now()
         val l = LunarCalendar.convert(today)
         val w = WeatherRepo.load(activity)
-        val tips = SuggestionEngine.build(today, now, w, prefs.spiritual, EventStore.upcoming(EventStore.load(activity), today))
+        val tips = SuggestionEngine.build(today, now, w, prefs.spiritual, EventStore.upcoming(Profile.eventsWithBirthday(activity), today))
 
         val bmp = Bitmap.createBitmap(W, H, Bitmap.Config.ARGB_8888)
         val c = Canvas(bmp)

@@ -253,7 +253,7 @@ class MainActivity : Activity() {
         @JavascriptInterface
         fun month(y: Int, m: Int): String {
             val ym = YearMonth.of(y, m)
-            val events = EventStore.load(this@MainActivity)
+            val events = Profile.eventsWithBirthday(this@MainActivity)
             val days = JSONArray()
             for (d in 1..ym.lengthOfMonth()) {
                 val date = LocalDate.of(y, m, d)
@@ -277,7 +277,7 @@ class MainActivity : Activity() {
             val now = LocalDateTime.now()
             val l = LunarCalendar.convert(date)
             val isToday = date == today
-            val events = EventStore.load(this@MainActivity)
+            val events = Profile.eventsWithBirthday(this@MainActivity)
             val tips = if (isToday) {
                 SuggestionEngine.build(date, now, WeatherRepo.load(this@MainActivity), prefs.spiritual, EventStore.upcoming(events, today))
             } else {
@@ -304,6 +304,9 @@ class MainActivity : Activity() {
                 put("hyThan", a.hyThan); put("taiThan", a.taiThan); put("lucDieuDay", a.lucDieuDay)
                 put("tu", a.tu.name); put("tuFull", a.tu.fullName); put("tuGood", a.tu.good)
                 put("tuNen", a.tu.nen); put("tuKy", a.tu.ky)
+                put("ngocHap", JSONArray().apply {
+                    NgocHap.of(l).forEach { put(JSONObject().put("name", it.name).put("good", it.good).put("desc", it.desc)) }
+                })
                 put("lucDieu", JSONArray().apply {
                     a.lucDieu.forEach { put(JSONObject().put("name", it.name).put("hours", it.hours).put("good", it.good).put("desc", it.desc)) }
                 })
@@ -339,6 +342,21 @@ class MainActivity : Activity() {
                     put("truc", g.truc); put("hoangDao", g.hoangDao)
                     put("score", g.score); put("reasons", JSONArray(g.reasons))
                 })
+            }
+            return arr.toString()
+        }
+
+        /** Kim Lâu, Hoang Ốc, Tam Tai, Thái Tuế của 5 năm âm lịch từ năm nay cho người sinh năm âm [birthYear]. */
+        @JavascriptInterface
+        fun tuoi(birthYear: Int): String {
+            val now = LunarCalendar.convert(LocalDate.now()).year
+            val arr = JSONArray()
+            if (birthYear !in 1900..now) return arr.toString()
+            for (y in now until now + 5) {
+                val c = Almanac.checkYear(birthYear, y)
+                arr.put(JSONObject().put("year", c.year).put("canChi", c.canChi).put("tuoi", c.tuoi)
+                    .put("kimLau", c.kimLau ?: "").put("hoangOc", c.hoangOc ?: "").put("hoangOcBad", c.hoangOcBad)
+                    .put("tamTai", c.tamTai ?: "").put("thaiTue", c.thaiTue ?: "").put("badForHouse", c.badForHouse))
             }
             return arr.toString()
         }
@@ -389,6 +407,7 @@ class MainActivity : Activity() {
             prefs.birthLunarInput = lunar
             prefs.birthYear = LunarCalendar.convert(birth).year
             pushState()
+            LichWidget.updateAll(this@MainActivity) // sinh nhật có thể vừa thành sự kiện sắp tới
             return ""
         }
 
@@ -399,6 +418,7 @@ class MainActivity : Activity() {
             prefs.birthLunarInput = false
             prefs.birthYear = 0
             pushState()
+            LichWidget.updateAll(this@MainActivity)
         }
 
         // ---- Thành phố ----
@@ -468,7 +488,7 @@ class MainActivity : Activity() {
         fun upcoming(days: Int): String {
             val today = LocalDate.now()
             val arr = JSONArray()
-            EventStore.upcoming(EventStore.load(this@MainActivity), today, days.coerceIn(1, 366)).forEach { u ->
+            EventStore.upcoming(Profile.eventsWithBirthday(this@MainActivity), today, days.coerceIn(1, 366)).forEach { u ->
                 arr.put(
                     eventJson(u.event)
                         .put("date", u.date.toString())
@@ -483,7 +503,7 @@ class MainActivity : Activity() {
         @JavascriptInterface
         fun saveEvent(json: String): String {
             val e = Event.fromJson(JSONObject(json))
-            if (e.title.isBlank()) return ""
+            if (e.title.isBlank() || e.id == EventStore.BIRTHDAY_ID) return "" // sinh nhật sửa trong Hồ sơ
             EventStore.upsert(this@MainActivity, e)
             LichWidget.updateAll(this@MainActivity)
             return e.id

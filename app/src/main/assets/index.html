@@ -123,6 +123,23 @@ h2 { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: u
 .chips2 span { font-size: 12.5px; padding: 4px 10px; border-radius: 999px; background: var(--chip); }
 .chips2.nen span { background: var(--good-soft); color: var(--good); font-weight: 600; }
 .chips2.ky span { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+.age-pick { display: flex; align-items: center; gap: 10px; margin-bottom: 4px; }
+.age-pick label { flex: 1; font-size: 13.5px; color: var(--muted); }
+.age-pick select { flex: none; width: 160px; padding: 8px 10px; }
+.yr { padding: 11px 0 9px; border-top: 1px solid var(--line); }
+.yr:first-child { border-top: 0; }
+.yr .hd { display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 14.5px; }
+.yr .hd small { color: var(--muted); font-weight: 500; }
+.tag { flex: none; font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 999px; }
+.tag.good { background: var(--good-soft); color: var(--good); }
+.tag.bad { background: var(--accent-soft); color: var(--accent); }
+.yr .chips2 { margin-top: 7px; }
+.chips2 button { font-size: 12.5px; padding: 4px 10px; border-radius: 999px; font-weight: 600; }
+.chips2 button.on { box-shadow: inset 0 0 0 1.5px currentColor; }
+.chips2 .g { background: var(--good-soft); color: var(--good); }
+.chips2 .b { background: var(--accent-soft); color: var(--accent); }
+.chips2 span.g { background: var(--good-soft); color: var(--good); }
+.chips2 span.b { background: var(--accent-soft); color: var(--accent); }
 .tu { font-size: 13.5px; line-height: 1.55; color: var(--muted); }
 .tu .nm { font-weight: 700; color: var(--text); }
 .tu .good { color: var(--good); font-weight: 600; }
@@ -351,16 +368,26 @@ button.item:active { background: var(--chip); }
     <div class="lbl2">Việc nên làm</div><div class="chips2 nen" id="almNen"></div>
     <div class="lbl2">Không nên</div><div class="chips2 ky" id="almKy"></div>
     <div class="lbl2">Nhị thập bát tú</div><div class="tu" id="almTu"></div>
+    <div class="lbl2">Sao tốt · Ngọc Hạp thông thư</div><div class="chips2 nh" id="nhGood"></div>
+    <div class="lbl2">Sao xấu · Ngọc Hạp thông thư</div><div class="chips2 nh" id="nhBad"></div>
+    <div class="tu" id="nhDesc" style="margin-top:8px"></div>
   </div>
   <div id="almHuongWrap"><div class="lbl2">Hướng xuất hành</div><div class="kv" id="almHuong"></div></div>
   <div id="almLdWrap"><div class="lbl2">Giờ xuất hành (Lục Diệu) · ngày <span id="ldDay"></span></div><div id="almLd"></div></div>
-  <p class="muted small" style="margin:12px 0 0">Tính theo trực ngày (thập nhị kiến trừ), sao Nhị thập bát tú, can chi ngày và phép Lục Diệu. Chỉ để tham khảo.</p>
+  <p class="muted small" style="margin:12px 0 0">Tính theo trực ngày (thập nhị kiến trừ), sao Nhị thập bát tú, Ngọc Hạp thông thư, can chi ngày và phép Lục Diệu. Chỉ để tham khảo.</p>
 </section>
 
 <section class="card col" id="gdCard">
   <h2><span class="ttl">Chọn ngày tốt</span><span class="sum" id="gdSum"></span><span class="chev"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></h2>
   <div class="tasks" id="tasks"></div>
   <div id="gdList"></div>
+</section>
+
+<section class="card col" id="ageCard">
+  <h2><span class="ttl">Xem tuổi làm nhà, cưới hỏi</span><span class="sum" id="ageSum"></span><span class="chev"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></h2>
+  <div class="age-pick"><label for="ageYear">Năm sinh âm lịch</label><select class="in" id="ageYear"></select></div>
+  <div id="ageList"></div>
+  <p class="muted small" style="margin:10px 0 0">Tính theo tuổi mụ. Làm nhà xét tuổi chủ nhà; cưới hỏi xét Kim Lâu theo tuổi cô dâu. Phạm Kim Lâu, Hoang Ốc hoặc Tam Tai thì nên hoãn hoặc mượn tuổi người không phạm đứng làm. Chỉ để tham khảo.</p>
 </section>
 
 <section class="card tools" id="toolsCard">
@@ -392,7 +419,7 @@ button.item:active { background: var(--chip); }
     <label class="item" for="spiritual"><span class="ico">✦</span><span class="body"><span class="lbl">Ngày hoàng đạo, giờ tốt</span><span class="val">Hiện trên widget và trong app</span></span><input type="checkbox" class="switch" id="spiritual"></label>
     <div class="item"><span class="ico">🌓</span><span class="body"><span class="lbl">Giao diện</span></span>
       <div class="seg" id="themeSeg"><button data-v="system">Hệ thống</button><button data-v="light">Sáng</button><button data-v="dark">Tối</button></div></div>
-    <label class="item" for="showAlmanac"><span class="ico">📖</span><span class="body"><span class="lbl">Việc nên làm, không nên</span><span class="val">Trực ngày, sao Nhị thập bát tú, ngũ hành, tuổi xung</span></span><input type="checkbox" class="switch" id="showAlmanac"></label>
+    <label class="item" for="showAlmanac"><span class="ico">📖</span><span class="body"><span class="lbl">Việc nên làm, không nên</span><span class="val">Trực, Nhị thập bát tú, sao Ngọc Hạp, ngũ hành, tuổi xung</span></span><input type="checkbox" class="switch" id="showAlmanac"></label>
     <label class="item" for="showHuong"><span class="ico">🧭</span><span class="body"><span class="lbl">Hướng xuất hành</span><span class="val">Hỷ thần, Tài thần theo can ngày</span></span><input type="checkbox" class="switch" id="showHuong"></label>
     <label class="item" for="showLucDieu"><span class="ico">⏱️</span><span class="body"><span class="lbl">Giờ xuất hành Lục Diệu</span><span class="val">Đại An, Tốc Hỷ, Tiểu Cát…</span></span><input type="checkbox" class="switch" id="showLucDieu"></label>
     <label class="item" for="showGoodDays"><span class="ico">🗓️</span><span class="body"><span class="lbl">Chọn ngày tốt</span><span class="val">Cưới hỏi, khai trương, khởi công…</span></span><input type="checkbox" class="switch" id="showGoodDays"></label>
@@ -480,7 +507,7 @@ const DOW_S = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
 function ls(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
 function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { } }
 let weekMode = ls("weekMode") === "1";
-const COL_DEFAULT = { almCard: true, gdCard: true, hoursCard: false };
+const COL_DEFAULT = { almCard: true, gdCard: true, hoursCard: false, ageCard: true };
 function isCollapsed(id) { const v = ls("col_" + id); return v === null ? COL_DEFAULT[id] : v === "1"; }
 
 function pad(n) { return (n < 10 ? "0" : "") + n; }
@@ -507,6 +534,7 @@ function render() {
   renderDay();
   renderWeather();
   renderGoodDays();
+  renderAge();
 }
 
 function renderGrid() {
@@ -593,7 +621,10 @@ function renderDay() {
   } else { cnt.innerHTML = ""; cnt.hidden = true; }
 
   // Gợi ý
-  $("tipsTitle").textContent = d.isToday ? (state.hour >= 18 ? "Gợi ý cho ngày mai" : "Gợi ý hôm nay") : `Ngày ${d.d}/${d.m}`;
+  const tipsBase = d.isToday ? (state.hour >= 18 ? "Gợi ý cho ngày mai" : "Gợi ý hôm nay") : `Ngày ${d.d}/${d.m}`;
+  const first = (state.prefs.name || "").trim().split(/\s+/).pop();
+  const greet = state.hour < 11 ? "Chào buổi sáng" : state.hour < 13 ? "Chào buổi trưa" : state.hour < 18 ? "Chào buổi chiều" : "Chào buổi tối";
+  $("tipsTitle").textContent = d.isToday && first ? `${greet}, ${first}! ${tipsBase}` : tipsBase;
   $("tips").innerHTML = d.tips.map(tp => {
     const sp = tp.short.indexOf(" ");
     const ic = tp.short.slice(0, sp), txt = tp.short.slice(sp + 1);
@@ -719,6 +750,17 @@ function renderAlmanac(d) {
   $("almTu").innerHTML = `<span class="nm">Sao ${esc(d.tuFull)}</span> · <span class="${d.tuGood ? "good" : "bad"}">${d.tuGood ? "sao tốt" : "sao xấu"}</span><br>` +
     (d.tuNen ? `Nên ${esc(d.tuNen)}. ` : "Không hợp việc lớn. ") +
     (d.tuKy ? `Kỵ ${esc(d.tuKy)}.` : "Không kỵ việc gì.");
+  // Sao Ngọc Hạp: chạm vào tên sao để xem ý nghĩa
+  const nh = d.ngocHap || [];
+  const chip = (s, i) => `<button class="${s.good ? "g" : "b"}" data-i="${i}">${esc(s.name)}</button>`;
+  $("nhGood").innerHTML = nh.map(chip).filter((_, i) => nh[i].good).join("") || `<span>Không có</span>`;
+  $("nhBad").innerHTML = nh.map(chip).filter((_, i) => !nh[i].good).join("") || `<span>Không có</span>`;
+  $("nhDesc").textContent = nh.length ? "Chạm vào tên sao để xem ý nghĩa." : "";
+  document.querySelectorAll(".chips2.nh button").forEach(b => b.onclick = () => {
+    const s = nh[+b.dataset.i];
+    document.querySelectorAll(".chips2.nh button").forEach(x => x.classList.toggle("on", x === b));
+    $("nhDesc").innerHTML = `<span class="nm">${esc(s.name)}</span> · <span class="${s.good ? "good" : "bad"}">${s.good ? "sao tốt" : "sao xấu"}</span>: ${esc(s.desc)}.`;
+  });
   $("almHuongWrap").style.display = p.showHuong ? "" : "none";
   $("almHuong").innerHTML = `<span>Hỷ thần <b>${esc(d.hyThan)}</b></span><span>Tài thần <b>${esc(d.taiThan)}</b></span>`;
   $("almLdWrap").style.display = p.showLucDieu ? "" : "none";
@@ -745,6 +787,43 @@ function renderGoodDays() {
     view = { y, m, sel: d }; render(); window.scrollTo({ top: 0, behavior: "smooth" });
   });
 }
+
+// ---- Xem tuổi: Kim Lâu, Hoang Ốc, Tam Tai, Thái Tuế ----
+const CAN_N = ["Giáp", "Ất", "Bính", "Đinh", "Mậu", "Kỷ", "Canh", "Tân", "Nhâm", "Quý"];
+const CHI_N = ["Tý", "Sửu", "Dần", "Mão", "Thìn", "Tỵ", "Ngọ", "Mùi", "Thân", "Dậu", "Tuất", "Hợi"];
+let ageYear = 0, agePicked = false;   // agePicked: người dùng tự chọn năm khác năm trong hồ sơ
+function renderAge() {
+  const sel = $("ageYear");
+  if (!agePicked) ageYear = state.prefs.birthYear || 0;
+  if (!sel.options.length) {
+    const o0 = document.createElement("option"); o0.value = 0; o0.textContent = "Chọn năm"; sel.appendChild(o0);
+    for (let y = state.today.y; y >= 1930; y--) {
+      const o = document.createElement("option"); o.value = y; o.textContent = `${y} · ${CAN_N[(y + 6) % 10]} ${CHI_N[(y + 8) % 12]}`; sel.appendChild(o);
+    }
+  }
+  sel.value = String(ageYear);
+  if (!ageYear) {
+    $("ageSum").textContent = "Kim Lâu, Hoang Ốc, Tam Tai theo năm sinh";
+    $("ageList").innerHTML = `<div class="ev-empty">Chọn năm sinh âm lịch ở trên, hoặc nhập ngày sinh trong <b>Cài đặt → Hồ sơ</b> để app tự điền.</div>`;
+    return;
+  }
+  const list = JSON.parse(Android.tuoi(ageYear));
+  const pham = c => [c.kimLau && "Kim Lâu", c.hoangOcBad && "Hoang Ốc", c.tamTai && "Tam Tai"].filter(Boolean);
+  const now = list[0];
+  $("ageSum").textContent = now ? `${now.year}: ${now.tuoi} tuổi · ${pham(now).length ? "phạm " + pham(now).join(", ") : "không phạm Kim Lâu, Hoang Ốc, Tam Tai"}` : "";
+  $("ageList").innerHTML = list.map(c => {
+    const chips = [
+      c.kimLau ? `<span class="b">${esc(c.kimLau)}</span>` : `<span class="g">Không phạm Kim Lâu</span>`,
+      c.hoangOc ? `<span class="${c.hoangOcBad ? "b" : "g"}">Hoang Ốc: ${esc(c.hoangOc)}</span>` : "",
+      c.tamTai ? `<span class="b">${esc(c.tamTai)}</span>` : "",
+      c.thaiTue ? `<span>${esc(c.thaiTue)}</span>` : "",
+    ].join("");
+    return `<div class="yr"><div class="hd"><span><b>${c.year} ${esc(c.canChi)}</b> <small>· ${c.tuoi} tuổi mụ</small></span>
+      <span class="tag ${c.badForHouse ? "bad" : "good"}">${c.badForHouse ? "Không nên làm nhà" : "Hợp làm nhà"}</span></div>
+      <div class="chips2">${chips}</div></div>`;
+  }).join("");
+}
+$("ageYear").onchange = e => { ageYear = +e.target.value; agePicked = ageYear !== (state.prefs.birthYear || 0); renderAge(); };
 
 // ---- Sự kiện ----
 const ICONS =["📌","🕯️","🎂","💍","🙏","🎉","💼","🏥","✈️","📚","🏠","❤️"];
@@ -800,6 +879,7 @@ function updateHint() {
   $("evHint").textContent = `${yearly ? "Năm nay" : "Năm " + y} rơi vào ${DOW[dt.getDay()]}, ${dt.getDate()}/${dt.getMonth() + 1}/${dt.getFullYear()} dương lịch.`;
 }
 function openSheet(e) {
+  if (e && e.id === "profile-birthday") return openProfile();   // sinh nhật lấy từ Hồ sơ
   editing = e || null;
   $("sheetTitle").textContent = e ? "Sửa sự kiện" : "Thêm sự kiện";
   $("evDelete").hidden = !e; $("evDelete").textContent = "Xóa"; delete $("evDelete").dataset.arm;

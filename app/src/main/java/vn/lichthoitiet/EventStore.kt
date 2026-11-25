@@ -60,6 +60,23 @@ data class Upcoming(val event: Event, val date: LocalDate, val daysLeft: Int)
 object EventStore {
     private const val KEY = "events_json"
 
+    /** Id của sự kiện sinh nhật sinh ra từ hồ sơ (không lưu trong danh sách sự kiện). */
+    const val BIRTHDAY_ID = "profile-birthday"
+
+    /**
+     * Sinh nhật của chủ máy từ ngày sinh dương lịch [birthIso] ("1990-03-12"), lặp hằng năm
+     * theo âm lịch nếu người dùng nhập ngày sinh âm ([lunar]), ngược lại theo dương lịch.
+     */
+    fun birthdayEvent(birthIso: String, lunar: Boolean): Event? {
+        val solar = try { LocalDate.parse(birthIso) } catch (e: Exception) { return null }
+        val l = LunarCalendar.convert(solar)
+        return Event(
+            id = BIRTHDAY_ID, title = "Sinh nhật của bạn", icon = "🎂", lunar = lunar,
+            day = if (lunar) l.day else solar.dayOfMonth, month = if (lunar) l.month else solar.monthValue,
+            year = null, yearly = true, time = "", note = "", remind = 1,
+        )
+    }
+
     fun load(ctx: Context): List<Event> {
         val s = Prefs.get(ctx).getString(KEY, null) ?: return emptyList()
         return try {
@@ -139,7 +156,10 @@ object EventStore {
     /** Sự kiện có diễn ra vào ngày dương [date] không. */
     fun occursOn(e: Event, date: LocalDate): Boolean {
         if (!e.lunar) {
-            return date.dayOfMonth == e.day && date.monthValue == e.month && (e.yearly || e.year == date.year)
+            if (date.monthValue != e.month || (!e.yearly && e.year != date.year)) return false
+            if (date.dayOfMonth == e.day) return true
+            // 29/2 lặp hằng năm: năm không nhuận làm vào 28/2
+            return e.day == 29 && e.month == 2 && date.dayOfMonth == 28 && !date.isLeapYear
         }
         val l = LunarCalendar.convert(date)
         if (l.leap || l.month != e.month) return false
