@@ -206,6 +206,7 @@ private val INK = Color(0xFF1C2A52)
 private val RED = Color(0xFFC0272D)
 private val PAPER = Color(0xFFFBF7EE)
 private val PAPER_EDGE = Color(0xFFE9E1CF)
+private val CRACK = Color(0xFF2D1C0C)
 private val LUNAR = Color(0xFF7D6B4F)
 private val SERIF = FontFamily.Serif
 
@@ -338,14 +339,13 @@ private fun DrawScope.lucideIcon(icon: TearIcon, color: Color) {
     }
 }
 
-/** Đổi góc xoay quanh góc trên (trái nếu kéo sang phải, phải nếu kéo sang trái) thành độ dời của tâm tờ. */
-private fun pivotToCenter(w: Float, h: Float, rightPivot: Boolean, deg: Float): Offset {
+/** Độ dời tâm tờ w×h khi xoay [deg] độ quanh điểm (px, py) của tờ. */
+private fun pivotShift(w: Float, h: Float, px: Float, py: Float, deg: Float): Offset {
     val t = Math.toRadians(deg.toDouble())
-    val px = if (rightPivot) w else 0f
     val rx = w / 2 - px
-    val ry = h / 2
+    val ry = h / 2 - py
     val cx = px + (rx * cos(t) - ry * sin(t)).toFloat()
-    val cy = (rx * sin(t) + ry * cos(t)).toFloat()
+    val cy = py + (rx * sin(t) + ry * cos(t)).toFloat()
     return Offset(cx - w / 2, cy - h / 2)
 }
 
@@ -395,18 +395,34 @@ private fun Bloc(
     fun progress(o: Offset) = (hypot(o.x, maxOf(o.y, 0f) * 0.8f) / (wPx * 0.55f)).coerceIn(0f, 1f)
     fun angle(o: Offset) = (o.x / wPx * 30f + maxOf(o.y, 0f) / hPx * 6f * if (o.x >= 0) 1 else -1).coerceIn(-42f, 42f)
 
+    // Vết xé: rách dần dọc đường xé từ mép phía tay kéo sang mép kia. Đang rách thì tờ chỉ hé quanh đầu vết nứt
+    // (khe mở dần, phần chưa rách vẫn dính dưới gáy); rách gần hết tờ mới xoay, dịch theo tay.
+    val uPx = density.density
+    val tPx = TEAR_T * uPx
+    fun tearOf(p: Float) = (p / 0.9f).coerceIn(0f, 1f)
+    fun frontOf(o: Offset, tear: Float) = if (o.x >= 0f) wPx * (1f - tear) else wPx * tear
+    fun freeOf(tear: Float) = ((tear - 0.72f) / 0.28f).coerceIn(0f, 1f)
+    fun bodyAngle(o: Offset, tear: Float, free: Float): Float {
+        val crack = (1f + 3f * tear) * minOf(1f, tear * 8f) * (if (o.x >= 0f) 1f else -1f)
+        return crack + (angle(o) - crack) * free
+    }
+    fun liftOf(o: Offset, p: Float, free: Float) = Offset(o.x * 0.18f * free, (maxOf(o.y, 0f) * 0.22f + p * 6f * uPx) * free)
+
     fun release(o: Offset, vx: Float, vy: Float) {
         val fling = hypot(vx, vy) > 1500f && vy > -300f
         if (progress(o) > 0.5f || fling) {
-            val deg = angle(o)
-            val rightPivot = o.x < 0
-            val shift = pivotToCenter(wPx, hPx, rightPivot, deg)
-            val tx = o.x * 0.18f
-            val ty = maxOf(o.y, 0f) * 0.22f
+            // Tờ bay đi bắt đầu đúng chỗ đang hiện: xoay quanh đầu vết nứt rồi dịch theo tay
+            val p = progress(o)
+            val tear = tearOf(p)
+            val free = freeOf(tear)
+            val front = frontOf(o, tear)
+            val deg = bodyAngle(o, tear, free)
+            val shift = pivotShift(wPx, hPx, front, tPx, deg)
+            val lift = liftOf(o, p, free)
             val kick = if (fling) 1f else 0f
             flyers += Flyer(
                 date = current,
-                x = tx + shift.x, y = ty + shift.y, rot = deg,
+                x = lift.x + shift.x, y = lift.y + shift.y, rot = deg,
                 vx = if (fling) vx * 0.9f else (if (o.x >= 0) 900f else -900f),
                 vy = if (fling) maxOf(vy, 300f) else 1100f,
                 spin = (if (o.x >= 0) 1 else -1) * (120f + 160f * kick) + vx * 0.04f,
@@ -436,7 +452,7 @@ private fun Bloc(
                 TearCmd.TEAR -> {
                     sound.rustle()
                     try {
-                        drag.animateTo(Offset(wPx * 0.42f, hPx * 0.22f), tween(240))
+                        drag.animateTo(Offset(wPx * 0.42f, hPx * 0.22f), tween(480))   // đủ chậm để thấy vết nứt chạy
                     } catch (e: CancellationException) {
                         if (!isActive) throw e
                         continue   // người dùng kéo tay chen vào: bỏ lượt tự xé này
@@ -470,17 +486,27 @@ private fun Bloc(
         // Tờ trên cùng, kéo để xé
         val o = drag.value
         val p = progress(o)
-        val deg = angle(o)
+        val tear = tearOf(p)
+        val free = freeOf(tear)
+        val front = frontOf(o, tear)
+        val deg = bodyAngle(o, tear, free)
+        val lift = liftOf(o, p, free)
+        val rightPull = o.x >= 0f
+        val topLine = remember(current, wPx) { tearLineFor(current, wPx, uPx) }
+        val topShape = remember(topLine) { bodyShape(topLine) }
+        val topShadow = remember(tPx) { bodyShadow(tPx + TEAR_A * uPx) }
         PaperPage(
             topPage, w, h,
             Modifier
                 .offset(y = bindH - 2.dp)
                 .graphicsLayer {
-                    transformOrigin = if (o.x >= 0) TransformOrigin(0f, 0f) else TransformOrigin(1f, 0f)
+                    // Xoay quanh đầu vết nứt; phần chưa rách bị nâng lên thì khuất dưới dải giấy và gáy
+                    transformOrigin = TransformOrigin(front / wPx, tPx / hPx)
                     rotationZ = deg + enter.value * -5f
-                    translationX = o.x * 0.18f
-                    translationY = maxOf(o.y, 0f) * 0.22f + p * 6f * density.density - enter.value * hPx * 0.35f
-                    rotationX = -p * 10f
+                    translationX = lift.x
+                    translationY = lift.y - enter.value * hPx * 0.35f
+                    // Giấy bị kéo bong ra phía trước (trục nghiêng đi qua đường xé nên chỗ còn dính không xê dịch)
+                    rotationX = -tear * 8f * (1f - free) - p * 10f * free
                     cameraDistance = 14f * density.density
                     alpha = 1f - enter.value * 0.85f
                 }
@@ -502,19 +528,33 @@ private fun Bloc(
                             tracker.addPosition(change.uptimeMillis, change.position)
                             val next = drag.value + amount
                             scope.launch { drag.snapTo(next) }
-                            val step = (progress(next) * 5).toInt()
+                            // Mỗi nấc vết nứt chạy thêm một đoạn: rung nhẹ, vài nấc kèm tiếng giấy
+                            val step = (tearOf(progress(next)) * 10).toInt()
                             if (step > ticks) {
                                 ticks = step
                                 view.tick()
-                                if (step == 2) sound.rustle(0.45f)
+                                if (step == 3 || step == 7) sound.rustle(0.4f)
                             }
                         },
                     )
                 },
             elevation = (2f + p * 14f).dp,
+            shape = topShape,
+            shadowShape = topShadow,
+            overlay = { tornRim(topLine, if (rightPull) front else 0f, if (rightPull) Float.MAX_VALUE else front, uPx) },
         )
 
-        // Gáy lịch đỏ và mép giấy còn dính lại sau khi xé
+        // Đầu tờ còn dính dưới gáy: vết nứt chạy dần, lòng khe tối, mép rách trắng xơ giấy
+        Canvas(
+            Modifier
+                .offset(y = bindH - 2.dp)
+                .size(w, (TEAR_T + 40f).dp)
+                .graphicsLayer { alpha = 1f - enter.value },
+        ) {
+            tearStrip(topLine, tear, rightPull, front, deg, lift, free, tPx, uPx, current.toEpochDay())
+        }
+
+        // Gáy lịch đỏ và mép giấy các tờ đã xé còn dính lại
         Binding(current, w, bindH)
 
         // Các tờ đang bay (vẽ trên cùng, không bị cắt)
@@ -547,6 +587,11 @@ private fun FlyingPage(f: Flyer, w: Dp, h: Dp, bindH: Dp, hPx: Float, flyers: Mu
         flyers.remove(f)
     }
     val page = remember(f.date) { BlocPage(f.date) }
+    val dens = LocalDensity.current
+    val wPx = with(dens) { w.toPx() }
+    val line = remember(f.date, wPx) { tearLineFor(f.date, wPx, dens.density) }
+    val shape = remember(line) { bodyShape(line) }
+    val shadow = remember(wPx) { bodyShadow((TEAR_T + TEAR_A) * dens.density) }
     PaperPage(
         page, w, h,
         Modifier
@@ -561,28 +606,129 @@ private fun FlyingPage(f: Flyer, w: Dp, h: Dp, bindH: Dp, hPx: Float, flyers: Mu
                 alpha = f.alpha
             },
         elevation = 18.dp,
-        torn = true,
+        shape = shape,
+        shadowShape = shadow,
+        overlay = { tornRim(line, 0f, Float.MAX_VALUE, dens.density) },
     )
 }
 
-/** Mép trên răng cưa của tờ lịch (chỗ xé khỏi gáy). */
-private fun tornTop(seed: Int, amp: Float): Shape = GenericShape { size, _ ->
-    val rnd = Random(seed)
-    moveTo(0f, amp)
+/** Độ sâu (dp) của đường xé dưới mép trên tờ và độ lởm chởm của răng xé. */
+private const val TEAR_T = 12f
+private const val TEAR_A = 1.8f
+
+/** Đường xé của một tờ: các điểm (x, y) theo px, răng cưa không đều và lượn nhẹ, cố định theo ngày. */
+private class TearLine(val xs: FloatArray, val ys: FloatArray)
+
+private fun tearLineFor(date: LocalDate, w: Float, u: Float, dy: Float = 0f): TearLine {
+    val rnd = Random(date.toEpochDay() * 7919L + 13L)
+    val t = (TEAR_T + dy) * u
+    val a = TEAR_A * u
+    val xs = ArrayList<Float>()
+    val ys = ArrayList<Float>()
     var x = 0f
-    while (x < size.width) {
-        x = minOf(size.width, x + 6f + rnd.nextFloat() * 10f)
-        lineTo(x, amp * (0.2f + rnd.nextFloat() * 1.6f))
+    var drift = 0f
+    while (true) {
+        drift = (drift + (rnd.nextFloat() - 0.5f) * a).coerceIn(-a, a)
+        xs += x
+        ys += t + drift + (rnd.nextFloat() - 0.5f) * a
+        if (x >= w) break
+        x = minOf(w, x + u * (2.5f + rnd.nextFloat() * 4.5f))
     }
+    return TearLine(xs.toFloatArray(), ys.toFloatArray())
+}
+
+/** Phần tờ dưới đường xé (phần sẽ bay đi). */
+private fun bodyShape(line: TearLine): Shape = GenericShape { size, _ ->
+    moveTo(0f, line.ys[0])
+    for (i in 1 until line.xs.size) lineTo(line.xs[i], line.ys[i])
+    lineTo(size.width, line.ys[line.ys.size - 1])
     lineTo(size.width, size.height)
     lineTo(0f, size.height)
     close()
 }
 
+/** Hình đổ bóng của phần tờ dưới đường xé: chữ nhật từ chân răng xé trở xuống. */
+private fun bodyShadow(top: Float): Shape = GenericShape { size, _ -> addRect(Rect(0f, top, size.width, size.height)) }
+
+/** Dải giấy từ mép trên tờ tới đường xé (còn dính dưới gáy). */
+private fun stripPath(line: TearLine, w: Float) = Path().apply {
+    moveTo(0f, 0f)
+    lineTo(w, 0f)
+    for (i in line.xs.size - 1 downTo 0) lineTo(line.xs[i], line.ys[i])
+    close()
+}
+
+/** Mép rách trắng của đoạn [from, to] trên đường xé, vẽ trên phần tờ bị xé. */
+private fun DrawScope.tornRim(line: TearLine, from: Float, to: Float, u: Float) {
+    for (i in 0 until line.xs.size - 1) {
+        val mid = (line.xs[i] + line.xs[i + 1]) / 2f
+        if (mid < from || mid > to) continue
+        val a = Offset(line.xs[i], line.ys[i])
+        val b = Offset(line.xs[i + 1], line.ys[i + 1])
+        drawLine(Color(0x14000000), a + Offset(0f, 2f * u), b + Offset(0f, 2f * u), 1f * u)
+        drawLine(Color.White, a, b, 1.6f * u, cap = StrokeCap.Round)
+    }
+}
+
+/**
+ * Dải đầu tờ còn dính dưới gáy. Đoạn đã rách: lòng khe nứt tối (giữa mép dải và mép trên thân tờ, tính cùng phép
+ * xoay [deg] quanh đầu vết nứt [front] và độ dời [lift] như lớp thân tờ), mép rách trắng có xơ giấy;
+ * trước đầu vết nứt có vệt căng mờ (giấy sắp rách).
+ */
+private fun DrawScope.tearStrip(
+    line: TearLine, tear: Float, rightPull: Boolean, front: Float, deg: Float, lift: Offset, free: Float, t: Float, u: Float, seed: Long,
+) {
+    val w = size.width
+    drawPath(stripPath(line, w), PAPER)
+    if (tear <= 0f) return
+    val n = line.xs.size
+    val torn = { x: Float -> if (rightPull) x >= front else x <= front }
+    if (free < 1f) {
+        val th = Math.toRadians(deg.toDouble())
+        val c = cos(th).toFloat()
+        val sn = sin(th).toFloat()
+        val idx = (0 until n).filter { torn(line.xs[it]) }
+        if (idx.size > 1) {
+            val gap = Path().apply {
+                idx.forEachIndexed { k, i -> if (k == 0) moveTo(line.xs[i], line.ys[i]) else lineTo(line.xs[i], line.ys[i]) }
+                for (i in idx.reversed()) {
+                    val dx = line.xs[i] - front
+                    val dy = line.ys[i] - t
+                    lineTo(front + dx * c - dy * sn + lift.x, t + dx * sn + dy * c + lift.y + 0.6f * u)
+                }
+                close()
+            }
+            val k = 1f - free
+            drawPath(gap, Brush.verticalGradient(listOf(CRACK.copy(alpha = 0.55f * k), CRACK.copy(alpha = 0.22f * k)), startY = t - 2f * u, endY = t + 16f * u))
+        }
+    }
+    val reach = w * 0.1f
+    val rnd = Random(seed * 31L + 5L)
+    for (i in 0 until n - 1) {
+        val a = Offset(line.xs[i], line.ys[i])
+        val b = Offset(line.xs[i + 1], line.ys[i + 1])
+        val mid = (a.x + b.x) / 2f
+        val r1 = rnd.nextFloat()
+        val r2 = rnd.nextFloat()
+        val r3 = rnd.nextFloat()
+        if (torn(mid)) {
+            drawLine(Color(0x2E000000), a + Offset(0f, 1.8f * u), b + Offset(0f, 1.8f * u), 2.4f * u)
+            drawLine(Color.White, a, b, 1.3f * u, cap = StrokeCap.Round)
+            if (r1 < 0.55f) drawLine(Color(0xD9FFFFFF), a, a + Offset((r2 - 0.5f) * 1.6f * u, (1f + r3 * 2.2f) * u), 0.8f * u, cap = StrokeCap.Round)
+        } else {
+            val d = if (rightPull) front - mid else mid - front
+            if (d < reach) drawLine(Color.Black.copy(alpha = 0.18f * (1f - d / reach)), a, b, 0.9f * u)
+        }
+    }
+}
+
 @Composable
-private fun PaperPage(page: BlocPage, w: Dp, h: Dp, modifier: Modifier, elevation: Dp, torn: Boolean = false) {
+private fun PaperPage(
+    page: BlocPage, w: Dp, h: Dp, modifier: Modifier, elevation: Dp,
+    shape: Shape? = null, overlay: (DrawScope.() -> Unit)? = null, shadowShape: Shape? = null,
+) {
     val density = LocalDensity.current
-    val shape = if (torn) tornTop(page.date.toEpochDay().toInt(), 3f * density.density) else RoundedCornerShape(bottomStart = 4.dp, bottomEnd = 4.dp)
+    val clip = shape ?: RoundedCornerShape(bottomStart = 4.dp, bottomEnd = 4.dp)
     val ink = if (page.red) RED else INK
     val dayFont = with(density) { (w * 0.40f).toSp() }
     // Cỡ chữ, khoảng cách theo bề rộng tờ (tờ nhỏ khi xoay ngang hoặc cửa sổ nhỏ)
@@ -592,13 +738,15 @@ private fun PaperPage(page: BlocPage, w: Dp, h: Dp, modifier: Modifier, elevatio
     Box(
         modifier
             .size(w, h)
-            .shadow(elevation, shape)
-            .clip(shape)
+            // Bóng theo hình lồi riêng (hình răng cưa là đa giác lõm, Android 10 trở xuống không đổ bóng được)
+            .shadow(elevation, shadowShape ?: clip, clip = false)
+            .clip(clip)
             .background(PAPER)
             .drawBehind { paperFibers(page.date.toEpochDay().toInt()) },
     ) {
         Column(
-            Modifier.fillMaxSize().padding(horizontal = 18.dp * k, vertical = 14.dp * k),
+            // Trên cùng chừa chỗ cho dải giấy dính gáy và đường xé
+            Modifier.fillMaxSize().padding(start = 18.dp * k, end = 18.dp * k, top = TEAR_T.dp + 5.dp * k, bottom = 14.dp * k),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             BasicText(
@@ -670,6 +818,7 @@ private fun PaperPage(page: BlocPage, w: Dp, h: Dp, modifier: Modifier, elevatio
                 style = TextStyle(color = LUNAR, fontSize = ts(11f)),
             )
         }
+        overlay?.let { draw -> Canvas(Modifier.fillMaxSize()) { draw() } }
     }
 }
 
@@ -703,16 +852,19 @@ internal fun DrawScope.drawMoon(c: Offset, r: Float, illum: Float, waxing: Boole
 private fun Binding(current: LocalDate, w: Dp, bindH: Dp) {
     val k = (w / 330.dp).coerceIn(0.5f, 1.15f)
     Box(Modifier.size(w, bindH + 10.dp)) {
-        // Mép giấy còn dính dưới gáy (răng cưa)
-        Canvas(Modifier.offset(y = bindH - 3.dp).size(w, 12.dp)) {
-            val rnd = Random(current.toEpochDay().toInt() + 7)
-            val path = Path().apply {
-                moveTo(0f, 0f); lineTo(size.width, 0f); lineTo(size.width, size.height * 0.4f)
-                var x = size.width
-                while (x > 0f) { x = maxOf(0f, x - 6f - rnd.nextFloat() * 10f); lineTo(x, size.height * (0.25f + rnd.nextFloat() * 0.6f)) }
-                close()
+        // Dải giấy các tờ đã xé còn dính dưới gáy, đúng đường xé của từng tờ: tờ vừa xé (hôm qua) nằm dưới,
+        // tờ xé trước đó đè lên trên; vì vậy xé xong, dải của tờ vừa xé ở đúng chỗ vết nứt
+        Canvas(Modifier.offset(y = bindH - 2.dp).size(w, (TEAR_T + TEAR_A + 6f).dp)) {
+            val u = density
+            listOf(1L to 0f, 2L to -1.6f).forEach { (back, dy) ->
+                val line = tearLineFor(current.minusDays(back), size.width, u, dy)
+                drawPath(stripPath(line, size.width), if (back == 1L) PAPER else PAPER_EDGE)
+                for (i in 0 until line.xs.size - 1) {
+                    drawLine(
+                        Color(0x26000000), Offset(line.xs[i], line.ys[i] + 1.2f * u), Offset(line.xs[i + 1], line.ys[i + 1] + 1.2f * u), 1.4f * u,
+                    )
+                }
             }
-            drawPath(path, PAPER_EDGE)
         }
         Box(
             Modifier

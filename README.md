@@ -31,7 +31,7 @@ Màn hình app (số liệu thời tiết là mẫu):
 
 **Lịch xé** (Tiện ích → Lịch xé, hoặc chạm widget "Lịch bloc")
 - Tập lịch bloc dựng bằng Jetpack Compose: gáy đỏ có đinh tán, tờ giấy có thớ, mép răng cưa còn dính dưới gáy sau mỗi lần xé.
-- Kéo tờ trên cùng xuống hoặc sang ngang: tờ xoay quanh góc còn dính gáy và rách dần từ góc đang kéo, kèm tiếng giấy sột soạt và rung nhẹ theo từng nấc. Thả đủ xa hoặc vuốt nhanh thì tờ rời gáy, bay theo mô phỏng vật lý (giữ vận tốc lúc vuốt, trọng lực, lực cản không khí, xoay chậm dần, tờ giấy rung lật 3D) rồi mờ dần; không đủ thì tờ bật về như lò xo. Có nút "Xé tờ", "Hôm qua", "Hôm nay", tắt tiếng; máy để im lặng / rung thì không phát tiếng.
+- Kéo tờ trên cùng xuống hoặc sang ngang: vết nứt răng cưa chạy dần dọc đường xé từ mép phía tay kéo sang mép kia (lòng khe tối, mép rách trắng có xơ giấy, vệt căng mờ trước đầu vết nứt), phần chưa rách vẫn dính dưới gáy, tờ chỉ hé ra và bong nhẹ về phía trước; rách gần hết mới xoay theo tay. Kèm tiếng giấy sột soạt và rung nhẹ mỗi nấc vết nứt chạy thêm. Dải giấy của tờ vừa xé ở lại dưới gáy đúng theo đường rách. Thả đủ xa hoặc vuốt nhanh thì tờ rời gáy, bay theo mô phỏng vật lý (giữ vận tốc lúc vuốt, trọng lực, lực cản không khí, xoay chậm dần, tờ giấy rung lật 3D) rồi mờ dần; không đủ thì tờ bật về như lò xo. Có nút "Xé tờ", "Hôm qua", "Hôm nay", tắt tiếng; máy để im lặng / rung thì không phát tiếng.
 - Tiếng giấy là âm thanh tự tổng hợp (nhiễu lọc dải và chuỗi xung thớ giấy đứt), không lấy từ nguồn ngoài.
 
 **Màn hình khóa & hình nền**
