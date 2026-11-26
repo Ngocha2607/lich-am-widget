@@ -1084,9 +1084,7 @@ $("pinRow").onclick = () => Android.pinWidget();
 $("pinIconRow").onclick = () => Android.pinIconWidget();
 $("pinBlocRow").onclick = () => Android.pinBlocWidget();
 
-// ---- Lịch xé, la bàn AR, màn hình khóa, hình nền động ----
-const pad2 = n => String(n).padStart(2, "0");
-$("tearRow").onclick = () => Android.openTearOff(`${view.y}-${pad2(view.m)}-${pad2(view.sel)}`);
+// ---- La bàn AR, màn hình khóa, hình nền động ----
 $("compassRow").onclick = () => Android.openCompass();
 $("lockNote").onchange = e => {
   state.prefs.lockNote = e.target.checked;

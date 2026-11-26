@@ -46,7 +46,7 @@ android {
         jvmTarget = "17"
     }
 
-    // Jetpack Compose cho các màn hình native: lịch xé, la bàn AR (Compose Compiler 1.5.14 đi với Kotlin 1.9.24)
+    // Jetpack Compose cho màn hình native la bàn AR (Compose Compiler 1.5.14 đi với Kotlin 1.9.24)
     buildFeatures {
         compose = true
     }
@@ -63,7 +63,7 @@ dependencies {
     implementation("androidx.core:core-ktx:1.13.1")
     implementation("androidx.work:work-runtime-ktx:2.9.1")
 
-    // Compose: lịch xé (cử chỉ + hoạt ảnh vật lý), giao diện la bàn AR
+    // Compose: giao diện la bàn AR
     implementation(platform("androidx.compose:compose-bom:2024.06.00"))
     implementation("androidx.compose.ui:ui")
     implementation("androidx.compose.foundation:foundation")

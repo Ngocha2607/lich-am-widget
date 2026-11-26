@@ -7,7 +7,6 @@
     <string name="widget_icon_desc">Tờ lịch nhỏ như biểu tượng: thứ, ngày dương, ngày âm, tự đổi lúc 0h</string>
     <string name="widget_bloc_name">Lịch bloc</string>
     <string name="widget_bloc_desc">Tờ lịch ngày kiểu bloc: thứ, ngày lớn, ngày âm, can chi và câu ca dao, tục ngữ mỗi ngày</string>
-    <string name="tear_name">Lịch xé</string>
     <string name="compass_name">La bàn phong thủy</string>
     <string name="wallpaper_name">Lịch âm · trời trăng</string>
     <string name="wallpaper_desc">Bầu trời đổi theo giờ, trăng đúng ngày âm (rằm tròn, đầu tháng lưỡi liềm), hiệu ứng theo tiết khí và thời tiết</string>

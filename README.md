@@ -27,12 +27,7 @@ Màn hình app (số liệu thời tiết là mẫu):
 - Chạm vào nhiệt độ mở thẳng thẻ thời tiết, chạm phần còn lại mở lịch.
 - Widget 1×1 "Lịch hôm nay": tập lịch bloc 3D cỡ một biểu tượng (tờ chồng tạo độ dày, gáy đỏ son bóng có vòng gáy vàng kim, thứ trên gáy, ngày dương in chìm, ngày âm kèm trăng 3D đúng tuần trăng; số đỏ vào Chủ nhật, lễ, rằm, mùng 1; có biểu tượng khi hôm nay có sự kiện), tự đổi lúc 0h. Android không cho app tự đổi số ngày trên icon, nên đặt widget này thay icon app để có biểu tượng lịch đổi theo ngày. Trong app: Cài đặt → Widget → Thêm tờ lịch 1×1.
 
-- Widget "Lịch bloc": tờ lịch ngày kiểu bloc truyền thống (tháng năm trên gáy đỏ, thứ, ngày lớn, ngày âm kèm trăng, can chi ngày tháng) kèm một câu ca dao, tục ngữ mỗi ngày (120 câu dân gian, đi hết vòng mới lặp). Ghim nhanh trong Cài đặt → Widget. Chạm vào widget là mở lịch xé.
-
-**Lịch xé** (Tiện ích → Lịch xé, hoặc chạm widget "Lịch bloc")
-- Tập lịch bloc dựng bằng Jetpack Compose: gáy đỏ có đinh tán, tờ giấy có thớ, mép răng cưa còn dính dưới gáy sau mỗi lần xé.
-- Kéo tờ trên cùng xuống hoặc sang ngang: vết nứt răng cưa chạy dần dọc đường xé từ mép phía tay kéo sang mép kia (lòng khe tối, mép rách trắng có xơ giấy, vệt căng mờ trước đầu vết nứt), phần chưa rách vẫn dính dưới gáy, tờ chỉ hé ra và bong nhẹ về phía trước; rách gần hết mới xoay theo tay. Kèm tiếng giấy sột soạt và rung nhẹ mỗi nấc vết nứt chạy thêm. Dải giấy của tờ vừa xé ở lại dưới gáy đúng theo đường rách. Thả đủ xa hoặc vuốt nhanh thì tờ rời gáy, bay theo mô phỏng vật lý (giữ vận tốc lúc vuốt, trọng lực, lực cản không khí, xoay chậm dần, tờ giấy rung lật 3D) rồi mờ dần; không đủ thì tờ bật về như lò xo. Có nút "Xé tờ", "Hôm qua", "Hôm nay", tắt tiếng; máy để im lặng / rung thì không phát tiếng.
-- Tiếng giấy là âm thanh tự tổng hợp (nhiễu lọc dải và chuỗi xung thớ giấy đứt), không lấy từ nguồn ngoài.
+- Widget "Lịch bloc": tờ lịch ngày kiểu bloc truyền thống (tháng năm trên gáy đỏ, thứ, ngày lớn, ngày âm kèm trăng, can chi ngày tháng) kèm một câu ca dao, tục ngữ mỗi ngày (120 câu dân gian, đi hết vòng mới lặp). Ghim nhanh trong Cài đặt → Widget. Chạm vào widget là mở app.
 
 **Màn hình khóa & hình nền**
 - Lịch trên màn hình khóa: một thông báo im lặng (không kêu, không rung, không hiện nổi) luôn có ngày âm và câu ca dao hôm nay, tự đổi lúc 0h; máy có màn hình luôn bật (AOD) hiện thông báo thì thấy cả ở đó. Bật trong Cài đặt → Màn hình khóa & hình nền.
@@ -105,14 +100,12 @@ Mở `app/src/main/assets/index.html` bằng trình duyệt (hoặc chạy `pyth
 | `Quotes.kt` | 120 câu ca dao, tục ngữ và cách chọn câu cho từng ngày |
 | `CalendarSync.kt` | Nhập / xuất sự kiện với lịch trên máy (gồm lịch Google), trạng thái và yêu cầu đồng bộ tài khoản Google, tự lấy sự kiện |
 | `Horoscope.kt` | Cung hoàng đạo, mệnh nạp âm theo năm, tuổi xông đất |
-| `TearOffActivity.kt` | Lịch xé (Compose): cử chỉ kéo, mô phỏng vật lý tờ bay, tiếng giấy, rung |
 | `CompassActivity.kt` | La bàn phong thủy AR (Compose + CameraX + cảm biến), la bàn phẳng |
 | `PhongThuy.kt` | Cung phi, tám hướng Bát trạch, 24 sơn, phép chiếu hướng lên khung camera |
 | `LunarWallpaperService.kt`, `SkyScene.kt` | Hình nền động: trạng thái bầu trời (giờ mọc lặn, tuần trăng, hiệu ứng theo tiết khí) và phần vẽ |
 | `LockScreenDay.kt` | Thông báo im lặng trên màn hình khóa |
 | `FamilyBook.kt` | Sổ giỗ gia đình: mã chia sẻ (nén + base64), gộp bản sửa, đổi thành sự kiện |
 | `ZenVerses.kt` | Thơ ba dòng và trích đoạn thơ cổ cho chế độ Zen |
-| `res/raw/paper_*.wav` | Tiếng giấy sột soạt, tiếng xé (tự tổng hợp) |
 | `BackgroundImage.kt` | Ảnh nền cá nhân: thu nhỏ, xoay đúng chiều, lưu trong app |
 | `assets/bg_art.js`, `assets/van_khan.js` | Tranh nền tự vẽ (SVG) và kho văn khấn |
 | `Profile.kt` | Ghép sinh nhật trong hồ sơ vào danh sách sự kiện để hiển thị và nhắc |

@@ -51,13 +51,6 @@
             </intent-filter>
         </activity>
 
-        <!-- Lịch bloc xé tay (Compose) -->
-        <activity
-            android:name=".TearOffActivity"
-            android:exported="false"
-            android:label="@string/tear_name"
-            android:theme="@style/ImmersiveTheme" />
-
         <!-- La bàn phong thủy AR (Compose + CameraX); khóa dọc vì lớp phủ tính theo trục máy khi cầm dọc -->
         <activity
             android:name=".CompassActivity"

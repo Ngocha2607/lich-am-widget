@@ -5,7 +5,7 @@
         <item name="android:windowBackground">@drawable/splash_bg</item>
     </style>
 
-    <!-- Màn hình native (lịch xé, la bàn AR): tràn viền, nền tối trong lúc vẽ khung đầu -->
+    <!-- Màn hình native (la bàn AR): tràn viền, nền tối trong lúc vẽ khung đầu -->
     <style name="ImmersiveTheme" parent="@android:style/Theme.Material.NoActionBar">
         <item name="android:windowBackground">@color/immersive_bg</item>
     </style>

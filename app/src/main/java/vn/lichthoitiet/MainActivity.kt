@@ -1005,13 +1005,7 @@ class MainActivity : Activity() {
             }
         }
 
-        // ---- Lịch xé, la bàn AR ----
-
-        /** Mở lịch bloc xé tay, bắt đầu từ ngày [iso] ("2026-11-25"). */
-        @JavascriptInterface
-        fun openTearOff(iso: String) = runOnUiThread {
-            startActivity(Intent(this@MainActivity, TearOffActivity::class.java).putExtra(TearOffActivity.EXTRA_DATE, iso))
-        }
+        // ---- La bàn AR ----
 
         @JavascriptInterface
         fun openCompass() = runOnUiThread {

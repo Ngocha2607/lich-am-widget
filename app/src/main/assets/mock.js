@@ -294,7 +294,6 @@
       return JSON.stringify({ id: g.id, name: g.name, added: 1, updated: 0, isNew: true });
     },
     clipboardText: () => "Sổ giỗ \"Nhà ngoại\"\nLICHGIAPHA1:eJxLyEzJTM1LSVWyUkpKLMpUMlSyUsrJz0tXqgUAeQ8IyA",
-    openTearOff(iso) { window.onStatus && window.onStatus(`(xem trước) Trên máy sẽ mở lịch xé từ ngày ${iso}.`); },
     openCompass() { window.onStatus && window.onStatus("(xem trước) Trên máy sẽ mở la bàn phong thủy AR (camera + cảm biến)."); },
     setLiveWallpaper() { prefs.wpActive = true; window.onStatus && window.onStatus("(xem trước) Trên máy sẽ mở màn hình đặt hình nền động."); setTimeout(push); },
     setWallpaperText(v) { prefs.wpText = v; },

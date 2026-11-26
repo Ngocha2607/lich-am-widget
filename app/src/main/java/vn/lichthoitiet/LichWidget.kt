@@ -280,12 +280,8 @@ object WidgetRenderer {
         views.setTextViewText(R.id.bloc_canchi, "Ngày ${LunarCalendar.canChiDay(lunar.jd)} · Năm ${LunarCalendar.canChiYear(lunar.year)}")
         views.setTextViewText(R.id.bloc_quote, quote.text)
         views.setTextViewText(R.id.bloc_kind, "— ${quote.kind} —")
-        // Chạm vào tờ lịch bloc: mở lịch xé tay
-        val tear = Intent(context, TearOffActivity::class.java).apply { flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP }
-        views.setOnClickPendingIntent(
-            android.R.id.background,
-            PendingIntent.getActivity(context, 3, tear, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE),
-        )
+        // Chạm vào tờ lịch bloc: mở app
+        views.setOnClickPendingIntent(android.R.id.background, openApp(context, null, 3))
         return views
     }
 
