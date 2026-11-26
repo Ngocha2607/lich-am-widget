@@ -1,10 +1,13 @@
 package vn.lichthoitiet
 
 import android.Manifest
+import android.accounts.Account
+import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
 import android.content.pm.PackageManager
+import android.os.Bundle
 import android.provider.CalendarContract
 import android.provider.CalendarContract.Calendars as Cal
 import android.provider.CalendarContract.Instances as Inst
@@ -16,7 +19,7 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 
 /** Một lịch trên máy (lịch Google đã đồng bộ, lịch điện thoại...). */
-data class DeviceCalendar(val id: Long, val name: String, val account: String, val color: Int, val writable: Boolean)
+data class DeviceCalendar(val id: Long, val name: String, val account: String, val accountType: String, val color: Int, val writable: Boolean)
 
 /**
  * Nhập / xuất sự kiện với lịch trên máy qua CalendarContract, gồm các lịch Google mà máy đã đồng bộ
@@ -28,27 +31,82 @@ object CalendarSync {
     /** Ghi ở cuối mô tả các mục app xuất ra, để lúc nhập bỏ qua (khỏi nhập ngược lại chính mình). */
     const val MARKER = "— Xuất từ Lịch & Thời tiết"
     private const val KEY_EXPORTED = "gcal_exported_ids"
+    private const val KEY_AUTO_AT = "gcal_auto_at"
+    private const val AUTO_GAP_MS = 30 * 60_000L
+    /** Loại tài khoản Google trong AccountManager / CalendarContract. */
+    const val GOOGLE = "com.google"
 
     fun hasPermission(ctx: Context) =
         ctx.checkSelfPermission(Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED &&
             ctx.checkSelfPermission(Manifest.permission.WRITE_CALENDAR) == PackageManager.PERMISSION_GRANTED
 
     fun calendars(ctx: Context): List<DeviceCalendar> {
-        val proj = arrayOf(Cal._ID, Cal.CALENDAR_DISPLAY_NAME, Cal.ACCOUNT_NAME, Cal.CALENDAR_COLOR, Cal.CALENDAR_ACCESS_LEVEL)
+        val proj = arrayOf(Cal._ID, Cal.CALENDAR_DISPLAY_NAME, Cal.ACCOUNT_NAME, Cal.CALENDAR_COLOR, Cal.CALENDAR_ACCESS_LEVEL, Cal.ACCOUNT_TYPE)
         val out = mutableListOf<DeviceCalendar>()
         ctx.contentResolver.query(Cal.CONTENT_URI, proj, "${Cal.VISIBLE} = 1", null, "${Cal.ACCOUNT_NAME}, ${Cal.CALENDAR_DISPLAY_NAME}")?.use { cur ->
             while (cur.moveToNext()) {
                 out += DeviceCalendar(
                     id = cur.getLong(0), name = cur.getString(1) ?: "", account = cur.getString(2) ?: "",
-                    color = cur.getInt(3), writable = cur.getInt(4) >= Cal.CAL_ACCESS_CONTRIBUTOR,
+                    accountType = cur.getString(5) ?: "", color = cur.getInt(3), writable = cur.getInt(4) >= Cal.CAL_ACCESS_CONTRIBUTOR,
                 )
             }
         }
         return out
     }
 
+    /** Lịch của tài khoản Google [account] có đang tự đồng bộ không; null nếu không đọc được. */
+    fun syncOn(account: String): Boolean? = try {
+        ContentResolver.getMasterSyncAutomatically() &&
+            ContentResolver.getSyncAutomatically(Account(account, GOOGLE), CalendarContract.AUTHORITY)
+    } catch (e: Exception) {
+        null
+    }
+
+    /** Yêu cầu đồng bộ ngay lịch của tài khoản Google [account]. */
+    fun requestSync(account: String): Boolean = try {
+        val extras = Bundle().apply {
+            putBoolean(ContentResolver.SYNC_EXTRAS_MANUAL, true)
+            putBoolean(ContentResolver.SYNC_EXTRAS_EXPEDITED, true)
+        }
+        ContentResolver.requestSync(Account(account, GOOGLE), CalendarContract.AUTHORITY, extras)
+        true
+    } catch (e: Exception) {
+        false
+    }
+
+    /** Bật tự đồng bộ Lịch cho tài khoản [account] (người dùng vừa bấm) rồi đồng bộ ngay; false nếu cả máy đang tắt tự đồng bộ. */
+    fun enableSync(account: String): Boolean = try {
+        if (!ContentResolver.getMasterSyncAutomatically()) false
+        else {
+            ContentResolver.setSyncAutomatically(Account(account, GOOGLE), CalendarContract.AUTHORITY, true)
+            requestSync(account)
+            true
+        }
+    } catch (e: Exception) {
+        false
+    }
+
+    /**
+     * Tự lấy sự kiện từ lịch đã chọn nếu người dùng bật (gọi ở luồng nền: lúc mở app, WeatherWorker).
+     * Bỏ qua khi chưa đủ 30 phút từ lần trước (trừ [force]) hoặc lịch không còn trên máy (đăng xuất tài khoản
+     * không làm mất sự kiện đã nhập). Trả về số sự kiện trong 1 năm tới của lịch, -1 nếu không chạy.
+     */
+    fun autoImport(ctx: Context, force: Boolean = false): Int {
+        val p = Prefs(ctx)
+        if (!p.gcalAuto || p.gcalCalId < 0 || !hasPermission(ctx)) return -1
+        val sp = Prefs.get(ctx)
+        val now = System.currentTimeMillis()
+        if (!force && now - sp.getLong(KEY_AUTO_AT, 0L) in 0L until AUTO_GAP_MS) return -1
+        if (calendars(ctx).none { it.id == p.gcalCalId }) return -1
+        sp.edit().putLong(KEY_AUTO_AT, now).apply()
+        return importFrom(ctx, p.gcalCalId, LocalDate.now(), 365)
+    }
+
+    private fun dateOfId(id: String): LocalDate? = try { LocalDate.parse(id.takeLast(10)) } catch (e: Exception) { null }
+
     /**
      * Nhập các lần diễn ra trong [days] ngày tới của lịch [calId] thành sự kiện dương lịch một lần.
+     * Sự kiện lần trước nhập mà nay không còn (đã xóa hay dời ngày bên lịch Google) thì bỏ khỏi app; sự kiện đã qua giữ lại.
      * Trả về số sự kiện đã nhập (nhập lại thì ghi đè, không trùng).
      */
     fun importFrom(ctx: Context, calId: Long, from: LocalDate, days: Int): Int {
@@ -78,7 +136,18 @@ object CalendarSync {
                 )
             }
         }
-        EventStore.upsertAll(ctx, imported)
+        val prefs = Prefs.get(ctx)
+        val key = "gcal_imported_$calId"
+        val prev = try {
+            JSONArray(prefs.getString(key, "[]")).let { a -> (0 until a.length()).map { a.getString(it) } }
+        } catch (e: Exception) {
+            emptyList()
+        }
+        val now = imported.map { it.id }.toSet()
+        val gone = prev.filter { it !in now && dateOfId(it)?.isBefore(from) == false }.toSet()
+        val keep = prev.filter { it !in now && it !in gone }
+        EventStore.syncImported(ctx, gone, imported)
+        prefs.edit().putString(key, JSONArray(keep + now).toString()).apply()
         return imported.size
     }
 

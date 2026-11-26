@@ -70,7 +70,7 @@ Màn hình app (số liệu thời tiết là mẫu):
 
 **Dữ liệu**
 - Sao lưu sự kiện ra file JSON và khôi phục lại.
-- Google Calendar trên máy: nhập sự kiện 1 năm tới từ một lịch (tài khoản Google đã đồng bộ trên máy, không cần đăng nhập trong app) vào app; xuất sự kiện của app, kể cả giỗ âm lịch, thành từng ngày trong 5 năm tới sang lịch Google đã chọn. Xuất lại thì thay các mục đã xuất lần trước; sự kiện vừa nhập không bị xuất ngược. Cần quyền Lịch, chỉ xin khi bấm.
+- Google Calendar (Tiện ích → Google Calendar): nút "Đăng nhập Google" mở màn hình đăng nhập chính thức của Google trên máy (app không thấy mật khẩu); sau đó app hiện tài khoản, trạng thái đồng bộ Lịch (đang tắt thì có nút Bật), nút đồng bộ ngay và các lịch của tài khoản. Nhập sự kiện 1 năm tới từ lịch đang chọn vào app; bật "Tự lấy sự kiện mới" thì app tự lấy lại vài giờ một lần và mỗi lần mở app, sự kiện đã xóa hay dời ngày bên Google cũng được cập nhật (sự kiện đã qua giữ lại). Xuất sự kiện của app, kể cả giỗ âm lịch, thành từng ngày trong 5 năm tới sang lịch Google đã chọn; xuất lại thì thay các mục đã xuất lần trước, sự kiện vừa nhập không bị xuất ngược. Cần quyền Lịch, chỉ xin khi bấm.
 - Xuất sự kiện sang Google Calendar bằng file .ics (mỗi lần diễn ra trong 5 năm là một mục, vì Google Calendar không lặp theo âm lịch).
 
 ## Build APK bằng GitHub (không cần cài Android Studio)
@@ -103,7 +103,7 @@ Mở `app/src/main/assets/index.html` bằng trình duyệt (hoặc chạy `pyth
 | `NgocHap.kt` | Sao tốt, sao xấu theo Ngọc Hạp thông thư (bảng quy tắc sinh tự động, xem mục Nguồn tính toán) |
 | `NoteStore.kt` | Ghi chú việc cần làm theo ngày |
 | `Quotes.kt` | 120 câu ca dao, tục ngữ và cách chọn câu cho từng ngày |
-| `CalendarSync.kt` | Nhập / xuất sự kiện với lịch trên máy (gồm lịch Google) |
+| `CalendarSync.kt` | Nhập / xuất sự kiện với lịch trên máy (gồm lịch Google), trạng thái và yêu cầu đồng bộ tài khoản Google, tự lấy sự kiện |
 | `Horoscope.kt` | Cung hoàng đạo, mệnh nạp âm theo năm, tuổi xông đất |
 | `TearOffActivity.kt` | Lịch xé (Compose): cử chỉ kéo, mô phỏng vật lý tờ bay, tiếng giấy, rung |
 | `CompassActivity.kt` | La bàn phong thủy AR (Compose + CameraX + cảm biến), la bàn phẳng |

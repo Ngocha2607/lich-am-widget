@@ -121,6 +121,16 @@ class Prefs(ctx: Context) {
         get() = sp.getString("theme", "system") ?: "system"
         set(v) = sp.edit().putString("theme", v).apply()
 
+    /** Tự lấy sự kiện từ một lịch trên máy (lịch Google) vài giờ một lần và mỗi lần mở app. */
+    var gcalAuto: Boolean
+        get() = sp.getBoolean("gcalAuto", false)
+        set(v) = sp.edit().putBoolean("gcalAuto", v).apply()
+
+    /** Lịch trên máy dùng để tự lấy sự kiện (id trong CalendarContract), -1 nếu chưa chọn. */
+    var gcalCalId: Long
+        get() = sp.getLong("gcalCalId", -1L)
+        set(v) = sp.edit().putLong("gcalCalId", v).apply()
+
     companion object {
         const val DEFAULT_LAT = 21.0285
         const val DEFAULT_LON = 105.8542

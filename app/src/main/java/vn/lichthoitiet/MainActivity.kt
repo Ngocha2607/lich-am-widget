@@ -250,6 +250,15 @@ class MainActivity : Activity() {
         super.onResume()
         LockScreenDay.update(this)
         if (pageReady) pushState()
+        // Tự lấy sự kiện mới từ lịch Google nếu đã bật (tối đa 30 phút một lần)
+        Thread {
+            try {
+                if (CalendarSync.autoImport(this@MainActivity) >= 0) {
+                    if (pageReady) pushState()
+                    LichWidget.updateAll(this@MainActivity)
+                }
+            } catch (e: Exception) { }
+        }.start()
     }
 
     /** Nút Back: đóng màn Cài đặt nếu đang mở, không thì thoát app. */
@@ -331,6 +340,7 @@ class MainActivity : Activity() {
                 .put("wpText", Prefs.get(this@MainActivity).getBoolean("wpText", true))
                 .put("wpActive", liveWallpaperActive())
                 .put("zenStart", Prefs.get(this@MainActivity).getBoolean("zenStart", false))
+                .put("gcalAuto", prefs.gcalAuto).put("gcalCal", prefs.gcalCalId.toString())
                 .put("zenPaper", Prefs.get(this@MainActivity).getString("zenPaper", "auto") ?: "auto"))
             put("weather", if (w == null) JSONObject.NULL else weatherJson(w))
         }.toString()
@@ -521,9 +531,12 @@ class MainActivity : Activity() {
             }
             val arr = JSONArray()
             try {
+                val sync = HashMap<String, Boolean?>()
                 CalendarSync.calendars(this@MainActivity).forEach {
-                    arr.put(JSONObject().put("id", it.id.toString()).put("name", it.name).put("account", it.account)
-                        .put("color", String.format("#%06X", it.color and 0xFFFFFF)).put("writable", it.writable))
+                    val o = JSONObject().put("id", it.id.toString()).put("name", it.name).put("account", it.account).put("type", it.accountType)
+                        .put("color", String.format("#%06X", it.color and 0xFFFFFF)).put("writable", it.writable)
+                    if (it.accountType == CalendarSync.GOOGLE) o.put("sync", sync.getOrPut(it.account) { CalendarSync.syncOn(it.account) } ?: JSONObject.NULL)
+                    arr.put(o)
                 }
             } catch (e: Exception) {
                 status("Không đọc được danh sách lịch: ${e.message}")
@@ -555,6 +568,64 @@ class MainActivity : Activity() {
                     status(if (n > 0) "Đã xuất $n mục sang lịch đã chọn. Lịch Google sẽ tự đồng bộ." else "Chưa có sự kiện nào để xuất.")
                 } catch (e: Exception) {
                     status("Không xuất được: ${e.message}")
+                }
+            }.start()
+        }
+
+        /** Mở màn hình đăng nhập tài khoản Google của máy; đăng nhập xong lịch Google tự đồng bộ về máy để app đọc. */
+        @JavascriptInterface
+        fun addGoogleAccount() = runOnUiThread {
+            val add = Intent(android.provider.Settings.ACTION_ADD_ACCOUNT)
+                .putExtra(android.provider.Settings.EXTRA_ACCOUNT_TYPES, arrayOf(CalendarSync.GOOGLE))
+            try {
+                startActivity(add)
+            } catch (e: Exception) {
+                try { startActivity(Intent(android.provider.Settings.ACTION_SYNC_SETTINGS)) } catch (e2: Exception) {
+                    status("Máy không mở được màn hình đăng nhập Google.")
+                }
+            }
+        }
+
+        /** Đồng bộ ngay lịch của tài khoản Google [account], đợi một lúc rồi lấy sự kiện mới nếu đang bật tự lấy. */
+        @JavascriptInterface
+        fun syncGoogle(account: String) {
+            if (!CalendarSync.requestSync(account)) { status("Không đồng bộ được. Thử trong Cài đặt máy → Tài khoản → Google."); return }
+            status("Đang đồng bộ lịch Google…")
+            Thread {
+                try {
+                    Thread.sleep(8000)
+                    val n = CalendarSync.autoImport(this@MainActivity, force = true)
+                    if (n >= 0) {
+                        status("Đã cập nhật $n sự kiện từ lịch Google.")
+                        pushState()
+                        LichWidget.updateAll(this@MainActivity)
+                    }
+                } catch (e: Exception) { }
+            }.start()
+        }
+
+        /** Bật đồng bộ Lịch cho tài khoản Google [account]; máy đang tắt tự đồng bộ thì mở cài đặt để người dùng bật. */
+        @JavascriptInterface
+        fun enableGoogleSync(account: String) {
+            if (CalendarSync.enableSync(account)) { status("Đã bật đồng bộ Lịch cho $account."); return }
+            status("Máy đang tắt tự đồng bộ dữ liệu. Bật lên rồi quay lại app.")
+            runOnUiThread { try { startActivity(Intent(android.provider.Settings.ACTION_SYNC_SETTINGS)) } catch (e: Exception) { } }
+        }
+
+        /** Bật / tắt tự lấy sự kiện từ lịch [calId] (vài giờ một lần và mỗi lần mở app). */
+        @JavascriptInterface
+        fun setCalendarAuto(on: Boolean, calId: String) {
+            calId.toLongOrNull()?.let { prefs.gcalCalId = it }
+            prefs.gcalAuto = on
+            if (!on) { status("Đã tắt tự lấy sự kiện từ lịch."); return }
+            Thread {
+                try {
+                    val n = CalendarSync.autoImport(this@MainActivity, force = true)
+                    status(if (n >= 0) "Đã bật. Lấy được $n sự kiện, app sẽ tự cập nhật vài giờ một lần." else "Đã bật tự lấy sự kiện.")
+                    pushState()
+                    LichWidget.updateAll(this@MainActivity)
+                } catch (e: Exception) {
+                    status("Không nhập được: ${e.message}")
                 }
             }.start()
         }

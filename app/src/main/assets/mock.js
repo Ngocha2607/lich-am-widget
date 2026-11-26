@@ -229,8 +229,15 @@
       }
       return JSON.stringify(out);
     },
-    calendarList: () => JSON.stringify([{ id: "1", name: "Cá nhân", account: "ban@gmail.com", color: "#4285F4", writable: true },
-      { id: "2", name: "Ngày lễ ở Việt Nam", account: "ban@gmail.com", color: "#0B8043", writable: false }]),
+    calendarList: () => JSON.stringify(mockGoogle ? [
+      { id: "1", name: "ban@gmail.com", account: "ban@gmail.com", type: "com.google", sync: mockSync, color: "#4285F4", writable: true },
+      { id: "2", name: "Ngày lễ ở Việt Nam", account: "ban@gmail.com", type: "com.google", sync: mockSync, color: "#0B8043", writable: false },
+      { id: "3", name: "Lịch điện thoại", account: "Điện thoại", type: "LOCAL", color: "#E67C73", writable: true }]
+      : [{ id: "3", name: "Lịch điện thoại", account: "Điện thoại", type: "LOCAL", color: "#E67C73", writable: true }]),
+    addGoogleAccount() { mockGoogle = true; setTimeout(push, 600); },
+    syncGoogle() { window.onStatus && window.onStatus("(xem trước) Đang đồng bộ lịch Google…"); },
+    enableGoogleSync() { mockSync = true; window.onStatus && window.onStatus("(xem trước) Đã bật đồng bộ Lịch."); },
+    setCalendarAuto(on, id) { prefs.gcalAuto = on; prefs.gcalCal = id; window.onStatus && window.onStatus(on ? "(xem trước) Đã bật tự lấy sự kiện." : "(xem trước) Đã tắt."); },
     importCalendar() { window.onStatus && window.onStatus("(xem trước) Đã nhập 3 sự kiện từ lịch trên máy."); },
     exportCalendar() { window.onStatus && window.onStatus("(xem trước) Đã xuất 12 mục sang lịch đã chọn."); },
     tuvi: () => profile.birth ? JSON.stringify({ sign: "Song Ngư", symbol: "♓", element: "Nước", range: "19/2 – 20/3",
@@ -297,7 +304,8 @@
 
   const prefs = { city: "Hà Nội", spiritual: true, theme: "system", showAlmanac: true, showLucDieu: true, showHuong: true, showGoodDays: true,
     notifyEvents: true, notifyLunar: true, notifyHour: 7, notifyWeather: true, notifyWeatherHour: 20, bg: "none", bgVer: 0,
-    lockNote: false, notifAllowed: true, wpText: true, wpActive: false, zenStart: false, zenPaper: "auto" };
+    lockNote: false, notifAllowed: true, wpText: true, wpActive: false, zenStart: false, zenPaper: "auto", gcalAuto: false, gcalCal: "-1" };
+  let mockGoogle = false, mockSync = false;   // xem trước: chưa đăng nhập Google; đăng nhập xong thì đồng bộ Lịch đang tắt
   function push() {
     const n = new Date(), l = toLunar(today.getDate(), today.getMonth() + 1, today.getFullYear());
     const tet = toSolar(1, 1, l.y + 1), dark = prefs.theme === "dark" || (prefs.theme === "system" && matchMedia("(prefers-color-scheme: dark)").matches);

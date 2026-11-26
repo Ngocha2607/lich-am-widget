@@ -7,6 +7,9 @@
     <!-- Nhập / xuất sự kiện với lịch trên máy (tài khoản Google đã đăng nhập); chỉ xin khi người dùng bấm -->
     <uses-permission android:name="android.permission.READ_CALENDAR" />
     <uses-permission android:name="android.permission.WRITE_CALENDAR" />
+    <!-- Xem / bật đồng bộ Lịch của tài khoản Google khi người dùng bấm (quyền thường, máy không hỏi) -->
+    <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" />
+    <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
     <!-- La bàn phong thủy AR: khung hình camera sau; máy không có camera vẫn dùng la bàn phẳng -->
     <uses-permission android:name="android.permission.CAMERA" />
 

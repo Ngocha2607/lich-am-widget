@@ -104,6 +104,12 @@ object EventStore {
         save(ctx, load(ctx).filter { !it.id.startsWith(prefix) } + events)
     }
 
+    /** Đồng bộ một chiều từ lịch trên máy: ghi đè [list] và bỏ các id trong [remove] (một lượt, có khóa). */
+    fun syncImported(ctx: Context, remove: Set<String>, list: List<Event>) = synchronized(LOCK) {
+        val ids = list.map { it.id }.toSet()
+        save(ctx, load(ctx).filter { it.id !in ids && it.id !in remove } + list)
+    }
+
     /** Thêm hoặc ghi đè nhiều sự kiện một lượt (trùng id thì ghi đè). */
     fun upsertAll(ctx: Context, list: List<Event>) {
         if (list.isEmpty()) return

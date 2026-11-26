@@ -17,6 +17,7 @@ class WeatherWorker(ctx: Context, params: WorkerParameters) : Worker(ctx, params
 
     override fun doWork(): Result {
         Reminders.schedule(applicationContext) // tự đặt lại báo thức nếu hệ thống đã hủy
+        try { CalendarSync.autoImport(applicationContext) } catch (e: Exception) { }   // tự lấy sự kiện từ lịch Google nếu đã bật
         return try {
             WeatherRepo.refresh(applicationContext)
             LichWidget.updateAll(applicationContext)

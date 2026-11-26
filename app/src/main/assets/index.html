@@ -572,6 +572,25 @@ html.dark { --violet: #A68BFF; --teal: #2DD4BF; --orange: #FF9F4A; }
 .conv-res .moon { vertical-align: middle; margin: -6px 0 -4px -4px; }
 .z-ctl button { display: inline-grid; place-items: center; } .z-ctl button .i { width: 20px; height: 20px; }
 
+/* Google Calendar: đăng nhập, tài khoản, trạng thái đồng bộ */
+.gc-login { text-align: center; padding: 18px 14px 16px; border-radius: 18px; margin-bottom: 10px;
+  background: linear-gradient(180deg, var(--blue-soft), color-mix(in srgb, var(--blue-soft) 30%, var(--card))); }
+.gc-login > .i { width: 34px; height: 34px; color: var(--blue); }
+.gc-login b { display: block; font-size: 16px; margin-top: 8px; }
+.gc-login p { margin: 6px 0 14px; font-size: 13px; color: var(--muted); line-height: 1.5; }
+.gc-login .btn { width: 100%; }
+.btn .i { width: 18px; height: 18px; margin-right: 6px; vertical-align: -4px; }
+.gc-acc { display: flex; align-items: center; gap: 10px; padding: 6px 2px 10px; }
+.gc-acc .av { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; flex: none; font-weight: 800; color: #fff;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--blue) 75%, white), var(--blue)); box-shadow: var(--raise-sm); }
+.gc-acc .who { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.gc-acc .who b { font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.gc-acc .who small { font-size: 12px; color: var(--good); } .gc-acc .who small.off { color: var(--accent); }
+.gc-acc .pill { margin-top: 0; flex: none; }
+.gc-add { display: flex; align-items: center; gap: 8px; width: 100%; padding: 10px 4px 4px; color: var(--blue); font-weight: 600; font-size: 14px; }
+.gc-add .i { width: 18px; height: 18px; }
+.sw-row small { display: block; font-size: 12px; font-weight: 400; color: var(--muted); margin-top: 2px; }
+
 /* ===== Thanh menu dưới: mỗi mục một trang ngắn, không phải cuộn cả app ===== */
 body:not([data-cur="lich"]) [data-tab="lich"], body:not([data-cur="thoitiet"]) [data-tab="thoitiet"],
 body:not([data-cur="xem"]) [data-tab="xem"], body:not([data-cur="tienich"]) [data-tab="tienich"],
@@ -750,13 +769,14 @@ body.has-bg .tool { background: color-mix(in srgb, var(--card) 84%, transparent)
 
 <header class="tab-head" data-tab="tienich"><div class="grow"><h1>Tiện ích</h1></div></header>
 <section class="tools-grid" id="toolsCard" data-tab="tienich">
-  <button class="tool" id="convRow"><span class="ico t-blue" data-ic="arrow-left-right"></span><span class="body"><span class="lbl">Đổi lịch âm ↔ dương</span><span class="val">Tra ngày âm của một ngày dương và ngược lại</span></span></button>
+  <button class="tool" id="convRow"><span class="ico t-teal" data-ic="arrow-left-right"></span><span class="body"><span class="lbl">Đổi lịch âm ↔ dương</span><span class="val">Tra ngày âm của một ngày dương và ngược lại</span></span></button>
+  <button class="tool" id="gcalTool"><span class="ico t-blue" data-ic="calendar-range"></span><span class="body"><span class="lbl">Google Calendar</span><span class="val">Đăng nhập Google, đồng bộ sự kiện về app và ngược lại</span></span></button>
   <button class="tool" id="vkRow"><span class="ico t-orange" data-ic="flame"></span><span class="body"><span class="lbl">Văn khấn cổ truyền</span><span class="val">Mùng 1, ngày rằm, gia tiên, giỗ, khai trương… không cần mạng</span></span></button>
   <button class="tool" id="tearRow"><span class="ico t-red" data-ic="sticky-note"></span><span class="body"><span class="lbl">Lịch xé</span><span class="val">Xé từng tờ như lịch bloc treo tường, có tiếng giấy</span></span></button>
   <button class="tool" id="compassRow"><span class="ico t-green" data-ic="compass"></span><span class="body"><span class="lbl">La bàn phong thủy AR</span><span class="val">Hướng bàn thờ, hướng xuất hành, góc tài lộc qua camera</span></span></button>
   <button class="tool" id="famRow"><span class="ico t-gold" data-ic="book-heart"></span><span class="body"><span class="lbl">Sổ giỗ gia đình</span><span class="val">Gửi mã qua Zalo, cả nhà cùng được nhắc ngày giỗ</span></span></button>
   <button class="tool" id="zenRow"><span class="ico t-teal" data-ic="leaf"></span><span class="body"><span class="lbl">Chế độ Zen</span><span class="val">Một con số ngày âm và một câu thơ trên nền giấy dó</span></span></button>
-  <button class="tool wide" id="shareRow"><span class="ico t-violet" data-ic="share-2"></span><span class="body"><span class="lbl">Chia sẻ hôm nay</span><span class="val">Ảnh ngày âm, thời tiết, gợi ý để gửi Zalo, Facebook</span></span></button>
+  <button class="tool" id="shareRow"><span class="ico t-violet" data-ic="share-2"></span><span class="body"><span class="lbl">Chia sẻ hôm nay</span><span class="val">Ảnh ngày âm, thời tiết, gợi ý để gửi Zalo, Facebook</span></span></button>
 </section>
 
 <div id="settings" data-tab="caidat" role="region" aria-label="Cài đặt">
@@ -816,7 +836,7 @@ body.has-bg .tool { background: color-mix(in srgb, var(--card) 84%, transparent)
     <button class="item" id="refreshRow"><span class="ico t-blue" data-ic="refresh-cw"></span><span class="body"><span class="lbl">Thời tiết</span><span class="val" id="updVal"></span></span><span class="act">Làm mới</span></button>
     <button class="item" id="exportRow"><span class="ico t-green" data-ic="download"></span><span class="body"><span class="lbl">Sao lưu sự kiện</span><span class="val">Lưu file JSON để chuyển máy hoặc phòng mất dữ liệu</span></span><span class="chev" data-ic="chevron-right"></span></button>
     <button class="item" id="importRow"><span class="ico t-orange" data-ic="folder-open"></span><span class="body"><span class="lbl">Khôi phục từ file</span><span class="val">Chọn file JSON đã sao lưu, sự kiện trùng được ghi đè</span></span><span class="chev" data-ic="chevron-right"></span></button>
-    <button class="item" id="gcalRow"><span class="ico t-blue" data-ic="calendar-range"></span><span class="body"><span class="lbl">Google Calendar trên máy</span><span class="val">Nhập sự kiện từ lịch Google vào app, hoặc xuất sự kiện (kể cả giỗ âm lịch) sang lịch Google</span></span><span class="chev" data-ic="chevron-right"></span></button>
+    <button class="item" id="gcalRow"><span class="ico t-blue" data-ic="calendar-range"></span><span class="body"><span class="lbl">Google Calendar</span><span class="val">Đăng nhập Google, lấy sự kiện từ lịch Google về app hoặc xuất sang</span></span><span class="chev" data-ic="chevron-right"></span></button>
     <button class="item" id="icsRow"><span class="ico t-teal" data-ic="calendar-plus"></span><span class="body"><span class="lbl">Xuất sang Google Calendar</span><span class="val">File .ics chứa 5 năm sự kiện, kể cả lặp theo âm lịch</span></span><span class="chev" data-ic="chevron-right"></span></button>
     <div class="item"><span class="ico t-green" data-ic="globe"></span><span class="body"><span class="lbl">Nguồn dữ liệu</span><span class="val">Open-Meteo · lịch âm tính trên máy, không cần mạng</span></span></div>
   </div>
@@ -889,10 +909,13 @@ body.has-bg .tool { background: color-mix(in srgb, var(--card) 84%, transparent)
 </div>
 <div class="sheet-bg" id="calBg" hidden></div>
 <div class="sheet" id="calSheet" hidden role="dialog" aria-label="Google Calendar">
-  <h3>Lịch Google trên máy</h3>
-  <p class="muted small" style="margin:0 0 10px">Dùng các lịch máy đã đồng bộ (tài khoản Google trong Cài đặt máy), không cần đăng nhập trong app. <b>Nhập</b>: sự kiện 1 năm tới của lịch đã chọn vào app. <b>Xuất</b>: sự kiện của app, kể cả giỗ âm lịch, thành từng ngày trong 5 năm tới; xuất lại sẽ thay các mục đã xuất lần trước.</p>
+  <h3>Google Calendar</h3>
   <div id="calList"></div>
-  <div class="actions"><button class="btn ghost" id="calImport">Nhập vào app</button><button class="btn" id="calExport">Xuất sang lịch</button></div>
+  <div id="calMain" hidden>
+    <label class="sw-row" for="calAuto"><span>Tự lấy sự kiện mới<small id="calAutoWhere"></small></span><input type="checkbox" class="switch" id="calAuto"></label>
+    <div class="actions"><button class="btn ghost" id="calImport">Nhập vào app</button><button class="btn" id="calExport">Xuất sang lịch</button></div>
+    <p class="muted small" style="margin:12px 0 0"><b>Nhập</b>: sự kiện 1 năm tới của lịch đang chọn; sự kiện đã xóa bên Google cũng tự bỏ khỏi app. <b>Xuất</b>: sự kiện của app, kể cả giỗ âm lịch, thành từng ngày trong 5 năm tới; xuất lại sẽ thay các mục đã xuất lần trước.</p>
+  </div>
   <div class="actions" style="margin-top:8px"><button class="btn ghost" id="calClose">Đóng</button></div>
 </div>
 <div class="sheet-bg" id="famBg" hidden></div>

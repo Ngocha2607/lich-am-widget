@@ -202,6 +202,7 @@ window.onState = function (s) {
   if (first && s.prefs.zenStart && s.zenLaunch) openZen();
   else if (!$("zen").hidden) renderZen();
   if (!$("famSheet").hidden && famView === "list") famList();
+  if (!$("calSheet").hidden && calPermOk) loadCalendars();
 };
 function toast(msg) { const t = $("toast"); t.textContent = msg; t.classList.add("show"); clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove("show"), 2800); }
 window.onStatus = toast;
@@ -923,27 +924,65 @@ $("icsRow").onclick = () => Android.exportIcs();
 let calSel = ls("calId"), calList = [];
 function openCal() { $("calBg").hidden = false; $("calSheet").hidden = false; loadCalendars(); }
 function closeCal() { $("calBg").hidden = true; $("calSheet").hidden = true; }
+let calPermOk = false;
+const calName = c => c.name === c.account && c.type === "com.google" ? "Lịch chính" : c.name;   // lịch chính của Google mang tên là email
+const calBtn = c => `<button class="cal${c.id === calSel ? " on" : ""}" data-id="${esc(c.id)}"><i style="background:${esc(c.color)}"></i>
+    <span><b>${esc(calName(c))}</b><small>${[c.type === "com.google" ? "" : c.account, c.writable ? "" : "chỉ đọc"].filter(Boolean).map(esc).join(" · ")}</small></span></button>`;
+/** Bảng Google Calendar: đăng nhập Google (màn hình của máy), tài khoản và lịch, tự lấy sự kiện, nhập / xuất. */
 function loadCalendars() {
-  const raw = Android.calendarList();
-  if (raw === "null") { $("calList").innerHTML = `<div class="ev-empty">Đang xin quyền truy cập lịch trên máy…</div>`; return; }
+  const raw = Android.calendarList(), main = $("calMain");
+  if (raw === "null") { main.hidden = true; $("calList").innerHTML = `<div class="ev-empty">Đang xin quyền truy cập lịch trên máy…</div>`; return; }
+  calPermOk = true;
   calList = JSON.parse(raw);
-  if (!calList.length) {
-    $("calList").innerHTML = `<div class="ev-empty">Máy chưa có lịch nào. Thêm tài khoản Google trong Cài đặt máy rồi bật đồng bộ Lịch.</div>`;
-    $("calImport").disabled = $("calExport").disabled = true; return;
-  }
-  if (!calList.some(c => c.id === calSel)) calSel = (calList.find(c => c.writable) || calList[0]).id;
-  $("calList").innerHTML = calList.map(c => `<button class="cal${c.id === calSel ? " on" : ""}" data-id="${esc(c.id)}"><i style="background:${esc(c.color)}"></i>
-    <span><b>${esc(c.name)}</b><small>${esc(c.account)}${c.writable ? "" : " · chỉ đọc"}</small></span></button>`).join("");
-  $("calList").querySelectorAll(".cal").forEach(b => b.onclick = () => { calSel = b.dataset.id; lsSet("calId", calSel); loadCalendars(); });
+  const google = calList.filter(c => c.type === "com.google");
+  // Chưa tự chọn lịch nào: ưu tiên lịch Google (vừa đăng nhập xong thì chuyển sang lịch Google)
+  if (calList.length && (!calList.some(c => c.id === calSel) || (!ls("calId") && google.length && !google.some(c => c.id === calSel))))
+    calSel = (google.find(c => c.writable) || calList.find(c => c.writable) || calList[0]).id;
+  const accounts = [...new Set(google.map(c => c.account))];
+  let html = accounts.length ? "" : `<div class="gc-login">${ic("calendar-range")}<b>Đăng nhập Google để đồng bộ lịch</b>
+    <p>Mở màn hình đăng nhập chính thức của Google trên máy, app không thấy mật khẩu. Đăng nhập xong quay lại đây, chọn lịch rồi bấm Nhập vào app.</p>
+    <button class="btn" id="gcLogin">${ic("log-in")}Đăng nhập Google</button></div>`;
+  accounts.forEach(acc => {
+    const cals = google.filter(c => c.account === acc), sync = cals[0].sync;
+    html += `<div class="gc-acc"><span class="av">${esc((acc[0] || "G").toUpperCase())}</span><span class="who"><b>${esc(acc)}</b>
+      <small class="${sync === false ? "off" : ""}">${sync === false ? "Đồng bộ Lịch của tài khoản đang tắt" : sync ? "Đã đăng nhập · lịch tự đồng bộ" : "Đã đăng nhập"}</small></span>
+      ${sync === false ? `<button class="pill" data-on="${esc(acc)}">Bật</button>` : `<button class="act-btn" data-sync="${esc(acc)}" aria-label="Đồng bộ ngay ${esc(acc)}">${ic("refresh-cw")}</button>`}</div>`
+      + cals.map(calBtn).join("");
+  });
+  const other = calList.filter(c => c.type !== "com.google");
+  if (other.length) html += `<div class="sub-h">Lịch khác trên máy</div>` + other.map(calBtn).join("");
+  if (accounts.length) html += `<button class="gc-add" id="gcLogin">${ic("plus")}Thêm tài khoản Google khác</button>`;
+  $("calList").innerHTML = html;
+  $("gcLogin").onclick = () => { toast("Đăng nhập xong thì quay lại app"); Android.addGoogleAccount(); };
+  $("calList").querySelectorAll(".cal").forEach(b => b.onclick = () => {
+    if (b.dataset.id === calSel) return;
+    calSel = b.dataset.id; lsSet("calId", calSel);
+    if (state.prefs.gcalAuto) { state.prefs.gcalCal = calSel; Android.setCalendarAuto(true, calSel); }   // tự lấy theo lịch mới chọn
+    loadCalendars();
+  });
+  $("calList").querySelectorAll("[data-sync]").forEach(b => b.onclick = () => Android.syncGoogle(b.dataset.sync));
+  $("calList").querySelectorAll("[data-on]").forEach(b => b.onclick = () => { Android.enableGoogleSync(b.dataset.on); setTimeout(loadCalendars, 800); });
+  main.hidden = !calList.length;
+  if (!calList.length) return;
   const cur = calList.find(c => c.id === calSel);
   $("calImport").disabled = false;
   $("calExport").disabled = !(cur && cur.writable);
+  $("calAuto").checked = !!state.prefs.gcalAuto;
+  const autoCal = state.prefs.gcalAuto && calList.find(c => c.id === state.prefs.gcalCal);
+  $("calAutoWhere").textContent = autoCal ? `Đang tự lấy từ "${calName(autoCal)}", vài giờ một lần và mỗi lần mở app` : "Vài giờ một lần và mỗi lần mở app, từ lịch đang chọn";
 }
 window.onCalendarPermission = ok => {
-  if (ok) loadCalendars();
-  else $("calList").innerHTML = `<div class="ev-empty">Chưa được cấp quyền truy cập lịch. Mở lại mục này để thử, hoặc cấp trong Cài đặt máy → Ứng dụng → Lịch &amp; Thời tiết → Quyền.</div>`;
+  if (ok) { loadCalendars(); return; }
+  $("calMain").hidden = true;
+  $("calList").innerHTML = `<div class="ev-empty">Chưa được cấp quyền truy cập lịch. Mở lại mục này để thử, hoặc cấp trong Cài đặt máy → Ứng dụng → Lịch &amp; Thời tiết → Quyền.</div>`;
 };
-$("gcalRow").onclick = openCal; $("calClose").onclick = closeCal; $("calBg").onclick = closeCal;
+$("calAuto").onchange = e => {
+  if (!calSel) { e.target.checked = false; return; }
+  state.prefs.gcalAuto = e.target.checked; state.prefs.gcalCal = calSel;
+  Android.setCalendarAuto(e.target.checked, calSel);
+  loadCalendars();
+};
+$("gcalRow").onclick = $("gcalTool").onclick = openCal; $("calClose").onclick = closeCal; $("calBg").onclick = closeCal;
 $("calImport").onclick = () => { if (!calSel) return; toast("Đang nhập sự kiện…"); Android.importCalendar(calSel); };
 $("calExport").onclick = () => { if (!calSel) return; toast("Đang xuất sang lịch…"); Android.exportCalendar(calSel); };
 // ---- Thanh menu dưới: Lịch, Thời tiết, Xem ngày, Tiện ích, Cài đặt; mỗi mục nhớ chỗ đang cuộn ----
