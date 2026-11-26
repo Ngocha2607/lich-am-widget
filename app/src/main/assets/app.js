@@ -1083,7 +1083,6 @@ $("refreshRow").onclick = () => { toast("Đang tải thời tiết..."); Android
 $("pinRow").onclick = () => Android.pinWidget();
 $("pinIconRow").onclick = () => Android.pinIconWidget();
 $("pinBlocRow").onclick = () => Android.pinBlocWidget();
-$("srcRow").onclick = () => Android.openUrl("https://github.com/Ngocha2607/lich-am-widget");
 
 // ---- Lịch xé, la bàn AR, màn hình khóa, hình nền động ----
 const pad2 = n => String(n).padStart(2, "0");
