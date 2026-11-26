@@ -129,13 +129,31 @@ class MainActivity : Activity() {
         }
     }
 
+    /** Tài khoản Google đã biết: đã chọn trong app, app được thấy, hoặc có lịch trên máy. */
+    private fun googleAccounts(): LinkedHashSet<String> {
+        val names = LinkedHashSet<String>()
+        prefs.gcalAccount.takeIf { it.isNotBlank() }?.let { names += it }
+        try {
+            android.accounts.AccountManager.get(this).getAccountsByType(CalendarSync.GOOGLE).forEach { names += it.name }
+        } catch (e: Exception) { }
+        if (CalendarSync.hasPermission(this)) {
+            try {
+                CalendarSync.calendars(this).filter { it.accountType == CalendarSync.GOOGLE }.forEach { names += it.account }
+            } catch (e: Exception) { }
+        }
+        return names
+    }
+
     /** Vừa chọn tài khoản Google: nhớ tài khoản, bật đồng bộ Lịch nếu đang tắt (người dùng chủ động kết nối) rồi đồng bộ ngay. */
     private fun connectGoogle(name: String) {
         prefs.gcalAccount = name
         Thread {
             when {
-                !CalendarSync.hasGoogleCalendarAdapter() ->
-                    status("Máy chưa có phần đồng bộ Lịch Google. Cài ứng dụng Lịch Google rồi quay lại.")
+                !CalendarSync.hasGoogleCalendarAdapter(this) ->
+                    status(
+                        if (CalendarSync.versionOf(this, CalendarSync.GCAL_APP) == null) "Máy chưa có phần đồng bộ Lịch Google. Cài ứng dụng Lịch Google rồi quay lại."
+                        else "Máy chưa có bộ đồng bộ Lịch Google nên lịch chưa về máy được.",
+                    )
                 CalendarSync.syncOn(name) == false && !CalendarSync.enableSync(name) ->
                     status("Máy đang tắt tự đồng bộ dữ liệu. Bật lên để lấy lịch của $name.")
                 else -> {
@@ -619,22 +637,50 @@ class MainActivity : Activity() {
             }
         }
 
-        /** Tài khoản Google đã biết (đã chọn trong app, app được thấy, hoặc có lịch trên máy), trạng thái đồng bộ Lịch, máy có bộ đồng bộ Lịch Google không. */
+        /**
+         * Tài khoản Google đã biết (đã chọn trong app, app được thấy, hoặc có lịch trên máy), trạng thái đồng bộ Lịch,
+         * máy có bộ đồng bộ Lịch Google không, đã cài ứng dụng Lịch Google chưa.
+         */
         @JavascriptInterface
         fun googleStatus(): String {
-            val names = LinkedHashSet<String>()
-            prefs.gcalAccount.takeIf { it.isNotBlank() }?.let { names += it }
-            try {
-                android.accounts.AccountManager.get(this@MainActivity).getAccountsByType(CalendarSync.GOOGLE).forEach { names += it.name }
-            } catch (e: Exception) { }
-            if (CalendarSync.hasPermission(this@MainActivity)) {
-                try {
-                    CalendarSync.calendars(this@MainActivity).filter { it.accountType == CalendarSync.GOOGLE }.forEach { names += it.account }
-                } catch (e: Exception) { }
-            }
             val arr = JSONArray()
-            names.forEach { n -> arr.put(JSONObject().put("name", n).put("sync", CalendarSync.syncOn(n) ?: JSONObject.NULL)) }
-            return JSONObject().put("adapter", CalendarSync.hasGoogleCalendarAdapter()).put("accounts", arr).toString()
+            googleAccounts().forEach { n -> arr.put(JSONObject().put("name", n).put("sync", CalendarSync.syncOn(n) ?: JSONObject.NULL)) }
+            return JSONObject().put("adapter", CalendarSync.hasGoogleCalendarAdapter(this@MainActivity))
+                .put("app", CalendarSync.versionOf(this@MainActivity, CalendarSync.GCAL_APP) != null).put("accounts", arr).toString()
+        }
+
+        /** Thông tin kiểm tra vì sao lịch Google chưa về máy (hiện trong bảng Google Calendar, sao chép được). */
+        @JavascriptInterface
+        fun googleDiag(): String = try {
+            CalendarSync.diagnostics(this@MainActivity, googleAccounts())
+        } catch (e: Exception) {
+            "Không lấy được thông tin: ${e.message}"
+        }
+
+        /** Mở ứng dụng Lịch Google; chưa cài thì mở trang CH Play. */
+        @JavascriptInterface
+        fun openGoogleCalendar() = runOnUiThread {
+            val i = packageManager.getLaunchIntentForPackage(CalendarSync.GCAL_APP)
+            if (i != null) tryStart(i) else installGoogleCalendar()
+        }
+
+        /** Yêu cầu đồng bộ ngay lịch của mọi tài khoản Google đã biết. */
+        @JavascriptInterface
+        fun syncGoogleAll() {
+            val names = googleAccounts()
+            names.forEach { CalendarSync.requestSync(it) }
+            status(if (names.isEmpty()) "Chưa có tài khoản Google nào." else "Đang đồng bộ lịch của ${names.size} tài khoản Google…")
+        }
+
+        /** Chép [text] vào bộ nhớ tạm. */
+        @JavascriptInterface
+        fun copyText(text: String) = runOnUiThread {
+            try {
+                getSystemService(ClipboardManager::class.java)?.setPrimaryClip(android.content.ClipData.newPlainText("Lịch & Thời tiết", text))
+                if (Build.VERSION.SDK_INT < 33) status("Đã sao chép.")   // Android 13+ tự báo
+            } catch (e: Exception) {
+                status("Không sao chép được.")
+            }
         }
 
         /** Mở trang ứng dụng Lịch Google trên CH Play (bộ đồng bộ Lịch Google đi kèm ứng dụng này). */

@@ -6,12 +6,16 @@ import android.content.ContentResolver
 import android.content.ContentUris
 import android.content.ContentValues
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.pm.ServiceInfo
+import android.os.Build
 import android.os.Bundle
 import android.provider.CalendarContract
 import android.provider.CalendarContract.Calendars as Cal
 import android.provider.CalendarContract.Instances as Inst
 import org.json.JSONArray
+import org.xmlpull.v1.XmlPullParser
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
@@ -35,6 +39,9 @@ object CalendarSync {
     private const val AUTO_GAP_MS = 30 * 60_000L
     /** Loại tài khoản Google trong AccountManager / CalendarContract. */
     const val GOOGLE = "com.google"
+    /** Ứng dụng Lịch Google (CH Play) và gói bộ đồng bộ Lịch Google của hệ thống. */
+    const val GCAL_APP = "com.google.android.calendar"
+    const val GCAL_SYNC_PKG = "com.google.android.syncadapters.calendar"
 
     fun hasPermission(ctx: Context) =
         ctx.checkSelfPermission(Manifest.permission.READ_CALENDAR) == PackageManager.PERMISSION_GRANTED &&
@@ -43,7 +50,9 @@ object CalendarSync {
     fun calendars(ctx: Context): List<DeviceCalendar> {
         val proj = arrayOf(Cal._ID, Cal.CALENDAR_DISPLAY_NAME, Cal.ACCOUNT_NAME, Cal.CALENDAR_COLOR, Cal.CALENDAR_ACCESS_LEVEL, Cal.ACCOUNT_TYPE)
         val out = mutableListOf<DeviceCalendar>()
-        ctx.contentResolver.query(Cal.CONTENT_URI, proj, "${Cal.VISIBLE} = 1", null, "${Cal.ACCOUNT_NAME}, ${Cal.CALENDAR_DISPLAY_NAME}")?.use { cur ->
+        // Gồm cả lịch đang ẩn trong app lịch khác (visible = 0) mà vẫn đồng bộ sự kiện
+        val where = "(${Cal.VISIBLE} = 1 OR ${Cal.SYNC_EVENTS} = 1)"
+        ctx.contentResolver.query(Cal.CONTENT_URI, proj, where, null, "${Cal.ACCOUNT_NAME}, ${Cal.CALENDAR_DISPLAY_NAME}")?.use { cur ->
             while (cur.moveToNext()) {
                 out += DeviceCalendar(
                     id = cur.getLong(0), name = cur.getString(1) ?: "", account = cur.getString(2) ?: "",
@@ -54,11 +63,120 @@ object CalendarSync {
         return out
     }
 
-    /** Máy có bộ đồng bộ Lịch cho tài khoản Google không (thường đi kèm ứng dụng Google Calendar); không đọc được thì coi như có. */
-    fun hasGoogleCalendarAdapter(): Boolean = try {
-        ContentResolver.getSyncAdapterTypes().any { it.accountType == GOOGLE && it.authority == CalendarContract.AUTHORITY }
+    /** Phiên bản gói [pkg] đã cài (thêm "(đang tắt)" nếu bị tắt); null nếu chưa cài hoặc app không được thấy. */
+    fun versionOf(ctx: Context, pkg: String): String? = try {
+        val info = ctx.packageManager.getPackageInfo(pkg, 0)
+        (info.versionName ?: "?") + if (info.applicationInfo?.enabled == false) " (đang tắt)" else ""
+    } catch (e: Exception) {
+        null
+    }
+
+    /**
+     * Máy có bộ đồng bộ Lịch cho tài khoản Google không: hệ thống báo có, hoặc có gói bộ đồng bộ Lịch Google.
+     * Không đọc được thì coi như có.
+     */
+    fun hasGoogleCalendarAdapter(ctx: Context): Boolean = try {
+        ContentResolver.getSyncAdapterTypes().any { it.accountType == GOOGLE && it.authority == CalendarContract.AUTHORITY } ||
+            versionOf(ctx, GCAL_SYNC_PKG) != null
     } catch (e: Exception) {
         true
+    }
+
+    /** Loại tài khoản và kho dữ liệu mà dịch vụ đồng bộ [si] khai báo (đọc từ meta-data android.content.SyncAdapter). */
+    private fun adapterOf(pm: PackageManager, si: ServiceInfo): Pair<String, String>? {
+        val xml = try { si.loadXmlMetaData(pm, "android.content.SyncAdapter") } catch (e: Exception) { null } ?: return null
+        return try {
+            val ns = "http://schemas.android.com/apk/res/android"
+            val res = pm.getResourcesForApplication(si.applicationInfo)
+            fun attr(name: String): String {
+                val id = xml.getAttributeResourceValue(ns, name, 0)
+                return if (id != 0) res.getString(id) else xml.getAttributeValue(ns, name) ?: ""
+            }
+            var ev = xml.eventType
+            var found: Pair<String, String>? = null
+            while (ev != XmlPullParser.END_DOCUMENT && found == null) {
+                if (ev == XmlPullParser.START_TAG && xml.name == "sync-adapter") found = attr("accountType") to attr("contentAuthority")
+                else ev = xml.next()
+            }
+            found
+        } catch (e: Exception) {
+            null
+        } finally {
+            xml.close()
+        }
+    }
+
+    private fun mask(email: String): String {
+        val at = email.indexOf('@')
+        return if (at <= 3) email else email.take(3) + "…" + email.substring(at)
+    }
+
+    private fun onOff(b: Boolean?) = when (b) { true -> "bật"; false -> "tắt"; null -> "?" }
+
+    private inline fun <T> orNull(f: () -> T): T? = try { f() } catch (e: Exception) { null }
+
+    /**
+     * Thông tin để tìm vì sao lịch Google chưa về máy: phiên bản Android, các gói liên quan, bộ đồng bộ hệ thống thấy được,
+     * trạng thái đồng bộ từng tài khoản [accounts] và các lịch đang có trong kho lịch của máy (email được che bớt).
+     */
+    fun diagnostics(ctx: Context, accounts: Collection<String>): String {
+        val out = mutableListOf<String>()
+        val pm = ctx.packageManager
+        out += "Android ${Build.VERSION.RELEASE} (SDK ${Build.VERSION.SDK_INT}) · ${Build.MANUFACTURER} ${Build.MODEL}"
+        out += "Ứng dụng Lịch Google: ${versionOf(ctx, GCAL_APP) ?: "không có"}"
+        out += "Gói đồng bộ Lịch Google: ${versionOf(ctx, GCAL_SYNC_PKG) ?: "không có"}"
+        out += "Dịch vụ Google Play: ${versionOf(ctx, "com.google.android.gms") ?: "không có"}"
+        out += "Kho lịch của máy: ${orNull { pm.resolveContentProvider(CalendarContract.AUTHORITY, 0)?.packageName } ?: "không thấy"}"
+        out += "Tự đồng bộ cả máy: ${onOff(orNull { ContentResolver.getMasterSyncAutomatically() })}"
+        val types = orNull { ContentResolver.getSyncAdapterTypes().toList() } ?: emptyList()
+        val google = types.filter { it.accountType == GOOGLE }.map { it.authority }.distinct().sorted()
+        out += "Bộ đồng bộ hệ thống báo: ${types.size}; của Google: ${google.joinToString().ifEmpty { "không có" }}"
+        @Suppress("DEPRECATION")
+        val services = orNull { pm.queryIntentServices(Intent("android.content.SyncAdapter"), PackageManager.GET_META_DATA) } ?: emptyList()
+        val calAdapters = services.mapNotNull { ri ->
+            val (type, auth) = adapterOf(pm, ri.serviceInfo) ?: return@mapNotNull null
+            if (auth.split(',').any { it.trim() == CalendarContract.AUTHORITY }) "${ri.serviceInfo.packageName} ($type)" else null
+        }
+        out += "Dịch vụ đồng bộ lịch (trong ${services.size} dịch vụ đồng bộ): ${calAdapters.joinToString().ifEmpty { "không có" }}"
+        accounts.forEach { n ->
+            val a = Account(n, GOOGLE)
+            val auth = CalendarContract.AUTHORITY
+            out += "Tài khoản ${mask(n)}: tự đồng bộ Lịch ${onOff(orNull { ContentResolver.getSyncAutomatically(a, auth) })}" +
+                ", syncable ${orNull { ContentResolver.getIsSyncable(a, auth) } ?: "?"}" +
+                ", đang chạy ${onOff(orNull { ContentResolver.isSyncActive(a, auth) })}" +
+                ", đang chờ ${onOff(orNull { ContentResolver.isSyncPending(a, auth) })}"
+        }
+        if (!hasPermission(ctx)) {
+            out += "Chưa có quyền đọc lịch"
+            return out.joinToString("\n")
+        }
+        try {
+            val cr = ctx.contentResolver
+            val proj = arrayOf(Cal._ID, Cal.ACCOUNT_TYPE, Cal.ACCOUNT_NAME, Cal.CALENDAR_DISPLAY_NAME, Cal.VISIBLE, Cal.SYNC_EVENTS)
+            val read = cr.query(Cal.CONTENT_URI, proj, null, null, "${Cal.ACCOUNT_TYPE}, ${Cal.ACCOUNT_NAME}")?.use { c ->
+                out += "Lịch trong kho: ${c.count}"
+                var shown = 0
+                while (c.moveToNext() && shown < 20) {
+                    shown++
+                    val id = c.getLong(0)
+                    val acc = c.getString(2) ?: ""
+                    val name = (c.getString(3) ?: "").let { if (it == acc) "lịch chính" else it }
+                    val events = orNull {
+                        cr.query(
+                            CalendarContract.Events.CONTENT_URI, arrayOf(CalendarContract.Events._ID),
+                            "${CalendarContract.Events.CALENDAR_ID} = ? AND ${CalendarContract.Events.DELETED} = 0", arrayOf(id.toString()), null,
+                        )?.use { it.count }
+                    }
+                    out += "- ${c.getString(1)} · ${mask(acc)} · ${mask(name)} · hiện ${onOff(c.getInt(4) == 1)}" +
+                        " · đồng bộ ${onOff(c.getInt(5) == 1)} · ${events ?: "?"} sự kiện"
+                }
+                true
+            }
+            if (read == null) out += "Không đọc được kho lịch"
+        } catch (e: Exception) {
+            out += "Lỗi đọc kho lịch: ${e.message}"
+        }
+        return out.joinToString("\n")
     }
 
     /** Lịch của tài khoản Google [account] có đang tự đồng bộ không; null nếu không đọc được. */

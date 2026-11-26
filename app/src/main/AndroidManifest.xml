@@ -17,11 +17,15 @@
     <uses-feature android:name="android.hardware.sensor.compass" android:required="false" />
     <uses-feature android:name="android.software.live_wallpaper" android:required="false" />
 
-    <!-- Xem máy có bộ đồng bộ Lịch Google không (Android 11+ chỉ cho thấy gói đã khai báo) -->
+    <!-- Xem máy có bộ đồng bộ Lịch Google không, mở ứng dụng Lịch Google (Android 11+ chỉ cho thấy gói đã khai báo) -->
     <queries>
         <intent>
             <action android:name="android.content.SyncAdapter" />
         </intent>
+        <package android:name="com.google.android.calendar" />
+        <package android:name="com.google.android.syncadapters.calendar" />
+        <package android:name="com.google.android.gms" />
+        <provider android:authorities="com.android.calendar" />
     </queries>
 
     <application

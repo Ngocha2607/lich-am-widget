@@ -591,8 +591,13 @@ html.dark { --violet: #A68BFF; --teal: #2DD4BF; --orange: #FF9F4A; }
 .gc-add .i { width: 18px; height: 18px; }
 .gc-note { margin: 0 0 10px; padding: 10px 12px; border-radius: 12px; background: var(--chip); font-size: 12.5px; line-height: 1.5; color: var(--muted); }
 .gc-note b { color: var(--text); }
-.gc-note .row { display: flex; gap: 8px; margin-top: 8px; }
+.gc-note .row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 .gc-note .btn { padding: 8px 10px; font-size: 13px; }
+.gc-diag { margin: 0 0 10px; font-size: 13px; }
+.gc-diag summary { padding: 4px 2px 8px; color: var(--muted); font-weight: 600; cursor: pointer; }
+.gc-diag pre { margin: 0 0 8px; padding: 10px 12px; border-radius: 12px; background: var(--chip); color: var(--text); white-space: pre-wrap; word-break: break-word;
+  font: 11.5px/1.55 ui-monospace, "Roboto Mono", monospace; max-height: 280px; overflow: auto; }
+.gc-diag .btn { padding: 8px 12px; font-size: 13px; }
 .sw-row small { display: block; font-size: 12px; font-weight: 400; color: var(--muted); margin-top: 2px; }
 
 /* ===== Thanh menu dưới: mỗi mục một trang ngắn, không phải cuộn cả app ===== */

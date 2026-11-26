@@ -234,7 +234,23 @@
       { id: "2", name: "Ngày lễ ở Việt Nam", account: "ban@gmail.com", type: "com.google", sync: mockSync, color: "#0B8043", writable: false },
       { id: "3", name: "Lịch điện thoại", account: "Điện thoại", type: "LOCAL", color: "#E67C73", writable: true }]
       : [{ id: "3", name: "Lịch điện thoại", account: "Điện thoại", type: "LOCAL", color: "#E67C73", writable: true }]),
-    googleStatus: () => JSON.stringify({ adapter: mockAdapter, accounts: mockAcct ? [{ name: "ban@gmail.com", sync: mockSync }] : [] }),
+    googleStatus: () => JSON.stringify({ adapter: mockAdapter, app: mockGcalApp, accounts: mockAcct ? [{ name: "ban@gmail.com", sync: mockSync }] : [] }),
+    googleDiag: () => [
+      "Android 14 (SDK 34) · (xem trước) trình duyệt",
+      `Ứng dụng Lịch Google: ${mockGcalApp ? "2024.40.0" : "không có"}`,
+      `Gói đồng bộ Lịch Google: ${mockAdapter ? "14" : "không có"}`,
+      "Dịch vụ Google Play: 24.40.33",
+      "Kho lịch của máy: com.android.providers.calendar",
+      "Tự đồng bộ cả máy: bật",
+      `Bộ đồng bộ hệ thống báo: 18; của Google: com.android.contacts${mockAdapter ? ", com.android.calendar" : ""}`,
+      `Dịch vụ đồng bộ lịch (trong 12 dịch vụ đồng bộ): ${mockAdapter ? "com.google.android.syncadapters.calendar (com.google)" : "không có"}`,
+      `Tài khoản ban…@gmail.com: tự đồng bộ Lịch ${mockSync ? "bật" : "tắt"}, syncable ${mockAdapter ? 1 : -1}, đang chạy tắt, đang chờ tắt`,
+      `Lịch trong kho: ${mockGoogle ? 3 : 1}`,
+      ...(mockGoogle ? ["- com.google · ban…@gmail.com · lịch chính · hiện bật · đồng bộ bật · 42 sự kiện"] : []),
+      "- LOCAL · Điện thoại · Lịch điện thoại · hiện bật · đồng bộ bật · 3 sự kiện"].join("\n"),
+    openGoogleCalendar() { window.onStatus && window.onStatus("(xem trước) Mở ứng dụng Lịch Google"); },
+    syncGoogleAll() { window.onStatus && window.onStatus("(xem trước) Đang đồng bộ lịch của 1 tài khoản Google…"); setTimeout(() => { mockGoogle = mockAdapter; }, 2500); },
+    copyText() { window.onStatus && window.onStatus("(xem trước) Đã sao chép."); },
     chooseGoogleAccount() {   // xem trước: chọn tài khoản có sẵn, app bật đồng bộ, vài giây sau lịch về máy
       mockAcct = true; mockSync = true;
       setTimeout(() => window.onGoogleAccount && window.onGoogleAccount("ban@gmail.com"), 300);
@@ -311,7 +327,9 @@
   const prefs = { city: "Hà Nội", spiritual: true, theme: "system", showAlmanac: true, showLucDieu: true, showHuong: true, showGoodDays: true,
     notifyEvents: true, notifyLunar: true, notifyHour: 7, notifyWeather: true, notifyWeatherHour: 20, bg: "none", bgVer: 0,
     lockNote: false, notifAllowed: true, wpText: true, wpActive: false, zenStart: false, zenPaper: "auto", gcalAuto: false, gcalCal: "-1" };
-  let mockGoogle = false, mockSync = false, mockAcct = false, mockAdapter = true;   // xem trước: chưa đăng nhập Google; đăng nhập xong thì đồng bộ Lịch đang tắt
+  let mockGoogle = false, mockSync = false, mockAcct = false, mockAdapter = true, mockGcalApp = true;   // xem trước: chưa đăng nhập Google; đăng nhập xong thì đồng bộ Lịch đang tắt
+  // cho kiểm thử: đặt trạng thái Google (vd. __gc({ acct: true, sync: true, adapter: false, app: true }))
+  window.__gc = o => { ({ google: mockGoogle = mockGoogle, sync: mockSync = mockSync, acct: mockAcct = mockAcct, adapter: mockAdapter = mockAdapter, app: mockGcalApp = mockGcalApp } = o); };
   function push() {
     const n = new Date(), l = toLunar(today.getDate(), today.getMonth() + 1, today.getFullYear());
     const tet = toSolar(1, 1, l.y + 1), dark = prefs.theme === "dark" || (prefs.theme === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
