@@ -29,7 +29,7 @@ Màn hình app (số liệu thời tiết là mẫu):
 
 - Widget "Lịch bloc": tờ lịch ngày kiểu bloc truyền thống (tháng năm trên gáy đỏ, thứ, ngày lớn, ngày âm kèm trăng, can chi ngày tháng) kèm một câu ca dao, tục ngữ mỗi ngày (120 câu dân gian, đi hết vòng mới lặp). Ghim nhanh trong Cài đặt → Widget. Chạm vào widget là mở lịch xé.
 
-**Lịch xé** (Công cụ → Lịch xé, hoặc chạm widget "Lịch bloc")
+**Lịch xé** (Tiện ích → Lịch xé, hoặc chạm widget "Lịch bloc")
 - Tập lịch bloc dựng bằng Jetpack Compose: gáy đỏ có đinh tán, tờ giấy có thớ, mép răng cưa còn dính dưới gáy sau mỗi lần xé.
 - Kéo tờ trên cùng xuống hoặc sang ngang: tờ xoay quanh góc còn dính gáy và rách dần từ góc đang kéo, kèm tiếng giấy sột soạt và rung nhẹ theo từng nấc. Thả đủ xa hoặc vuốt nhanh thì tờ rời gáy, bay theo mô phỏng vật lý (giữ vận tốc lúc vuốt, trọng lực, lực cản không khí, xoay chậm dần, tờ giấy rung lật 3D) rồi mờ dần; không đủ thì tờ bật về như lò xo. Có nút "Xé tờ", "Hôm qua", "Hôm nay", tắt tiếng; máy để im lặng / rung thì không phát tiếng.
 - Tiếng giấy là âm thanh tự tổng hợp (nhiễu lọc dải và chuỗi xung thớ giấy đứt), không lấy từ nguồn ngoài.
@@ -42,7 +42,9 @@ Màn hình app (số liệu thời tiết là mẫu):
 - Tập lịch bloc 3D trên nền trời đêm: tờ chồng, gáy đỏ son bóng, vòng gáy vàng kim, lưới ngày với ngày hôm nay là vầng trăng vàng phát sáng; có lớp đơn sắc cho icon theo chủ đề (Android 13+).
 
 **Màn hình app**
-- Lưới tháng có ngày âm dưới ngày dương, chấm vàng ngày hoàng đạo; ngày có sự kiện tô nhạt và hiện biểu tượng sự kiện ở góc ô (🕯️ giỗ, 🎂 sinh nhật..., kèm số nếu có nhiều sự kiện); thu gọn thành một hàng tuần được.
+- Thanh menu dưới năm mục: Lịch (lưới tháng, thẻ ngày, gợi ý, ghi chú, sự kiện), Thời tiết, Xem ngày (giờ hoàng đạo, việc nên làm, chọn ngày tốt, xem tuổi, Tết & tử vi; có nút sang ngày trước / sau), Tiện ích, Cài đặt. Mỗi mục nhớ chỗ đang cuộn, chạm lại mục đang mở để lên đầu trang; nút Quay lại của máy đóng bảng đang mở rồi về mục Lịch. Chạm vùng thời tiết trên widget mở thẳng mục Thời tiết.
+- Icon nét bộ Lucide (đóng gói sẵn trong app, không tải qua mạng), mỗi mục một màu nhấn; giờ hoàng đạo và tuổi ghi địa chi bằng chữ Hán. Sự kiện vẫn lưu biểu tượng dạng emoji nên widget và thông báo hiển thị như cũ.
+- Lưới tháng có ngày âm dưới ngày dương, chấm vàng ngày hoàng đạo; ngày có sự kiện tô nhạt và hiện biểu tượng sự kiện ở góc ô (ngọn lửa cho giỗ, bánh kem cho sinh nhật..., kèm số nếu có nhiều sự kiện); thu gọn thành một hàng tuần được.
 - Giao diện 3D (ánh sáng từ góc trên trái): thẻ và nút nổi khối, chạm thì lún xuống; ô hôm nay là nút đỏ nổi; chấm hoàng đạo là hạt vàng; trăng hình cầu, mây khối; số ngày trên khung trời có độ dày; khung trời nghiêng nhẹ và các lớp sao, trăng, mây dịch theo chiều sâu khi nghiêng máy hoặc rê ngón tay.
 - Mở app: màn chờ trời đêm có trăng thay cho màn trắng, rồi thẻ ngày hiện dần như một khung trời theo giờ (cùng màu với widget), trăng nhô lên đúng tuần trăng của ngày đang xem, mây cát tường trôi vào, sao lấp lánh ban đêm; các thẻ khác lần lượt hiện. Máy bật "giảm chuyển động" thì không chạy hiệu ứng.
 - Thẻ ngày: số ngày lớn, giờ can chi hiện tại, ngày/tháng/năm can chi, tiết khí, hoàng/hắc đạo, tuần trăng, hợp/xung với tuổi bạn (nếu đã nhập năm sinh).
@@ -124,6 +126,7 @@ Mở `app/src/main/assets/index.html` bằng trình duyệt (hoặc chạy `pyth
 | `MainActivity.kt` | WebView + cầu nối `Android.*` cho trang `assets/index.html` |
 | `assets/index.html` | Toàn bộ giao diện app (HTML/CSS/JS), xem trước được trên trình duyệt |
 | `assets/mock.js` | Giả lập cầu nối `Android` khi mở trang trên trình duyệt |
+| `assets/icons.js` | Icon nét [Lucide](https://lucide.dev) 0.460.0 (giấy phép ISC, kèm trong file), chỉ các icon app dùng; `ic("tên")` trả về SVG. Thêm icon: chép phần bên trong thẻ `<svg>` của icon đó (gói `lucide-static`) vào `window.LUCIDE` |
 | `res/drawable/moon_*`, `art_*` | Hình trăng 8 tuần trăng, mây cát tường, sao cho widget và màn chờ; sinh từ cùng hình vẽ với app (đối tượng `ART` trong `index.html`) |
 
 ## Nguồn tính toán

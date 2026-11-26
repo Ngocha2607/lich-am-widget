@@ -71,6 +71,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.PathOperation
 import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
@@ -241,14 +243,14 @@ private fun TearOffScreen(start: LocalDate, sound: PaperSound, onClose: () -> Un
                 Modifier.fillMaxWidth().padding(horizontal = 12.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Chip("✕", "Đóng", onClose)
+                IconChip(TearIcon.CLOSE, "Đóng", onClose)
                 Spacer(Modifier.width(10.dp))
                 BasicText(
                     "Lịch xé",
                     Modifier.weight(1f),
                     style = TextStyle(color = Color(0xFFF3E6CF), fontSize = 18.sp, fontFamily = SERIF, fontWeight = FontWeight.SemiBold),
                 )
-                Chip(if (muted) "🔇" else "🔈", if (muted) "Bật tiếng" else "Tắt tiếng") { sound.toggleMute(); muted = sound.muted }
+                IconChip(if (muted) TearIcon.MUTE else TearIcon.SOUND, if (muted) "Bật tiếng" else "Tắt tiếng") { sound.toggleMute(); muted = sound.muted }
                 Spacer(Modifier.width(8.dp))
                 Chip("Hôm nay", "Về hôm nay") { commands.trySend(TearCmd.TODAY) }
             }
@@ -296,6 +298,43 @@ private fun Chip(text: String, desc: String, onClick: () -> Unit) {
             .padding(horizontal = 14.dp, vertical = 8.dp),
     ) {
         BasicText(text, style = TextStyle(color = Color(0xFFF3E6CF), fontSize = 15.sp, fontWeight = FontWeight.Medium))
+    }
+}
+
+/** Icon nét cùng kiểu bộ Lucide của giao diện chính (khung 24×24, nét 2): đóng, loa, loa tắt. */
+private enum class TearIcon { CLOSE, SOUND, MUTE }
+
+@Composable
+private fun IconChip(icon: TearIcon, desc: String, onClick: () -> Unit) {
+    Box(
+        Modifier
+            .clip(RoundedCornerShape(50))
+            .background(Color(0x33FFFFFF))
+            .clickable(onClick = onClick)
+            .semantics { contentDescription = desc }
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+    ) {
+        Canvas(Modifier.size(20.dp)) { lucideIcon(icon, Color(0xFFF3E6CF)) }
+    }
+}
+
+private fun DrawScope.lucideIcon(icon: TearIcon, color: Color) {
+    val k = size.minDimension / 24f
+    val stroke = Stroke(width = 2f * k, cap = StrokeCap.Round, join = StrokeJoin.Round)
+    fun line(x1: Float, y1: Float, x2: Float, y2: Float) =
+        drawLine(color, Offset(x1 * k, y1 * k), Offset(x2 * k, y2 * k), strokeWidth = 2f * k, cap = StrokeCap.Round)
+    if (icon == TearIcon.CLOSE) { line(18f, 6f, 6f, 18f); line(6f, 6f, 18f, 18f); return }
+    val body = Path().apply {
+        moveTo(11f * k, 5f * k); lineTo(6.2f * k, 8.5f * k); lineTo(3f * k, 8.5f * k); lineTo(3f * k, 15.5f * k)
+        lineTo(6.2f * k, 15.5f * k); lineTo(11f * k, 19f * k); close()
+    }
+    drawPath(body, color, style = stroke)
+    if (icon == TearIcon.SOUND) {
+        // Hai sóng âm: cung tròn tâm (12,12) bán kính 5 và tâm (13,12) bán kính 9
+        drawArc(color, -36.87f, 73.74f, false, topLeft = Offset(7f * k, 7f * k), size = Size(10f * k, 10f * k), style = stroke)
+        drawArc(color, -45f, 90f, false, topLeft = Offset(4f * k, 3f * k), size = Size(18f * k, 18f * k), style = stroke)
+    } else {
+        line(22f, 9f, 16f, 15f); line(16f, 9f, 22f, 15f)
     }
 }
 

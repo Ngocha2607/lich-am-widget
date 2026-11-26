@@ -459,7 +459,7 @@ object FamilyBook {
         }
         lines += ""
         val nhac = if (g.remind == 0) "được nhắc đúng ngày giỗ" else "được nhắc trước ${g.remind} ngày"
-        lines += "Mở app Lịch & Thời tiết → Công cụ → Sổ giỗ gia đình → Nhập mã, dán cả tin nhắn này để cùng $nhac."
+        lines += "Mở app Lịch & Thời tiết → Tiện ích → Sổ giỗ gia đình → Nhập mã, dán cả tin nhắn này để cùng $nhac."
         lines += "Tải app: https://github.com/Ngocha2607/lich-am-widget/releases/latest"
         lines += encode(g)
         return lines.joinToString("\n")

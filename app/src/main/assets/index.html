@@ -40,7 +40,7 @@ html.dark {
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; background: var(--bg); color: var(--text); overflow-x: hidden;
   font-family: Roboto, -apple-system, "Segoe UI", system-ui, sans-serif; font-size: 15px; line-height: 1.4; }
-body { padding: 12px 14px 32px; padding-top: calc(12px + env(safe-area-inset-top)); }
+body { padding: 12px 14px calc(92px + env(safe-area-inset-bottom)); padding-top: calc(12px + env(safe-area-inset-top)); }
 button, input { font: inherit; color: inherit; }
 button { border: 0; background: none; cursor: pointer; }
 h2 { font-size: 13px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin: 0 0 10px; }
@@ -416,16 +416,7 @@ textarea.in { min-height: 120px; resize: vertical; font-family: inherit; line-he
 .chip.now { background: var(--gold-soft); box-shadow: inset 0 0 0 1.5px var(--gold); }
 
 /* Cài đặt */
-.top .spacer { width: 40px; flex: none; }
-.top .gear { width: 40px; height: 40px; border-radius: 50%; background: var(--card); color: var(--muted); box-shadow: var(--shadow); font-size: 19px; flex: none; }
-#settings { position: fixed; inset: 0; z-index: 50; background: var(--bg); transform: translateX(100%); visibility: hidden;
-  transition: transform .25s ease, visibility 0s linear .25s; overflow-y: auto;
-  padding: 12px 14px 40px; padding-top: calc(12px + env(safe-area-inset-top)); }
-#settings.open { transform: none; visibility: visible; transition: transform .25s ease, visibility 0s; }
-@media (prefers-reduced-motion: reduce) { #settings { transition: none; } }
-.s-head { display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
-.s-head .back { width: 40px; height: 40px; border-radius: 50%; font-size: 26px; line-height: 1; color: var(--blue); background: var(--card); box-shadow: var(--shadow); }
-.s-head h1 { font-size: 20px; font-weight: 800; margin: 0; }
+/* Cài đặt là một mục của thanh menu dưới (trang thường, không còn là lớp phủ trượt vào) */
 .g-title { font-size: 12px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); padding: 0 8px 8px; }
 .group { background: var(--card); border-radius: 18px; box-shadow: var(--shadow); margin-bottom: 18px; overflow: hidden; }
 .item { display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-top: 1px solid var(--line); min-height: 58px; width: 100%; text-align: left; box-sizing: border-box; }
@@ -482,8 +473,8 @@ button.item:active { background: var(--chip); }
 .btn { padding: 11px 16px; border-radius: 12px; background: var(--blue); color: #fff; font-weight: 700; flex: 1; }
 .btn.ghost { background: var(--chip); color: var(--text); }
 .btn.danger { background: var(--accent-soft); color: var(--accent); flex: 0 0 auto; }
-.toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%) translateY(16px); background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 999px;
-  font-size: 13.5px; font-weight: 500; opacity: 0; transition: .25s; z-index: 60; pointer-events: none; max-width: 88vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.toast { position: fixed; left: 50%; bottom: calc(88px + env(safe-area-inset-bottom)); transform: translateX(-50%) translateY(16px); background: var(--text); color: var(--bg); padding: 10px 16px; border-radius: 999px;
+  font-size: 13.5px; font-weight: 500; opacity: 0; transition: .25s; z-index: 95; pointer-events: none; max-width: 88vw; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .toast.show { opacity: 1; transform: translateX(-50%); }
 /* ===== Phong cách 3D: ánh sáng từ góc trên trái, khối nổi, bóng nhiều lớp, chạm thì lún ===== */
 .card:not(.hero), .group { background: linear-gradient(180deg, var(--card), var(--card2)); }
@@ -530,28 +521,118 @@ button.item:active { background: var(--chip); }
 .cloud-band .cloud { filter: drop-shadow(0 6px 8px rgba(10,20,60,.22)); }
 @media (prefers-reduced-motion: reduce) { .hero { transform: none; } }
 
+/* ===== Icon nét (bộ Lucide trong icons.js), mỗi mục một màu nhấn ===== */
+:root { --violet: #7C5CFF; --teal: #0E9488; --orange: #E8711A; }
+html.dark { --violet: #A68BFF; --teal: #2DD4BF; --orange: #FF9F4A; }
+@media (prefers-color-scheme: dark) { html:not(.light) { --violet: #A68BFF; --teal: #2DD4BF; --orange: #FF9F4A; } }
+.i { width: 1.2em; height: 1.2em; flex: none; vertical-align: -.24em; }
+.t-blue { --t: var(--blue); } .t-red { --t: var(--accent); } .t-gold { --t: var(--gold); } .t-green { --t: var(--good); }
+.t-violet { --t: var(--violet); } .t-teal { --t: var(--teal); } .t-orange { --t: var(--orange); } .t-gray { --t: var(--muted); }
+.item .ico { font-size: 0; color: var(--t, var(--muted)); background: color-mix(in srgb, var(--t, var(--muted)) 15%, transparent); }
+.item .ico .i { width: 18px; height: 18px; }
+.item .chev { line-height: 0; } .item .chev .i { width: 18px; height: 18px; }
+.item .act .i { width: 20px; height: 20px; stroke-width: 2.4; }
+.city-x { display: grid; place-items: center; line-height: 0; } .city-x .i { width: 18px; height: 18px; }
+.top .nav { display: grid; place-items: center; } .top .nav .i { width: 22px; height: 22px; stroke-width: 2.2; }
+.share { display: grid; place-items: center; } .share .i { width: 17px; height: 17px; stroke-width: 2.1; }
+.pill .i { width: 14px; height: 14px; margin-right: 4px; vertical-align: -2px; stroke-width: 2.4; }
+.badge .i { width: 12px; height: 12px; margin-right: 3px; vertical-align: -1.5px; }
+.badge.hd .i { fill: currentColor; }
+.weather { cursor: pointer; }
+.weather .icon { line-height: 0; flex: none; } .weather .icon .i { width: 40px; height: 40px; stroke-width: 1.6; }
+.wx-days .ic { line-height: 0; padding: 6px 0 5px; color: var(--t, var(--muted)); } .wx-days .ic .i { width: 24px; height: 24px; }
+.wx-days .rain .i { width: 10px; height: 10px; vertical-align: -1px; margin-right: 1px; color: var(--blue); }
+.tile .k .i { width: 13px; height: 13px; margin-right: 4px; vertical-align: -2px; }
+.sunbar .track .mk { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; color: var(--gold);
+  background: linear-gradient(180deg, var(--card), var(--chip)); box-shadow: var(--raise-sm); }
+.sunbar .track .mk .i { width: 16px; height: 16px; }
+.count .i { width: 15px; height: 15px; margin-right: 6px; vertical-align: -3px; color: var(--gold); }
+.tet-cd b .i { width: 30px; height: 30px; vertical-align: -4px; stroke-width: 1.6; }
+.tip .ic { width: 36px; height: 36px; border-radius: 12px; display: grid; place-items: center; line-height: 0; font-size: 0;
+  color: var(--t, var(--muted)); background: color-mix(in srgb, var(--t, var(--muted)) 15%, transparent); }
+.tip .ic .i { width: 20px; height: 20px; }
+.tip.warn .ic { --t: var(--accent); }
+.chip .an { font-family: "Noto Serif CJK SC", "Noto Serif CJK JP", "Noto Serif", serif; font-size: 24px; line-height: 1.1; font-weight: 500; color: var(--accent); }
+.chip.now .an { color: var(--gold); }
+.ev .ic { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; line-height: 0; font-size: 0;
+  color: var(--t, var(--muted)); background: color-mix(in srgb, var(--t, var(--muted)) 15%, transparent); }
+.ev .ic .i { width: 20px; height: 20px; }
+.ev .chev { color: var(--muted); line-height: 0; flex: none; } .ev .chev .i { width: 18px; height: 18px; }
+.cell .evb { color: var(--t, var(--blue)); } .cell .evb .i { width: 12px; height: 12px; stroke-width: 2.2; }
+.cell.today .evb { color: #fff; }
+.icons button { display: grid; place-items: center; color: var(--t, var(--muted)); }
+.icons button .i { width: 20px; height: 20px; }
+.tasks button .i { width: 16px; height: 16px; margin-right: 6px; vertical-align: -3px; }
+.gd .sc .i { width: 13px; height: 13px; fill: currentColor; margin-left: 1px; }
+.note .ck .i { width: 14px; height: 14px; stroke-width: 3.2; }
+.note .del { display: grid; place-items: center; } .note .del .i { width: 18px; height: 18px; }
+.tuvi-row .big { font-family: "Noto Serif CJK SC", "Noto Serif CJK JP", "Noto Serif", serif; color: var(--accent); }
+.tuvi-row .big.zod { font-family: "Noto Sans Symbols", "Segoe UI Symbol", serif; color: var(--blue); }
+.bg-pick .th .i { width: 22px; height: 22px; }
+.conv-res .moon { vertical-align: middle; margin: -6px 0 -4px -4px; }
+.z-ctl button { display: inline-grid; place-items: center; } .z-ctl button .i { width: 20px; height: 20px; }
+
+/* ===== Thanh menu dưới: mỗi mục một trang ngắn, không phải cuộn cả app ===== */
+body:not([data-cur="lich"]) [data-tab="lich"], body:not([data-cur="thoitiet"]) [data-tab="thoitiet"],
+body:not([data-cur="xem"]) [data-tab="xem"], body:not([data-cur="tienich"]) [data-tab="tienich"],
+body:not([data-cur="caidat"]) [data-tab="caidat"] { display: none !important; }
+.tabbar { position: fixed; left: 0; right: 0; bottom: 0; z-index: 60; display: flex; padding: 6px 4px calc(6px + env(safe-area-inset-bottom));
+  background: color-mix(in srgb, var(--card) 90%, transparent); backdrop-filter: blur(18px) saturate(1.3); -webkit-backdrop-filter: blur(18px) saturate(1.3);
+  border-top: 1px solid var(--line); box-shadow: 0 -8px 24px -16px rgba(20,30,60,.35); }
+.tabbar button { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 2px 0;
+  color: var(--muted); font-size: 11.5px; font-weight: 600; letter-spacing: .01em; }
+.tabbar .pc { width: 58px; height: 30px; border-radius: 15px; display: grid; place-items: center; transition: background-color .2s, transform .12s; }
+.tabbar .i { width: 22px; height: 22px; stroke-width: 1.8; }
+.tabbar b { font-weight: inherit; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.tabbar button[aria-selected="true"] { color: var(--accent); font-weight: 700; }
+.tabbar button[aria-selected="true"] .pc { background: var(--accent-soft); }
+.tabbar button[aria-selected="true"] .i { stroke-width: 2.2; }
+.tabbar button:active .pc { transform: scale(.94); }
+body.typing .tabbar, body.zen-open .tabbar { display: none; }
+@media (prefers-reduced-motion: reduce) { .tabbar .pc { transition: none; } }
+.tab-head { display: flex; align-items: center; gap: 10px; padding: 6px 4px 14px; min-height: 56px; }
+.tab-head .grow { flex: 1; min-width: 0; }
+.tab-head h1 { margin: 0; font-size: 26px; font-weight: 800; letter-spacing: -.01em; line-height: 1.15; }
+.tab-head .sub { font-size: 13px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.tab-head .sub .i { width: 14px; height: 14px; vertical-align: -2px; margin-right: 3px; }
+.act-btn { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; flex: none; color: var(--blue);
+  background: linear-gradient(180deg, var(--card), var(--card2)); box-shadow: var(--raise-sm); transition: transform .12s ease, box-shadow .12s ease; }
+.act-btn:active { transform: translateY(1px) scale(.96); box-shadow: var(--press); }
+.act-btn .i { width: 20px; height: 20px; }
+.xem-sub { font-size: 12.5px; color: var(--muted); margin-top: 3px; }
+body.has-bg .tab-head h1 { text-shadow: 0 1px 8px color-mix(in srgb, var(--bg) 80%, transparent); }
+.tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+.tool { display: flex; flex-direction: column; align-items: flex-start; gap: 12px; padding: 14px; border-radius: 20px; text-align: left; min-height: 150px;
+  background: linear-gradient(180deg, var(--card), var(--card2)); box-shadow: var(--shadow); transition: transform .12s ease, box-shadow .12s ease; }
+.tool:active { transform: translateY(1px) scale(.98); box-shadow: var(--press); }
+.tool .ico { width: 42px; height: 42px; border-radius: 13px; display: grid; place-items: center; flex: none;
+  color: var(--t, var(--muted)); background: color-mix(in srgb, var(--t, var(--muted)) 15%, transparent); }
+.tool .ico .i { width: 22px; height: 22px; }
+.tool .body { display: block; min-width: 0; }
+.tool .lbl { display: block; font-size: 15px; font-weight: 700; line-height: 1.25; }
+.tool .val { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; margin-top: 4px; font-size: 12.5px; line-height: 1.4; color: var(--muted); }
+.tool.wide { grid-column: 1 / -1; flex-direction: row; align-items: center; min-height: 0; }
+body.has-bg .tool { background: color-mix(in srgb, var(--card) 84%, transparent); backdrop-filter: blur(14px) saturate(1.15); }
 </style>
 </head>
-<body>
+<body data-cur="lich">
 <div class="bg-art" id="bgArt" aria-hidden="true"></div>
 
-<header class="top">
-  <span class="spacer"></span>
-  <button class="nav" id="prev" aria-label="Tháng trước">‹</button>
+<header class="top" data-tab="lich">
+  <button class="nav" id="prev" aria-label="Tháng trước"><span data-ic="chevron-left"></span></button>
   <div class="title"><h1 id="monthTitle">Tháng</h1><button class="pill" id="todayBtn">Hôm nay</button></div>
-  <button class="nav" id="next" aria-label="Tháng sau">›</button>
-  <button class="gear" id="openSettings" aria-label="Cài đặt">⚙</button>
+  <button class="nav" id="next" aria-label="Tháng sau"><span data-ic="chevron-right"></span></button>
 </header>
 
-<section class="card">
+<section data-tab="lich" class="card">
   <div class="weekdays"><div>T2</div><div>T3</div><div>T4</div><div>T5</div><div>T6</div><div>T7</div><div>CN</div></div>
   <div class="grid" id="grid"></div>
   <button class="wk" id="weekToggle" aria-label="Thu gọn còn một tuần"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></button>
 </section>
 
-<section class="card day-card hero sky-night" id="dayCard">
+<section data-tab="lich" class="card day-card hero sky-night" id="dayCard">
   <div class="sky-art" id="skyArt"></div>
-  <button class="share" id="shareBtn" aria-label="Chia sẻ hôm nay">↗</button>
+  <button class="share" id="shareBtn" aria-label="Chia sẻ hôm nay"><span data-ic="share-2"></span></button>
   <div class="day-top">
     <div class="solar">
       <div class="wd" id="wd"></div>
@@ -574,21 +655,36 @@ button.item:active { background: var(--chip); }
   <div class="quote serif" id="quote"></div>
 </section>
 
-<section class="card" id="noteCard">
+<section data-tab="lich" class="card" id="tipsCard">
+  <h2 id="tipsTitle">Gợi ý hôm nay</h2>
+  <div id="tips"></div>
+</section>
+
+<section data-tab="lich" class="card" id="noteCard">
   <div class="ev-head"><h2 id="noteTitle">Ghi chú hôm nay</h2><span class="muted small" id="noteSum"></span></div>
   <div class="note-add"><input class="in" id="noteInput" placeholder="Thêm việc cần làm…" maxlength="200" autocomplete="off" enterkeyhint="done"><button class="pill" id="noteAdd">Thêm</button></div>
   <div id="noteList"></div>
 </section>
 
-<section class="card" id="evCard">
-  <div class="ev-head"><h2 id="evTitle">Sự kiện</h2><button class="pill" id="addEvent">+ Thêm</button></div>
+<section data-tab="lich" class="card" id="evCard">
+  <div class="ev-head"><h2 id="evTitle">Sự kiện</h2><button class="pill" id="addEvent"><span data-ic="plus"></span>Thêm</button></div>
   <div id="evList"></div>
   <div id="evUpcoming"></div>
 </section>
 
-<section class="card" id="wxCard" style="display:none">
+<header class="tab-head" data-tab="thoitiet">
+  <div class="grow"><h1>Thời tiết</h1><div class="sub"><span data-ic="map-pin"></span><span id="wxCity"></span></div></div>
+  <button class="act-btn" id="wxRefresh" aria-label="Làm mới thời tiết"><span data-ic="refresh-cw"></span></button>
+</header>
+
+<section class="card" id="wxEmpty" data-tab="thoitiet" hidden>
+  <div class="ev-empty">Chưa có dữ liệu thời tiết. Kiểm tra kết nối mạng rồi tải lại, hoặc thêm thành phố trong mục Cài đặt.</div>
+  <div class="actions"><button class="btn" id="wxEmptyBtn">Tải thời tiết</button></div>
+</section>
+
+<section data-tab="thoitiet" class="card" id="wxCard" style="display:none">
   <div class="wx-head">
-    <h2 style="margin:0">Thời tiết · <span id="wxCity"></span></h2>
+    <h2 style="margin:0">7 ngày tới</h2>
     <div class="legend"><span class="mx"><i></i>Cao nhất</span><span class="mn"><i></i>Thấp nhất</span></div>
   </div>
   <div class="cities" id="cityChips" hidden></div>
@@ -600,17 +696,18 @@ button.item:active { background: var(--chip); }
   <div class="muted small" id="wxUpd" style="margin-top:10px"></div>
 </section>
 
-<section class="card">
-  <h2 id="tipsTitle">Gợi ý hôm nay</h2>
-  <div id="tips"></div>
-</section>
+<header class="top" data-tab="xem">
+  <button class="nav" id="dPrev" aria-label="Ngày trước"><span data-ic="chevron-left"></span></button>
+  <div class="title"><h1 id="xemTitle">Xem ngày</h1><div class="xem-sub" id="xemSub"></div><button class="pill" id="xemToday" hidden>Về hôm nay</button></div>
+  <button class="nav" id="dNext" aria-label="Ngày sau"><span data-ic="chevron-right"></span></button>
+</header>
 
-<section class="card col" id="hoursCard">
+<section data-tab="xem" class="card col" id="hoursCard">
   <h2><span class="ttl">Giờ hoàng đạo</span><span class="sum" id="hoursSum"></span><span class="chev"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></h2>
   <div class="chips" id="hours"></div>
 </section>
 
-<section class="card col" id="almCard">
+<section data-tab="xem" class="card col" id="almCard">
   <h2><span class="ttl">Xem ngày</span><span class="sum" id="almSum"></span><span class="chev"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></h2>
   <div class="kv" id="almKv"></div>
   <div id="almTruc">
@@ -626,20 +723,20 @@ button.item:active { background: var(--chip); }
   <p class="muted small" style="margin:12px 0 0">Tính theo trực ngày (thập nhị kiến trừ), sao Nhị thập bát tú, Ngọc Hạp thông thư, can chi ngày và phép Lục Diệu. Chỉ để tham khảo.</p>
 </section>
 
-<section class="card col" id="gdCard">
+<section data-tab="xem" class="card col" id="gdCard">
   <h2><span class="ttl">Chọn ngày tốt</span><span class="sum" id="gdSum"></span><span class="chev"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></h2>
   <div class="tasks" id="tasks"></div>
   <div id="gdList"></div>
 </section>
 
-<section class="card col" id="ageCard">
+<section data-tab="xem" class="card col" id="ageCard">
   <h2><span class="ttl">Xem tuổi làm nhà, cưới hỏi</span><span class="sum" id="ageSum"></span><span class="chev"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></h2>
   <div class="age-pick"><label for="ageYear">Năm sinh âm lịch</label><select class="in" id="ageYear"></select></div>
   <div id="ageList"></div>
   <p class="muted small" style="margin:10px 0 0">Tính theo tuổi mụ. Làm nhà xét tuổi chủ nhà; cưới hỏi xét Kim Lâu theo tuổi cô dâu. Phạm Kim Lâu, Hoang Ốc hoặc Tam Tai thì nên hoãn hoặc mượn tuổi người không phạm đứng làm. Chỉ để tham khảo.</p>
 </section>
 
-<section class="card col" id="tetCard">
+<section data-tab="xem" class="card col" id="tetCard">
   <h2><span class="ttl">Tết &amp; tử vi</span><span class="sum" id="tetSum"></span><span class="chev"><svg width="18" height="18" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg></span></h2>
   <div class="tet-cd" id="tetCd"></div>
   <div class="tet-when" id="tetWhen"></div>
@@ -651,24 +748,24 @@ button.item:active { background: var(--chip); }
   <p class="muted small" style="margin:10px 0 0">Điểm xông đất (thang 100) xét thiên can, địa chi, mệnh nạp âm của người xông với gia chủ và với năm mới; người xông từ 18 đến 65 tuổi. Chỉ để tham khảo.</p>
 </section>
 
-<section class="card tools" id="toolsCard">
-  <h2>Công cụ</h2>
-  <button class="item" id="convRow"><span class="ico">🔁</span><span class="body"><span class="lbl">Đổi lịch âm ↔ dương</span><span class="val">Tra ngày âm của một ngày dương và ngược lại</span></span><span class="chev">›</span></button>
-  <button class="item" id="vkRow"><span class="ico">🙏</span><span class="body"><span class="lbl">Văn khấn cổ truyền</span><span class="val">Mùng 1, ngày rằm, gia tiên, giỗ, khai trương, giao thừa… dùng được khi không có mạng</span></span><span class="chev">›</span></button>
-  <button class="item" id="tearRow"><span class="ico">📜</span><span class="body"><span class="lbl">Lịch xé</span><span class="val">Xé từng tờ như lịch bloc treo tường, có tiếng giấy và rung nhẹ</span></span><span class="chev">›</span></button>
-  <button class="item" id="compassRow"><span class="ico">🧭</span><span class="body"><span class="lbl">La bàn phong thủy AR</span><span class="val">Giơ camera lên để thấy hướng bàn thờ, hướng xuất hành, góc tài lộc ngay trong nhà</span></span><span class="chev">›</span></button>
-  <button class="item" id="famRow"><span class="ico">🕯️</span><span class="body"><span class="lbl">Sổ giỗ gia đình</span><span class="val">Một người nhập, gửi mã qua Zalo, cả nhà cùng được nhắc và biết ai lo đồ cúng</span></span><span class="chev">›</span></button>
-  <button class="item" id="zenRow"><span class="ico">🍃</span><span class="body"><span class="lbl">Chế độ Zen</span><span class="val">Chỉ một con số ngày âm và một câu thơ trên nền giấy dó</span></span><span class="chev">›</span></button>
-  <button class="item" id="shareRow"><span class="ico">↗</span><span class="body"><span class="lbl">Chia sẻ hôm nay</span><span class="val">Ảnh gồm ngày âm, thời tiết, gợi ý để gửi Zalo, Facebook</span></span><span class="chev">›</span></button>
+<header class="tab-head" data-tab="tienich"><div class="grow"><h1>Tiện ích</h1></div></header>
+<section class="tools-grid" id="toolsCard" data-tab="tienich">
+  <button class="tool" id="convRow"><span class="ico t-blue" data-ic="arrow-left-right"></span><span class="body"><span class="lbl">Đổi lịch âm ↔ dương</span><span class="val">Tra ngày âm của một ngày dương và ngược lại</span></span></button>
+  <button class="tool" id="vkRow"><span class="ico t-orange" data-ic="flame"></span><span class="body"><span class="lbl">Văn khấn cổ truyền</span><span class="val">Mùng 1, ngày rằm, gia tiên, giỗ, khai trương… không cần mạng</span></span></button>
+  <button class="tool" id="tearRow"><span class="ico t-red" data-ic="sticky-note"></span><span class="body"><span class="lbl">Lịch xé</span><span class="val">Xé từng tờ như lịch bloc treo tường, có tiếng giấy</span></span></button>
+  <button class="tool" id="compassRow"><span class="ico t-green" data-ic="compass"></span><span class="body"><span class="lbl">La bàn phong thủy AR</span><span class="val">Hướng bàn thờ, hướng xuất hành, góc tài lộc qua camera</span></span></button>
+  <button class="tool" id="famRow"><span class="ico t-gold" data-ic="book-heart"></span><span class="body"><span class="lbl">Sổ giỗ gia đình</span><span class="val">Gửi mã qua Zalo, cả nhà cùng được nhắc ngày giỗ</span></span></button>
+  <button class="tool" id="zenRow"><span class="ico t-teal" data-ic="leaf"></span><span class="body"><span class="lbl">Chế độ Zen</span><span class="val">Một con số ngày âm và một câu thơ trên nền giấy dó</span></span></button>
+  <button class="tool wide" id="shareRow"><span class="ico t-violet" data-ic="share-2"></span><span class="body"><span class="lbl">Chia sẻ hôm nay</span><span class="val">Ảnh ngày âm, thời tiết, gợi ý để gửi Zalo, Facebook</span></span></button>
 </section>
 
-<div id="settings" role="dialog" aria-label="Cài đặt">
-  <div class="s-head"><button class="back" id="closeSettings" aria-label="Quay lại">‹</button><h1>Cài đặt</h1></div>
+<div id="settings" data-tab="caidat" role="region" aria-label="Cài đặt">
+  <header class="tab-head"><div class="grow"><h1>Cài đặt</h1></div></header>
 
   <div class="g-title">Vị trí</div>
   <div class="group">
     <div id="cityList"></div>
-    <button class="item" id="cityRow"><span class="ico">➕</span><span class="body"><span class="lbl">Thêm thành phố</span><span class="val">Tìm theo tên, chạm kết quả để lưu và chọn</span></span><span class="act">Tìm</span></button>
+    <button class="item" id="cityRow"><span class="ico t-blue" data-ic="plus"></span><span class="body"><span class="lbl">Thêm thành phố</span><span class="val">Tìm theo tên, chạm kết quả để lưu và chọn</span></span><span class="act">Tìm</span></button>
     <div class="search" id="citySearch" hidden>
       <input type="text" id="cityInput" placeholder="Nhập tên thành phố, ví dụ Hải Phòng" autocomplete="off">
       <div class="results" id="cityResults"></div>
@@ -677,66 +774,73 @@ button.item:active { background: var(--chip); }
 
   <div class="g-title">Hồ sơ</div>
   <div class="group">
-    <button class="item" id="profileRow"><span class="ico">👤</span><span class="body"><span class="lbl" id="profName">Thông tin của bạn</span><span class="val" id="profVal">Họ tên, ngày sinh để xét hợp, xung tuổi</span></span><span class="chev">›</span></button>
+    <button class="item" id="profileRow"><span class="ico t-blue" data-ic="user-round"></span><span class="body"><span class="lbl" id="profName">Thông tin của bạn</span><span class="val" id="profVal">Họ tên, ngày sinh để xét hợp, xung tuổi</span></span><span class="chev" data-ic="chevron-right"></span></button>
   </div>
 
   <div class="g-title">Hiển thị</div>
   <div class="group">
-    <label class="item" for="spiritual"><span class="ico">✦</span><span class="body"><span class="lbl">Ngày hoàng đạo, giờ tốt</span><span class="val">Hiện trên widget và trong app</span></span><input type="checkbox" class="switch" id="spiritual"></label>
-    <div class="item seg-row"><span class="ico">🌓</span><span class="body"><span class="lbl">Giao diện</span></span>
+    <label class="item" for="spiritual"><span class="ico t-gold" data-ic="sparkles"></span><span class="body"><span class="lbl">Ngày hoàng đạo, giờ tốt</span><span class="val">Hiện trên widget và trong app</span></span><input type="checkbox" class="switch" id="spiritual"></label>
+    <div class="item seg-row"><span class="ico t-violet" data-ic="sun-moon"></span><span class="body"><span class="lbl">Giao diện</span></span>
       <div class="seg" id="themeSeg"><button data-v="system">Hệ thống</button><button data-v="light">Sáng</button><button data-v="dark">Tối</button></div></div>
-    <div class="item"><span class="ico">🖼️</span><span class="body"><span class="lbl">Hình nền lịch</span><span class="val">Tranh dân gian, phong cảnh Việt Nam hoặc ảnh của bạn</span></span></div>
+    <div class="item"><span class="ico t-teal" data-ic="image"></span><span class="body"><span class="lbl">Hình nền lịch</span><span class="val">Tranh dân gian, phong cảnh Việt Nam hoặc ảnh của bạn</span></span></div>
     <div class="bg-pick" id="bgPick"></div>
-    <label class="item" for="showAlmanac"><span class="ico">📖</span><span class="body"><span class="lbl">Việc nên làm, không nên</span><span class="val">Trực, Nhị thập bát tú, sao Ngọc Hạp, ngũ hành, tuổi xung</span></span><input type="checkbox" class="switch" id="showAlmanac"></label>
-    <label class="item" for="showHuong"><span class="ico">🧭</span><span class="body"><span class="lbl">Hướng xuất hành</span><span class="val">Hỷ thần, Tài thần theo can ngày</span></span><input type="checkbox" class="switch" id="showHuong"></label>
-    <label class="item" for="showLucDieu"><span class="ico">⏱️</span><span class="body"><span class="lbl">Giờ xuất hành Lục Diệu</span><span class="val">Đại An, Tốc Hỷ, Tiểu Cát…</span></span><input type="checkbox" class="switch" id="showLucDieu"></label>
-    <label class="item" for="zenStart"><span class="ico">🍃</span><span class="body"><span class="lbl">Mở app ở chế độ Zen</span><span class="val">Tối giản: chỉ ngày âm và một câu thơ, chạm ✕ để vào lịch đầy đủ</span></span><input type="checkbox" class="switch" id="zenStart"></label>
-    <div class="item seg-row"><span class="ico">📜</span><span class="body"><span class="lbl">Nền chế độ Zen</span></span>
+    <label class="item" for="showAlmanac"><span class="ico t-orange" data-ic="book-open"></span><span class="body"><span class="lbl">Việc nên làm, không nên</span><span class="val">Trực, Nhị thập bát tú, sao Ngọc Hạp, ngũ hành, tuổi xung</span></span><input type="checkbox" class="switch" id="showAlmanac"></label>
+    <label class="item" for="showHuong"><span class="ico t-green" data-ic="compass"></span><span class="body"><span class="lbl">Hướng xuất hành</span><span class="val">Hỷ thần, Tài thần theo can ngày</span></span><input type="checkbox" class="switch" id="showHuong"></label>
+    <label class="item" for="showLucDieu"><span class="ico t-blue" data-ic="timer"></span><span class="body"><span class="lbl">Giờ xuất hành Lục Diệu</span><span class="val">Đại An, Tốc Hỷ, Tiểu Cát…</span></span><input type="checkbox" class="switch" id="showLucDieu"></label>
+    <label class="item" for="zenStart"><span class="ico t-green" data-ic="leaf"></span><span class="body"><span class="lbl">Mở app ở chế độ Zen</span><span class="val">Tối giản: chỉ ngày âm và một câu thơ, chạm ✕ để vào lịch đầy đủ</span></span><input type="checkbox" class="switch" id="zenStart"></label>
+    <div class="item seg-row"><span class="ico t-gold" data-ic="scroll"></span><span class="body"><span class="lbl">Nền chế độ Zen</span></span>
       <div class="seg" id="zenSeg"><button data-v="auto">Tự động</button><button data-v="paper">Giấy dó</button><button data-v="ink">Mực đen</button></div></div>
-    <label class="item" for="showGoodDays"><span class="ico">🗓️</span><span class="body"><span class="lbl">Chọn ngày tốt</span><span class="val">Cưới hỏi, khai trương, khởi công…</span></span><input type="checkbox" class="switch" id="showGoodDays"></label>
+    <label class="item" for="showGoodDays"><span class="ico t-red" data-ic="calendar-check"></span><span class="body"><span class="lbl">Chọn ngày tốt</span><span class="val">Cưới hỏi, khai trương, khởi công…</span></span><input type="checkbox" class="switch" id="showGoodDays"></label>
   </div>
 
   <div class="g-title">Màn hình khóa &amp; hình nền</div>
   <div class="group">
-    <label class="item" for="lockNote"><span class="ico">🔒</span><span class="body"><span class="lbl">Lịch trên màn hình khóa</span><span class="val">Ngày âm và câu ca dao hôm nay, không kêu, không rung. Máy có màn hình luôn bật (AOD) hiện thông báo thì thấy cả ở đó</span></span><input type="checkbox" class="switch" id="lockNote"></label>
-    <button class="item" id="lockFix" hidden><span class="ico">⚠️</span><span class="body"><span class="lbl">Máy đang chặn thông báo của app</span><span class="val">Lịch không hiện được trên màn hình khóa. Chạm để mở cài đặt thông báo và cho phép</span></span><span class="chev">›</span></button>
-    <button class="item" id="wpRow"><span class="ico">🌙</span><span class="body"><span class="lbl">Hình nền động lịch âm</span><span class="val" id="wpVal">Trời theo giờ, trăng theo ngày âm, sương mù tiết Đông chí, hoa đào mùa xuân, lá vàng mùa thu</span></span><span class="act" id="wpAct">Đặt</span></button>
-    <label class="item" for="wpText"><span class="ico">🔤</span><span class="body"><span class="lbl">Hiện ngày âm trên hình nền</span><span class="val">Ví dụ "Rằm tháng 10 · Bính Ngọ · tiết Lập đông"</span></span><input type="checkbox" class="switch" id="wpText"></label>
+    <label class="item" for="lockNote"><span class="ico t-blue" data-ic="lock"></span><span class="body"><span class="lbl">Lịch trên màn hình khóa</span><span class="val">Ngày âm và câu ca dao hôm nay, không kêu, không rung. Máy có màn hình luôn bật (AOD) hiện thông báo thì thấy cả ở đó</span></span><input type="checkbox" class="switch" id="lockNote"></label>
+    <button class="item" id="lockFix" hidden><span class="ico t-red" data-ic="triangle-alert"></span><span class="body"><span class="lbl">Máy đang chặn thông báo của app</span><span class="val">Lịch không hiện được trên màn hình khóa. Chạm để mở cài đặt thông báo và cho phép</span></span><span class="chev" data-ic="chevron-right"></span></button>
+    <button class="item" id="wpRow"><span class="ico t-violet" data-ic="moon-star"></span><span class="body"><span class="lbl">Hình nền động lịch âm</span><span class="val" id="wpVal">Trời theo giờ, trăng theo ngày âm, sương mù tiết Đông chí, hoa đào mùa xuân, lá vàng mùa thu</span></span><span class="act" id="wpAct">Đặt</span></button>
+    <label class="item" for="wpText"><span class="ico t-teal" data-ic="type"></span><span class="body"><span class="lbl">Hiện ngày âm trên hình nền</span><span class="val">Ví dụ "Rằm tháng 10 · Bính Ngọ · tiết Lập đông"</span></span><input type="checkbox" class="switch" id="wpText"></label>
   </div>
 
   <div class="g-title">Thông báo</div>
   <div class="group">
-    <label class="item" for="notifyEvents"><span class="ico">🔔</span><span class="body"><span class="lbl">Nhắc sự kiện</span><span class="val">Giỗ, sinh nhật, lịch hẹn sắp tới</span></span><input type="checkbox" class="switch" id="notifyEvents"></label>
-    <label class="item" for="notifyLunar"><span class="ico">🌕</span><span class="body"><span class="lbl">Nhắc rằm, mùng 1, lễ Tết</span><span class="val">Báo hôm trước và đúng ngày</span></span><input type="checkbox" class="switch" id="notifyLunar"></label>
-    <div class="item"><span class="ico">⏰</span><span class="body"><span class="lbl">Giờ nhắc mỗi ngày</span></span><select class="in" id="notifyHour" style="width:108px;flex:none;padding:8px 12px"></select></div>
-    <label class="item" for="notifyWeather"><span class="ico">🌧️</span><span class="body"><span class="lbl">Cảnh báo thời tiết ngày mai</span><span class="val">Mưa, dông, rét, nắng nóng</span></span><input type="checkbox" class="switch" id="notifyWeather"></label>
-    <div class="item"><span class="ico">🕗</span><span class="body"><span class="lbl">Giờ báo thời tiết</span></span><select class="in" id="notifyWeatherHour" style="width:108px;flex:none;padding:8px 12px"></select></div>
-    <button class="item" id="testNotify"><span class="ico">📣</span><span class="body"><span class="lbl">Gửi thông báo thử</span><span class="val">Kiểm tra máy có chặn thông báo không</span></span><span class="act">Gửi</span></button>
+    <label class="item" for="notifyEvents"><span class="ico t-red" data-ic="bell"></span><span class="body"><span class="lbl">Nhắc sự kiện</span><span class="val">Giỗ, sinh nhật, lịch hẹn sắp tới</span></span><input type="checkbox" class="switch" id="notifyEvents"></label>
+    <label class="item" for="notifyLunar"><span class="ico t-gold" data-ic="moon"></span><span class="body"><span class="lbl">Nhắc rằm, mùng 1, lễ Tết</span><span class="val">Báo hôm trước và đúng ngày</span></span><input type="checkbox" class="switch" id="notifyLunar"></label>
+    <div class="item"><span class="ico t-orange" data-ic="alarm-clock"></span><span class="body"><span class="lbl">Giờ nhắc mỗi ngày</span></span><select class="in" id="notifyHour" style="width:108px;flex:none;padding:8px 12px"></select></div>
+    <label class="item" for="notifyWeather"><span class="ico t-blue" data-ic="cloud-rain"></span><span class="body"><span class="lbl">Cảnh báo thời tiết ngày mai</span><span class="val">Mưa, dông, rét, nắng nóng</span></span><input type="checkbox" class="switch" id="notifyWeather"></label>
+    <div class="item"><span class="ico t-teal" data-ic="clock"></span><span class="body"><span class="lbl">Giờ báo thời tiết</span></span><select class="in" id="notifyWeatherHour" style="width:108px;flex:none;padding:8px 12px"></select></div>
+    <button class="item" id="testNotify"><span class="ico t-violet" data-ic="megaphone"></span><span class="body"><span class="lbl">Gửi thông báo thử</span><span class="val">Kiểm tra máy có chặn thông báo không</span></span><span class="act">Gửi</span></button>
   </div>
 
   <div class="g-title">Dữ liệu</div>
   <div class="group">
-    <button class="item" id="refreshRow"><span class="ico">🔄</span><span class="body"><span class="lbl">Thời tiết</span><span class="val" id="updVal"></span></span><span class="act">Làm mới</span></button>
-    <button class="item" id="exportRow"><span class="ico">💾</span><span class="body"><span class="lbl">Sao lưu sự kiện</span><span class="val">Lưu file JSON để chuyển máy hoặc phòng mất dữ liệu</span></span><span class="chev">›</span></button>
-    <button class="item" id="importRow"><span class="ico">📂</span><span class="body"><span class="lbl">Khôi phục từ file</span><span class="val">Chọn file JSON đã sao lưu, sự kiện trùng được ghi đè</span></span><span class="chev">›</span></button>
-    <button class="item" id="gcalRow"><span class="ico">🔄</span><span class="body"><span class="lbl">Google Calendar trên máy</span><span class="val">Nhập sự kiện từ lịch Google vào app, hoặc xuất sự kiện (kể cả giỗ âm lịch) sang lịch Google</span></span><span class="chev">›</span></button>
-    <button class="item" id="icsRow"><span class="ico">📆</span><span class="body"><span class="lbl">Xuất sang Google Calendar</span><span class="val">File .ics chứa 5 năm sự kiện, kể cả lặp theo âm lịch</span></span><span class="chev">›</span></button>
-    <div class="item"><span class="ico">🌐</span><span class="body"><span class="lbl">Nguồn dữ liệu</span><span class="val">Open-Meteo · lịch âm tính trên máy, không cần mạng</span></span></div>
+    <button class="item" id="refreshRow"><span class="ico t-blue" data-ic="refresh-cw"></span><span class="body"><span class="lbl">Thời tiết</span><span class="val" id="updVal"></span></span><span class="act">Làm mới</span></button>
+    <button class="item" id="exportRow"><span class="ico t-green" data-ic="download"></span><span class="body"><span class="lbl">Sao lưu sự kiện</span><span class="val">Lưu file JSON để chuyển máy hoặc phòng mất dữ liệu</span></span><span class="chev" data-ic="chevron-right"></span></button>
+    <button class="item" id="importRow"><span class="ico t-orange" data-ic="folder-open"></span><span class="body"><span class="lbl">Khôi phục từ file</span><span class="val">Chọn file JSON đã sao lưu, sự kiện trùng được ghi đè</span></span><span class="chev" data-ic="chevron-right"></span></button>
+    <button class="item" id="gcalRow"><span class="ico t-blue" data-ic="calendar-range"></span><span class="body"><span class="lbl">Google Calendar trên máy</span><span class="val">Nhập sự kiện từ lịch Google vào app, hoặc xuất sự kiện (kể cả giỗ âm lịch) sang lịch Google</span></span><span class="chev" data-ic="chevron-right"></span></button>
+    <button class="item" id="icsRow"><span class="ico t-teal" data-ic="calendar-plus"></span><span class="body"><span class="lbl">Xuất sang Google Calendar</span><span class="val">File .ics chứa 5 năm sự kiện, kể cả lặp theo âm lịch</span></span><span class="chev" data-ic="chevron-right"></span></button>
+    <div class="item"><span class="ico t-green" data-ic="globe"></span><span class="body"><span class="lbl">Nguồn dữ liệu</span><span class="val">Open-Meteo · lịch âm tính trên máy, không cần mạng</span></span></div>
   </div>
 
   <div class="g-title">Widget</div>
   <div class="group">
-    <button class="item" id="pinRow"><span class="ico">➕</span><span class="body"><span class="lbl">Thêm widget vào màn hình chính</span><span class="val">Hoặc giữ lâu màn hình chính → Widget</span></span><span class="chev">›</span></button>
-    <button class="item" id="pinBlocRow"><span class="ico">🗓️</span><span class="body"><span class="lbl">Thêm "Lịch bloc"</span><span class="val">Tờ lịch ngày kiểu bloc, có câu ca dao, tục ngữ mỗi ngày</span></span><span class="chev">›</span></button>
-    <button class="item" id="pinIconRow"><span class="ico">📅</span><span class="body"><span class="lbl">Thêm tờ lịch 1×1 "Lịch hôm nay"</span><span class="val">Cỡ một biểu tượng, hiện ngày hôm nay và ngày âm, tự đổi lúc 0h. Đặt thay icon app để có icon lịch đổi theo ngày</span></span><span class="chev">›</span></button>
+    <button class="item" id="pinRow"><span class="ico t-violet" data-ic="layout-dashboard"></span><span class="body"><span class="lbl">Thêm widget vào màn hình chính</span><span class="val">Hoặc giữ lâu màn hình chính → Widget</span></span><span class="chev" data-ic="chevron-right"></span></button>
+    <button class="item" id="pinBlocRow"><span class="ico t-gold" data-ic="notebook"></span><span class="body"><span class="lbl">Thêm "Lịch bloc"</span><span class="val">Tờ lịch ngày kiểu bloc, có câu ca dao, tục ngữ mỗi ngày</span></span><span class="chev" data-ic="chevron-right"></span></button>
+    <button class="item" id="pinIconRow"><span class="ico t-red" data-ic="calendar"></span><span class="body"><span class="lbl">Thêm tờ lịch 1×1 "Lịch hôm nay"</span><span class="val">Cỡ một biểu tượng, hiện ngày hôm nay và ngày âm, tự đổi lúc 0h. Đặt thay icon app để có icon lịch đổi theo ngày</span></span><span class="chev" data-ic="chevron-right"></span></button>
   </div>
 
   <div class="g-title">Về ứng dụng</div>
   <div class="group">
-    <div class="item"><span class="ico">📅</span><span class="body"><span class="lbl">Lịch &amp; Thời tiết</span><span class="val" id="verVal"></span></span></div>
-    <button class="item" id="srcRow"><span class="ico">💻</span><span class="body"><span class="lbl">Mã nguồn</span><span class="val">github.com/Ngocha2607/lich-am-widget</span></span><span class="chev">›</span></button>
+    <div class="item"><span class="ico t-blue" data-ic="info"></span><span class="body"><span class="lbl">Lịch &amp; Thời tiết</span><span class="val" id="verVal"></span></span></div>
+    <button class="item" id="srcRow"><span class="ico t-gray" data-ic="code"></span><span class="body"><span class="lbl">Mã nguồn</span><span class="val">github.com/Ngocha2607/lich-am-widget</span></span><span class="chev" data-ic="chevron-right"></span></button>
   </div>
 </div>
+<nav class="tabbar" id="tabbar" role="tablist" aria-label="Mục chính">
+  <button role="tab" data-t="lich" aria-selected="true"><span class="pc" data-ic="calendar-days"></span><b>Lịch</b></button>
+  <button role="tab" data-t="thoitiet" aria-selected="false" tabindex="-1"><span class="pc" data-ic="cloud-sun"></span><b>Thời tiết</b></button>
+  <button role="tab" data-t="xem" aria-selected="false" tabindex="-1"><span class="pc" data-ic="scroll-text"></span><b>Xem ngày</b></button>
+  <button role="tab" data-t="tienich" aria-selected="false" tabindex="-1"><span class="pc" data-ic="layout-grid"></span><b>Tiện ích</b></button>
+  <button role="tab" data-t="caidat" aria-selected="false" tabindex="-1"><span class="pc" data-ic="settings"></span><b>Cài đặt</b></button>
+</nav>
 <div class="sheet-bg" id="sheetBg" hidden></div>
 <div class="sheet" id="sheet" hidden role="dialog" aria-label="Sự kiện">
   <h3 id="sheetTitle">Thêm sự kiện</h3>
@@ -805,15 +909,16 @@ button.item:active { background: var(--chip); }
   <div class="z-verse" id="zVerse"></div>
   <div class="z-by" id="zBy"></div>
   <div class="z-ctl">
-    <button id="zPrev" aria-label="Ngày trước">‹</button>
+    <button id="zPrev" aria-label="Ngày trước"><span data-ic="chevron-left"></span></button>
     <button id="zToday">Hôm nay</button>
-    <button id="zInk" aria-label="Đổi nền giấy dó hoặc mực đen">◐</button>
-    <button id="zClose" aria-label="Vào lịch đầy đủ">✕</button>
-    <button id="zNext" aria-label="Ngày sau">›</button>
+    <button id="zInk" aria-label="Đổi nền giấy dó hoặc mực đen"><span data-ic="contrast"></span></button>
+    <button id="zClose" aria-label="Vào lịch đầy đủ"><span data-ic="x"></span></button>
+    <button id="zNext" aria-label="Ngày sau"><span data-ic="chevron-right"></span></button>
   </div>
 </div>
 <div class="toast" id="toast" role="status"></div>
 
+<script src="icons.js"></script>
 <script src="bg_art.js"></script>
 <script src="van_khan.js"></script>
 <script src="app.js"></script>

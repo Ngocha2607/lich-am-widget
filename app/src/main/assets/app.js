@@ -1,6 +1,25 @@
 // Toàn bộ mã giao diện của app (tách khỏi index.html để chính sách bảo mật chặn mọi script nội tuyến)
 const $ = id => document.getElementById(id);
-const CON_GIAP = {Tý:"🐭",Sửu:"🐮",Dần:"🐯",Mão:"🐱",Thìn:"🐲",Tỵ:"🐍",Ngọ:"🐴",Mùi:"🐐",Thân:"🐵",Dậu:"🐔",Tuất:"🐶",Hợi:"🐷"};
+// Địa chi viết chữ Hán như lịch treo tường (giờ hoàng đạo, tuổi)
+const CHI_HAN = {Tý:"子",Sửu:"丑",Dần:"寅",Mão:"卯",Thìn:"辰",Tỵ:"巳",Ngọ:"午",Mùi:"未",Thân:"申",Dậu:"酉",Tuất:"戌",Hợi:"亥"};
+// Dữ liệu (sự kiện, thời tiết, gợi ý) vẫn mang emoji cho widget và thông báo; trong app vẽ bằng icon nét Lucide (icons.js) kèm màu nhấn
+const EMO = {
+  "📌": ["pin", "blue"], "🕯": ["flame", "gold"], "🎂": ["cake", "red"], "💍": ["gem", "violet"], "🙏": ["hand-heart", "orange"],
+  "🎉": ["party-popper", "red"], "💼": ["briefcase", "blue"], "🏥": ["hospital", "teal"], "✈": ["plane", "blue"], "📚": ["book-open", "orange"],
+  "🏠": ["house", "green"], "❤": ["heart", "red"], "📅": ["calendar", "blue"], "📍": ["map-pin", "red"], "📜": ["book-heart", "gold"],
+  "☀": ["sun", "gold"], "🌤": ["cloud-sun", "gold"], "⛅": ["cloud-sun", "gold"], "☁": ["cloud", "gray"], "🌫": ["cloud-fog", "gray"],
+  "🌦": ["cloud-drizzle", "blue"], "🌧": ["cloud-rain", "blue"], "❄": ["snowflake", "teal"], "⛈": ["cloud-lightning", "violet"], "🌡": ["thermometer", "orange"],
+  "☔": ["umbrella", "blue"], "✅": ["circle-check", "green"], "🌿": ["sprout", "green"], "💧": ["droplets", "blue"], "💨": ["wind", "teal"],
+  "🔸": ["diamond", "orange"], "🥵": ["thermometer-sun", "red"], "🥶": ["thermometer-snowflake", "teal"], "🧧": ["gift", "red"],
+};
+const emoKey = e => String(e ?? "").replace(/[︎️]/g, "").trim();
+const emoIcon = e => (EMO[emoKey(e)] || ["sparkle", "gray"])[0];
+const emoTint = e => (EMO[emoKey(e)] || ["sparkle", "gray"])[1];
+/** Bỏ emoji khỏi chữ máy gửi sang (ví dụ nhãn tuổi kèm hình con giáp). */
+const noEmo = s => String(s ?? "").replace(/[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}️‍]/gu, "").replace(/\s{2,}/g, " ").trim();
+/** Gắn icon cho các phần tử tĩnh có data-ic. */
+function hydrateIcons(root) { (root || document).querySelectorAll("[data-ic]").forEach(el => { if (!el.querySelector("svg")) el.innerHTML = ic(el.dataset.ic); }); }
+hydrateIcons();
 
 let state = null;               // {today:{y,m,d}, hour, minute, prefs:{city,spiritual,...}, weather, dark, tet, cities}
 let view = { y: 0, m: 0, sel: 0 };
@@ -8,7 +27,7 @@ const DOW_S = ["CN", "T2", "T3", "T4", "T5", "T6", "T7"];
 function ls(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
 function lsSet(k, v) { try { localStorage.setItem(k, v); } catch (e) { } }
 let weekMode = ls("weekMode") === "1";
-const COL_DEFAULT = { almCard: true, gdCard: true, hoursCard: false, ageCard: true, tetCard: true };
+const COL_DEFAULT = { almCard: false, gdCard: true, hoursCard: false, ageCard: true, tetCard: true };   // mục Xem ngày mở sẵn phần xem ngày
 function isCollapsed(id) { const v = ls("col_" + id); return v === null ? COL_DEFAULT[id] : v === "1"; }
 
 // ART3D-BEGIN — Hình 3D dùng chung: trăng hình cầu và mây khối. Cùng một mã chạy trong app (index.html) và
@@ -157,7 +176,7 @@ function applyBackground() {
 function renderBgPick() {
   const cur = state.prefs.bg || "none";
   $("bgPick").innerHTML = BG_LIST.map(([k, n]) => {
-    const th = k === "none" ? `<span class="th">∅</span>` : k === "photo" ? `<span class="th">＋</span>` : `<span class="th" style='background-image:${bgUrl(k)}'></span>`;
+    const th = k === "none" ? `<span class="th">∅</span>` : k === "photo" ? `<span class="th">${ic("plus")}</span>` : `<span class="th" style='background-image:${bgUrl(k)}'></span>`;
     return `<button class="${k === cur ? "on" : ""}" data-k="${k}">${th}<span>${n}</span></button>`;
   }).join("");
   $("bgPick").querySelectorAll("button").forEach(b => b.onclick = () => {
@@ -219,7 +238,7 @@ function renderGrid() {
     const lunarLabel = special ? `${d.ld}/${d.lm}` : String(d.ld);
     el.innerHTML = `<div class="s">${d.d}</div><div class="l${special ? " first" : ""}">${lunarLabel}</div>` +
       (state.prefs.spiritual && d.hd ? `<div class="dot"></div>` : "") +
-      (d.ev ? `<div class="evb" title="${d.evn || 1} sự kiện">${esc(d.ev)}${d.evn > 1 ? `<i>${d.evn}</i>` : ""}</div>` : "") +
+      (d.ev ? `<div class="evb t-${emoTint(d.ev)}" title="${d.evn || 1} sự kiện">${ic(emoIcon(d.ev))}${d.evn > 1 ? `<i>${d.evn}</i>` : ""}</div>` : "") +
       (d.nt ? `<div class="nt" title="${d.nt} việc chưa xong"></div>` : "");
     el.onclick = () => { view.sel = d.d; render(); };
     grid.appendChild(el);
@@ -252,7 +271,7 @@ function renderDay() {
   $("canChiMonth").innerHTML = `Tháng <b>${esc(d.canChiMonth)}</b>`;
   $("tiet").innerHTML = `Tiết <b>${esc(d.tietKhi)}</b>`;
   const badges = [];
-  if (state.prefs.spiritual) badges.push(d.hoangDao ? `<span class="badge hd">✦ Hoàng đạo · ${esc(d.trucThan)}</span>` : `<span class="badge hac">Hắc đạo · ${esc(d.trucThan)}</span>`);
+  if (state.prefs.spiritual) badges.push(d.hoangDao ? `<span class="badge hd">${ic("sparkle")}Hoàng đạo · ${esc(d.trucThan)}</span>` : `<span class="badge hac">Hắc đạo · ${esc(d.trucThan)}</span>`);
   if (d.tuoi === 1) badges.push(`<span class="badge good">Hợp tuổi bạn</span>`);
   else if (d.tuoi === -1) badges.push(`<span class="badge bad">Xung tuổi bạn</span>`);
   $("hdBadge").innerHTML = badges.join("");
@@ -260,15 +279,15 @@ function renderDay() {
   // Thời tiết của ngày đang chọn
   const w = state.weather, wEl = $("weather"), f = forecastFor(view.y, view.m, view.sel);
   if (!w) {
-    wEl.className = "weather empty"; wEl.textContent = "Chưa có dữ liệu thời tiết. Bấm Làm mới ở dưới.";
+    wEl.className = "weather empty"; wEl.textContent = "Chưa có dữ liệu thời tiết. Chạm để mở mục Thời tiết.";
   } else if (d.isToday) {
     wEl.className = "weather";
-    wEl.innerHTML = `<div class="icon">${w.iconNow}</div><div><div class="temp">${w.tempNow}°</div>
+    wEl.innerHTML = `<div class="icon">${ic(emoIcon(w.iconNow))}</div><div><div class="temp">${w.tempNow}°</div>
       <div class="desc">${esc(w.labelNow)} · ${f ? `${f.min}–${f.max}° · mưa ${f.rain}%` : ""}</div></div>
       <div class="city"><b>${esc(w.city)}</b>cảm giác ${w.feelsLike}° · ẩm ${w.humidity}%</div>`;
   } else if (f) {
     wEl.className = "weather";
-    wEl.innerHTML = `<div class="icon">${f.icon}</div><div><div class="temp">${f.min}–${f.max}°</div>
+    wEl.innerHTML = `<div class="icon">${ic(emoIcon(f.icon))}</div><div><div class="temp">${f.min}–${f.max}°</div>
       <div class="desc">${esc(f.text)} · mưa ${f.rain}%</div></div>
       <div class="city"><b>${esc(w.city)}</b>dự báo ${f.label}</div>`;
   } else {
@@ -280,10 +299,10 @@ function renderDay() {
   if (d.isToday && state.tet) {
     const tet = state.tet, tdt = new Date(tet.date + "T00:00:00");
     const rows = [tet.daysLeft === 0
-      ? `<div class="tet">🧧 <b>Hôm nay là ${esc(tet.name)}</b>. Chúc mừng năm mới!</div>`
-      : `<div class="tet">🧧 Còn <b>${tet.daysLeft} ngày</b> đến ${esc(tet.name)} · ${DOW_S[tdt.getDay()]} ${tdt.getDate()}/${tdt.getMonth() + 1}/${tdt.getFullYear()}</div>`];
+      ? `<div class="tet">${ic("gift")}<b>Hôm nay là ${esc(tet.name)}</b>. Chúc mừng năm mới!</div>`
+      : `<div class="tet">${ic("gift")}Còn <b>${tet.daysLeft} ngày</b> đến ${esc(tet.name)} · ${DOW_S[tdt.getDay()]} ${tdt.getDate()}/${tdt.getMonth() + 1}/${tdt.getFullYear()}</div>`];
     const u = lastUp[0];
-    if (u) rows.push(`<div>${esc(u.icon)} Còn <b>${u.daysLeft} ngày</b>: ${esc(u.title)} · ${esc(u.solarLabel)}</div>`);
+    if (u) rows.push(`<div>${ic(emoIcon(u.icon))}Còn <b>${u.daysLeft} ngày</b>: ${esc(u.title)} · ${esc(u.solarLabel)}</div>`);
     cnt.innerHTML = rows.join(""); cnt.hidden = false;
   } else { cnt.innerHTML = ""; cnt.hidden = true; }
 
@@ -294,8 +313,8 @@ function renderDay() {
   $("tipsTitle").textContent = d.isToday && first ? `${greet}, ${first}! ${tipsBase}` : tipsBase;
   $("tips").innerHTML = d.tips.map(tp => {
     const sp = tp.short.indexOf(" ");
-    const ic = tp.short.slice(0, sp), txt = tp.short.slice(sp + 1);
-    return `<div class="tip ${tp.kind.toLowerCase()}"><div class="ic">${esc(ic)}</div><div><div class="t">${esc(txt)}</div><div class="d">${esc(tp.detail)}</div></div></div>`;
+    const e = tp.short.slice(0, sp), txt = tp.short.slice(sp + 1);
+    return `<div class="tip ${tp.kind.toLowerCase()}"><div class="ic t-${emoTint(e)}">${ic(emoIcon(e))}</div><div><div class="t">${esc(txt)}</div><div class="d">${esc(tp.detail)}</div></div></div>`;
   }).join("");
 
   renderAlmanac(d);
@@ -305,8 +324,13 @@ function renderDay() {
   const nowChi = d.isToday ? d.canChiHour.split(" ")[1] : "";
   $("hoursSum").textContent = d.gioTot.map(g => g.chi).join(", ");
   $("hours").innerHTML = d.gioTot.map(g =>
-    `<div class="chip${g.chi === nowChi ? " now" : ""}"><div class="an">${CON_GIAP[g.chi] || ""}</div><div class="n">${g.chi}</div><div class="h">${g.from}h–${g.to}h</div></div>`
+    `<div class="chip${g.chi === nowChi ? " now" : ""}"><div class="an">${CHI_HAN[g.chi] || ""}</div><div class="n">${g.chi}</div><div class="h">${g.from}h–${g.to}h</div></div>`
   ).join("");
+
+  // Đầu mục Xem ngày: ngày đang xem, nút sang ngày trước / sau
+  $("xemTitle").textContent = `${d.weekday}, ${d.d}/${d.m}/${d.y}`;
+  $("xemSub").textContent = `${d.ld}/${d.lm}${d.leap ? " nhuận" : ""} âm lịch · ngày ${d.canChiDay}`;
+  $("xemToday").hidden = !!d.isToday;
 }
 
 /** Màu trời của thẻ ngày theo giờ hiện tại và mặt trời mọc/lặn; chỉ vẽ lại khi đổi thời điểm. */
@@ -323,10 +347,11 @@ function heroSky() {
 }
 
 function renderWeather() {
-  const w = state.weather, card = $("wxCard");
-  if (!w || !w.daily.length) { card.style.display = "none"; return; }
+  const w = state.weather, card = $("wxCard"), has = !!(w && w.daily.length);
+  $("wxCity").textContent = w ? w.city : (state.prefs.city || "Chưa chọn thành phố");
+  $("wxEmpty").hidden = has;
+  if (!has) { card.style.display = "none"; return; }
   card.style.display = "";
-  $("wxCity").textContent = w.city;
   $("wxUpd").textContent = `Cập nhật lúc ${w.updated} · nguồn Open-Meteo`;
 
   // Chip thành phố
@@ -341,9 +366,9 @@ function renderWeather() {
   const selKey = dateKey(view.y, view.m, view.sel);
   const days = w.daily.slice(0, 7);
   $("wxTop").innerHTML = days.map(d =>
-    `<div class="d${d.date === selKey ? " sel" : ""}" data-date="${esc(d.date)}"><div class="lb">${esc(d.label)}</div><div class="ic">${esc(d.icon)}</div><div class="v">${esc(d.max)}°</div></div>`).join("");
+    `<div class="d${d.date === selKey ? " sel" : ""}" data-date="${esc(d.date)}"><div class="lb">${esc(d.label)}</div><div class="ic t-${emoTint(d.icon)}">${ic(emoIcon(d.icon))}</div><div class="v">${esc(d.max)}°</div></div>`).join("");
   $("wxBottom").innerHTML = days.map(d =>
-    `<div class="d${d.date === selKey ? " sel" : ""}" data-date="${esc(d.date)}"><div class="v min">${esc(d.min)}°</div><div class="rain">${d.rain >= 20 ? "💧" + esc(d.rain) + "%" : "&nbsp;"}</div></div>`).join("");
+    `<div class="d${d.date === selKey ? " sel" : ""}" data-date="${esc(d.date)}"><div class="v min">${esc(d.min)}°</div><div class="rain">${d.rain >= 20 ? ic("droplets") + esc(d.rain) + "%" : "&nbsp;"}</div></div>`).join("");
   document.querySelectorAll(".wx-days .d").forEach(el => el.onclick = () => {
     const [y, m, d] = el.dataset.date.split("-").map(Number);
     view = { y, m, sel: d }; render();
@@ -364,21 +389,21 @@ function renderWeather() {
   // Ô chỉ số
   const tile = (k, v, unit) => `<div class="tile"><div class="k">${k}</div><div class="v">${v}${unit ? `<small>${unit}</small>` : ""}</div></div>`;
   $("tiles").innerHTML =
-    tile("☀️ UV", w.uv, w.uvLabel) +
-    tile("🌡️ Cảm giác", w.feelsLike + "°") +
-    tile("💧 Độ ẩm", w.humidity, "%") +
-    tile("🌬️ " + esc(w.windDir), "Cấp " + w.beaufort, w.windKmh + " km/h") +
-    tile("🧭 Áp suất", w.pressure, "hPa") +
-    tile("👁️ Tầm nhìn", w.visibility, "km");
+    tile(ic("sun") + "UV", w.uv, w.uvLabel) +
+    tile(ic("thermometer") + "Cảm giác", w.feelsLike + "°") +
+    tile(ic("droplets") + "Độ ẩm", w.humidity, "%") +
+    tile(ic("wind") + esc(w.windDir), "Cấp " + w.beaufort, w.windKmh + " km/h") +
+    tile(ic("gauge") + "Áp suất", w.pressure, "hPa") +
+    tile(ic("eye") + "Tầm nhìn", w.visibility, "km");
 
   // Bình minh / hoàng hôn
   const toMin = s => { const [h, m] = s.split(":").map(Number); return h * 60 + m; };
   const now = state.hour * 60 + state.minute, t0 = days[0], t1 = days[1] || days[0];
   const rise = toMin(t0.sunrise), set = toMin(t0.sunset);
   let left, right, start, end, mark;
-  if (now >= rise && now < set) { left = ["Bình minh", t0.sunrise]; right = ["Hoàng hôn", t0.sunset]; start = rise; end = set; mark = "☀️"; }
-  else if (now >= set) { left = ["Hoàng hôn", t0.sunset]; right = ["Bình minh", t1.sunrise]; start = set; end = toMin(t1.sunrise) + 1440; mark = "🌙"; }
-  else { left = ["Hoàng hôn", t0.sunset]; right = ["Bình minh", t0.sunrise]; start = set - 1440; end = rise; mark = "🌙"; }
+  if (now >= rise && now < set) { left = ["Bình minh", t0.sunrise]; right = ["Hoàng hôn", t0.sunset]; start = rise; end = set; mark = ic("sun"); }
+  else if (now >= set) { left = ["Hoàng hôn", t0.sunset]; right = ["Bình minh", t1.sunrise]; start = set; end = toMin(t1.sunrise) + 1440; mark = ic("moon"); }
+  else { left = ["Hoàng hôn", t0.sunset]; right = ["Bình minh", t0.sunrise]; start = set - 1440; end = rise; mark = ic("moon"); }
   const pct = Math.max(0, Math.min(100, (now - start) / (end - start) * 100));
   $("sun").innerHTML = `<div class="lbl"><span>${left[0]}<b>${esc(left[1])}</b></span><span style="text-align:right">${right[0]}<b>${esc(right[1])}</b></span></div>
     <div class="track"><div class="fill" style="width:${pct}%"></div><div class="mk" style="left:${pct}%">${mark}</div></div>`;
@@ -414,17 +439,24 @@ function closeAllLayers() {
 }
 window.openToday = function () {
   closeAllLayers();
+  if (!state) return;
   view = { y: state.today.y, m: state.today.m, sel: state.today.d };
   render();
+  setTab("lich");
   window.scrollTo({ top: 0, behavior: "smooth" });
 };
+/** Mở mục chứa thẻ (widget chạm vùng thời tiết, sự kiện) rồi cuộn tới thẻ; thẻ ở đầu mục thì giữ cả đầu mục. */
 window.scrollToCard = function (id) {
   closeAllLayers();
-  const el = $(id);
-  if (el && el.style.display !== "none") el.scrollIntoView({ behavior: "smooth", block: "start" });
+  const el = $(id); if (!el) return;
+  const t = el.closest("[data-tab]");
+  setTab(t ? t.dataset.tab : "lich");
+  if (el.style.display === "none") return;
+  const y = el.getBoundingClientRect().top + window.scrollY - 12;
+  window.scrollTo({ top: y < 160 ? 0 : y, behavior: "smooth" });
 };
 // ---- Xem ngày, chọn ngày tốt ----
-const TASKS = [["cuoi","💍 Cưới hỏi"],["khaitruong","✂️ Khai trương"],["khoicong","🏗️ Khởi công"],["nhaptrach","🏠 Nhập trạch"],["hopdong","🤝 Ký hợp đồng"],["muasam","🚗 Mua xe, tài sản"],["xuathanh","✈️ Xuất hành"],["cungle","🙏 Cúng lễ"]];
+const TASKS = [["cuoi","Cưới hỏi","gem"],["khaitruong","Khai trương","scissors"],["khoicong","Khởi công","construction"],["nhaptrach","Nhập trạch","house"],["hopdong","Ký hợp đồng","handshake"],["muasam","Mua xe, tài sản","car"],["xuathanh","Xuất hành","plane"],["cungle","Cúng lễ","flame"]];
 let curTask = "cuoi";
 
 function renderAlmanac(d) {
@@ -464,13 +496,13 @@ function renderGoodDays() {
   $("gdCard").style.display = on ? "" : "none";
   $("gdSum").textContent = "Cưới hỏi, khai trương, khởi công… 60 ngày tới";
   if (!on || $("gdCard").classList.contains("collapsed")) return;
-  $("tasks").innerHTML = TASKS.map(([k, n]) => `<button data-k="${k}" class="${k === curTask ? "on" : ""}">${n}</button>`).join("");
+  $("tasks").innerHTML = TASKS.map(([k, n, i]) => `<button data-k="${k}" class="${k === curTask ? "on" : ""}">${ic(i)}${n}</button>`).join("");
   $("tasks").querySelectorAll("button").forEach(b => b.onclick = () => { curTask = b.dataset.k; renderGoodDays(); });
   const list = JSON.parse(Android.goodDays(curTask, 60));
   $("gdList").innerHTML = list.length ? list.map(g =>
     `<button class="gd" data-date="${g.date}"><div class="dt"><b>${g.d}</b><small>${esc(g.dow)} ${g.m}/${String(g.y).slice(2)}</small></div>
      <div class="b"><div class="t">${esc(g.canChi)} · ${esc(g.lunar)}</div><div class="r">${g.reasons.map(esc).join(" · ")}</div></div>
-     <div class="sc">${"★".repeat(Math.min(g.score, 5))}</div></button>`).join("")
+     <div class="sc" aria-label="${Math.min(g.score, 5)} sao">${ic("star").repeat(Math.min(g.score, 5))}</div></button>`).join("")
     : `<div class="ev-empty">Không có ngày nổi bật cho việc này trong 60 ngày tới.</div>`;
   $("gdList").querySelectorAll(".gd").forEach(b => b.onclick = () => {
     const [y, m, d] = b.dataset.date.split("-").map(Number);
@@ -523,8 +555,8 @@ function renderNotes() {
   const open = list.filter(n => !n.done).length;
   $("noteSum").textContent = list.length ? (open ? `còn ${open}/${list.length} việc` : "đã xong hết") : "";
   $("noteList").innerHTML = list.length ? list.map(n => `<div class="note${n.done ? " done" : ""}">
-      <button class="ck" data-id="${esc(n.id)}" aria-label="${n.done ? "Bỏ đánh dấu xong" : "Đánh dấu xong"}">${n.done ? "✓" : ""}</button>
-      <span class="tx">${esc(n.text)}</span><button class="del" data-id="${esc(n.id)}" aria-label="Xóa ghi chú">×</button></div>`).join("")
+      <button class="ck" data-id="${esc(n.id)}" aria-label="${n.done ? "Bỏ đánh dấu xong" : "Đánh dấu xong"}">${n.done ? ic("check") : ""}</button>
+      <span class="tx">${esc(n.text)}</span><button class="del" data-id="${esc(n.id)}" aria-label="Xóa ghi chú">${ic("x")}</button></div>`).join("")
     : `<div class="ev-empty">Chưa có ghi chú cho ngày này. Gõ việc cần làm ở trên rồi bấm Thêm.</div>`;
   const redo = () => { renderNotes(); renderGrid(); };
   $("noteList").querySelectorAll(".ck").forEach(b => b.onclick = () => { Android.toggleNote(view.y, view.m, view.sel, b.dataset.id); redo(); });
@@ -548,7 +580,7 @@ function renderTet() {
   const d = Math.floor(ms / 864e5), h = Math.floor(ms % 864e5 / 36e5), mi = Math.floor(ms % 36e5 / 6e4);
   $("tetSum").textContent = tet.daysLeft > 0 ? `Còn ${tet.daysLeft} ngày đến ${tet.name}` : tet.name;
   $("tetCd").innerHTML = ms > 0 ? [[d, "ngày"], [h, "giờ"], [mi, "phút"]].map(([v, u]) => `<div class="u"><b>${v}</b><small>${u}</small></div>`).join("")
-    : `<div class="u"><b>🧧</b><small>Chúc mừng năm mới!</small></div>`;
+    : `<div class="u"><b>${ic("party-popper")}</b><small>Chúc mừng năm mới!</small></div>`;
   $("tetWhen").textContent = `${tet.name} · ${DOW_S[t.getDay()]} ${t.getDate()}/${t.getMonth() + 1}/${t.getFullYear()}`;
   clearTimeout(cdTimer); cdTimer = setTimeout(renderTet, 30000);
 }
@@ -574,8 +606,8 @@ function renderTuvi() {
   const raw = Android.tuvi();
   if (raw === "null") { $("tuvi").innerHTML = `<div class="ev-empty">Nhập ngày sinh trong <b>Cài đặt → Hồ sơ</b> để xem cung hoàng đạo và mệnh.</div>`; return; }
   const t = JSON.parse(raw);
-  $("tuvi").innerHTML = `<div class="tuvi-row"><span class="big">${esc(t.symbol)}</span><div><b>${esc(t.sign)}</b> <span class="muted small">${esc(t.range)} · nhóm ${esc(t.element)}</span><p>${esc(t.traits)}</p></div></div>
-    <div class="tuvi-row"><span class="big">${CON_GIAP[t.canChi.split(" ")[1]] || "☯"}</span><div><b>Tuổi ${esc(t.canChi)}</b> <span class="muted small">con ${esc(t.animal)}</span><p>Mệnh ${esc(t.menh)} (hành ${esc(t.hanh)})</p></div></div>`;
+  $("tuvi").innerHTML = `<div class="tuvi-row"><span class="big zod">${esc(t.symbol)}︎</span><div><b>${esc(t.sign)}</b> <span class="muted small">${esc(t.range)} · nhóm ${esc(t.element)}</span><p>${esc(t.traits)}</p></div></div>
+    <div class="tuvi-row"><span class="big han">${CHI_HAN[t.canChi.split(" ")[1]] || ""}</span><div><b>Tuổi ${esc(t.canChi)}</b> <span class="muted small">con ${esc(t.animal)}</span><p>Mệnh ${esc(t.menh)} (hành ${esc(t.hanh)})</p></div></div>`;
 }
 
 // ---- Văn khấn cổ truyền ----
@@ -623,13 +655,15 @@ function vkRead(id) {
 $("vkRow").onclick = openVk; $("vkClose").onclick = closeVk; $("vkBg").onclick = closeVk; $("vkBack").onclick = vkList;
 
 // ---- Sự kiện ----
-const ICONS =["📌","🕯️","🎂","💍","🙏","🎉","💼","🏥","✈️","📚","🏠","❤️"];
+const ICONS = [["📌", "pin", "Ghim"], ["🕯️", "flame", "Giỗ"], ["🎂", "cake", "Sinh nhật"], ["💍", "gem", "Cưới hỏi"], ["🙏", "hand-heart", "Lễ, cúng"],
+  ["🎉", "party-popper", "Liên hoan"], ["💼", "briefcase", "Công việc"], ["🏥", "hospital", "Khám bệnh"], ["✈️", "plane", "Đi xa"],
+  ["📚", "book-open", "Học tập"], ["🏠", "house", "Nhà cửa"], ["❤️", "heart", "Kỷ niệm"]];
 const DOW = ["Chủ nhật","Thứ Hai","Thứ Ba","Thứ Tư","Thứ Năm","Thứ Sáu","Thứ Bảy"];
 let curDay = null, editing = null, lastUp = [];
 
 function evRow(e, extra) {
   const meta = [e.dateLabel, e.time, e.note].filter(Boolean).map(esc).join(" · ");
-  return `<button class="ev" data-id="${esc(e.id)}"><div class="ic">${esc(e.icon)}</div><div class="b"><div class="t">${esc(e.title)}</div><div class="d">${meta}</div></div>${extra || ""}</button>`;
+  return `<button class="ev" data-id="${esc(e.id)}"><div class="ic t-${emoTint(e.icon)}">${ic(emoIcon(e.icon))}</div><div class="b"><div class="t">${esc(e.title)}</div><div class="d">${meta}</div></div>${extra || ""}</button>`;
 }
 function renderEvents(d) {
   $("evTitle").textContent = d.isToday ? "Sự kiện hôm nay" : `Sự kiện ngày ${d.d}/${d.m}`;
@@ -649,11 +683,14 @@ function fillSelect(sel, from, to, val, prefix) {
   sel.innerHTML = "";
   for (let i = from; i <= to; i++) { const o = document.createElement("option"); o.value = i; o.textContent = (prefix || "") + i; if (i === val) o.selected = true; sel.appendChild(o); }
 }
-function setIcon(ic) {
-  $("evIcons").innerHTML = ICONS.map(i => `<button data-i="${i}" class="${i === ic ? "on" : ""}" aria-label="Biểu tượng ${i}">${i}</button>`).join("");
-  $("evIcons").querySelectorAll("button").forEach(b => b.onclick = () => setIcon(b.dataset.i));
+/** Ô chọn biểu tượng sự kiện: hiện icon nét, giá trị lưu vẫn là emoji (widget, thông báo dùng chung); biểu tượng lạ (lịch Google, sổ giỗ) được giữ nguyên. */
+function setIcon(cur) {
+  const box = $("evIcons"), k = emoKey(cur);
+  box.dataset.orig = cur || "📌";
+  box.innerHTML = ICONS.map(([e, n, l]) => `<button data-i="${e}" class="t-${emoTint(e)}${emoKey(e) === k ? " on" : ""}" aria-label="${l}" title="${l}">${ic(n)}</button>`).join("");
+  box.querySelectorAll("button").forEach(b => b.onclick = () => setIcon(b.dataset.i));
 }
-function curIcon() { const b = $("evIcons").querySelector(".on"); return b ? b.dataset.i : "📌"; }
+function curIcon() { const b = $("evIcons").querySelector(".on"); return b ? b.dataset.i : ($("evIcons").dataset.orig || "📌"); }
 function isLunar() { const b = $("evCal").querySelector(".on"); return !b || b.dataset.v === "lunar"; }
 function setCal(lunar, e) {
   document.querySelectorAll("#evCal button").forEach(b => b.classList.toggle("on", (b.dataset.v === "lunar") === lunar));
@@ -737,14 +774,14 @@ function setConvMode(m) {
   fillSelect($("convDay"), 1, max, Math.min(cur, max));
   runConv();
 }
-function convOpenDay(y, m, d) { closeConv(); view = { y, m, sel: d }; render(); window.scrollTo({ top: 0, behavior: "smooth" }); }
+function convOpenDay(y, m, d) { closeConv(); view = { y, m, sel: d }; render(); setTab("lich"); window.scrollTo({ top: 0, behavior: "smooth" }); }
 function runConv() {
   const d = +$("convDay").value, m = +$("convMonth").value, y = +$("convYear").value, res = $("convRes");
   const hd = r => r.hoangDao ? "Hoàng đạo" : "Hắc đạo";
   if (convMode === "s2l") {
     if (new Date(y, m - 1, d).getDate() !== d) { res.innerHTML = `<div class="sub">Tháng ${m}/${y} không có ngày ${d}.</div>`; return; }
     const r = JSON.parse(Android.day(y, m, d));
-    res.innerHTML = `<div class="big">${r.moon || ""} ${r.ld} tháng ${monthName(r.lm)}${r.leap ? " (nhuận)" : ""}, ${esc(r.canChiYear)}</div>
+    res.innerHTML = `<div class="big">${ART.moon(r.ld, 30, "cv")} ${r.ld} tháng ${monthName(r.lm)}${r.leap ? " (nhuận)" : ""}, ${esc(r.canChiYear)}</div>
       <div class="sub">${esc(r.weekday)} ${d}/${m}/${y} · ngày ${esc(r.canChiDay)}, tháng ${esc(r.canChiMonth)} · tiết ${esc(r.tietKhi)} · ${hd(r)}</div>
       <button class="pill" data-d="${y}-${m}-${d}">Mở ngày này trên lịch</button>`;
   } else {
@@ -753,7 +790,7 @@ function runConv() {
     const [sy, sm, sd] = s.split("-").map(Number);
     const r = JSON.parse(Android.day(sy, sm, sd));
     res.innerHTML = `<div class="big">${esc(r.weekday)}, ${sd}/${sm}/${sy}</div>
-      <div class="sub">${r.moon || ""} ${d}/${m} âm năm ${esc(r.canChiYear)} · ngày ${esc(r.canChiDay)} · tiết ${esc(r.tietKhi)} · ${hd(r)}</div>
+      <div class="sub">${ART.moon(r.ld, 22, "cv")} ${d}/${m} âm năm ${esc(r.canChiYear)} · ngày ${esc(r.canChiDay)} · tiết ${esc(r.tietKhi)} · ${hd(r)}</div>
       <button class="pill" data-d="${sy}-${sm}-${sd}">Mở ngày này trên lịch</button>`;
   }
   res.querySelectorAll("button").forEach(b => b.onclick = () => convOpenDay(...b.dataset.d.split("-").map(Number)));
@@ -768,9 +805,9 @@ function renderCities() {
   const cities = (state.cities && state.cities.length) ? state.cities : [{ name: state.prefs.city }];
   $("cityList").innerHTML = cities.map(c => {
     const on = c.name === state.prefs.city;
-    return `<button class="item city" data-n="${esc(c.name)}"><span class="ico">📍</span><span class="body"><span class="lbl">${esc(c.name)}</span>
+    return `<button class="item city" data-n="${esc(c.name)}"><span class="ico t-red">${ic("map-pin")}</span><span class="body"><span class="lbl">${esc(c.name)}</span>
       <span class="val">${on ? "Đang chọn · dùng cho widget, gợi ý và thông báo" : "Chạm để chọn"}</span></span>
-      ${on ? '<span class="act">✓</span>' : `<span class="city-x" data-x="${esc(c.name)}" role="button" aria-label="Bỏ ${esc(c.name)}">×</span>`}</button>`;
+      ${on ? `<span class="act">${ic("check")}</span>` : `<span class="city-x" data-x="${esc(c.name)}" role="button" aria-label="Bỏ ${esc(c.name)}">${ic("x")}</span>`}</button>`;
   }).join("");
   $("cityList").querySelectorAll(".city").forEach(b => b.onclick = e => {
     const x = e.target.closest(".city-x");
@@ -815,13 +852,12 @@ $("notifyWeather").onchange = e => { state.prefs.notifyWeather = e.target.checke
 $("notifyWeatherHour").onchange = e => { state.prefs.notifyWeatherHour = +e.target.value; Android.setNotifyWeather(!!state.prefs.notifyWeather, +e.target.value); toast(`Sẽ báo thời tiết lúc ${e.target.value}:00`); };
 // ---- Hồ sơ: họ tên, ngày sinh (âm hoặc dương lịch) ----
 let profLunar = false;
-function animalOf(canChi) { return CON_GIAP[String(canChi).split(" ")[1]] || ""; }
 function profileSummary() {
   const p = state.prefs, b = p.birth;
   $("profName").textContent = p.name || "Thông tin của bạn";
   $("profVal").textContent = b
-    ? `Sinh ${b.sd}/${b.sm}/${b.sy} (${b.ld}/${b.lm}${b.leap ? " nhuận" : ""} âm lịch) · tuổi ${p.birthLabel}`
-    : p.birthYear ? `Năm sinh âm lịch ${p.birthYear} · tuổi ${p.birthLabel}. Chạm để nhập đủ ngày sinh`
+    ? `Sinh ${b.sd}/${b.sm}/${b.sy} (${b.ld}/${b.lm}${b.leap ? " nhuận" : ""} âm lịch) · tuổi ${noEmo(p.birthLabel)}`
+    : p.birthYear ? `Năm sinh âm lịch ${p.birthYear} · tuổi ${noEmo(p.birthLabel)}. Chạm để nhập đủ ngày sinh`
     : "Họ tên, ngày sinh để xét hợp, xung tuổi";
 }
 function setProfCal(lunar, d, m, y) {
@@ -845,8 +881,8 @@ function profHint() {
   if (dateKey(sy, sm, sd) > dateKey(t.y, t.m, t.d)) { h.textContent = "Ngày sinh không được sau hôm nay."; return false; }
   const r = JSON.parse(Android.day(sy, sm, sd));
   h.textContent = profLunar
-    ? `Tức ${r.weekday}, ${sd}/${sm}/${sy} dương lịch · tuổi ${r.canChiYear} ${animalOf(r.canChiYear)}`
-    : `Tức ${r.ld}/${r.lm}${r.leap ? " nhuận" : ""} âm lịch · tuổi ${r.canChiYear} ${animalOf(r.canChiYear)}`;
+    ? `Tức ${r.weekday}, ${sd}/${sm}/${sy} dương lịch · tuổi ${r.canChiYear}`
+    : `Tức ${r.ld}/${r.lm}${r.leap ? " nhuận" : ""} âm lịch · tuổi ${r.canChiYear}`;
   return true;
 }
 function openProfile() {
@@ -910,8 +946,22 @@ window.onCalendarPermission = ok => {
 $("gcalRow").onclick = openCal; $("calClose").onclick = closeCal; $("calBg").onclick = closeCal;
 $("calImport").onclick = () => { if (!calSel) return; toast("Đang nhập sự kiện…"); Android.importCalendar(calSel); };
 $("calExport").onclick = () => { if (!calSel) return; toast("Đang xuất sang lịch…"); Android.exportCalendar(calSel); };
-function openSettings() { renderSettings(); $("settings").classList.add("open"); }
-function closeSettings() { $("settings").classList.remove("open"); $("citySearch").hidden = true; }
+// ---- Thanh menu dưới: Lịch, Thời tiết, Xem ngày, Tiện ích, Cài đặt; mỗi mục nhớ chỗ đang cuộn ----
+const TABS = ["lich", "thoitiet", "xem", "tienich", "caidat"];
+let curTab = "lich";
+const tabScroll = {};
+function setTab(t) {
+  if (!TABS.includes(t)) t = "lich";
+  if (t === curTab) return;
+  tabScroll[curTab] = window.scrollY;
+  if (curTab === "caidat") $("citySearch").hidden = true;
+  curTab = t;
+  document.body.dataset.cur = t;
+  document.querySelectorAll("#tabbar button").forEach(b => { const on = b.dataset.t === t; b.setAttribute("aria-selected", on ? "true" : "false"); b.tabIndex = on ? 0 : -1; });
+  if (state && t === "caidat") renderSettings();
+  if (state && t === "thoitiet") renderWeather();   // vẽ lại đường nhiệt độ theo đúng bề rộng (lúc ẩn không đo được)
+  window.scrollTo(0, tabScroll[t] || 0);
+}
 window.closeSettingsIfOpen = function () {
   if (!$("zen").hidden) { closeZen(); return true; }
   if (!$("famSheet").hidden) { if (famView !== "list") famList(); else closeFamily(); return true; }
@@ -920,11 +970,27 @@ window.closeSettingsIfOpen = function () {
   if (!$("calSheet").hidden) { closeCal(); return true; }
   if (!$("vkSheet").hidden) { if (!$("vkBack").hidden) vkList(); else closeVk(); return true; }
   if (!$("profSheet").hidden) { closeProfile(); return true; }
-  if ($("settings").classList.contains("open")) { closeSettings(); return true; }
+  if (curTab !== "lich") { setTab("lich"); return true; }
   return false;
 };
-$("openSettings").onclick = openSettings;
-$("closeSettings").onclick = closeSettings;
+$("tabbar").onclick = e => {
+  const b = e.target.closest("button[data-t]"); if (!b) return;
+  if (b.dataset.t === curTab) window.scrollTo({ top: 0, behavior: "smooth" });   // chạm lại mục đang mở: lên đầu trang
+  else setTab(b.dataset.t);
+};
+// Đang gõ chữ thì ẩn thanh menu (bàn phím đẩy thanh lên che ô nhập)
+document.addEventListener("focusin", e => { if (e.target.matches("input:not([type=checkbox]):not([type=time]), textarea")) document.body.classList.add("typing"); });
+document.addEventListener("focusout", () => document.body.classList.remove("typing"));
+function shiftDay(n) {
+  const dt = new Date(view.y, view.m - 1, view.sel + n);
+  view = { y: dt.getFullYear(), m: dt.getMonth() + 1, sel: dt.getDate() };
+  render();
+}
+$("dPrev").onclick = () => shiftDay(-1);
+$("dNext").onclick = () => shiftDay(1);
+$("xemToday").onclick = () => { view = { y: state.today.y, m: state.today.m, sel: state.today.d }; render(); };
+$("weather").onclick = () => setTab("thoitiet");
+$("wxRefresh").onclick = $("wxEmptyBtn").onclick = () => { toast("Đang tải thời tiết..."); Android.refresh(); };
 
 let searchTimer, lastResults = [];
 $("cityRow").onclick = () => {
@@ -1055,7 +1121,7 @@ function famList() {
   const rows = famData.map(g => {
     const next = g.members.filter(m => m.daysLeft !== undefined).sort((a, b) => a.daysLeft - b.daysLeft)[0];
     const meta = `${g.members.length} ngày giỗ` + (next ? ` · gần nhất: ${esc(next.title)}, còn ${next.daysLeft} ngày` : "");
-    return `<button class="ev fam-row" data-id="${esc(g.id)}"><div class="ic">📜</div><div class="b"><div class="t">${esc(g.name)}</div><div class="d">${meta}</div></div><span class="chev">›</span></button>`;
+    return `<button class="ev fam-row" data-id="${esc(g.id)}"><div class="ic t-gold">${ic("book-heart")}</div><div class="b"><div class="t">${esc(g.name)}</div><div class="d">${meta}</div></div><span class="chev">${ic("chevron-right")}</span></button>`;
   }).join("");
   $("famBody").innerHTML = `<p class="fam-intro">Một người nhập ngày giỗ ông bà theo âm lịch rồi bấm <b>Gửi cho cả nhà</b> (Zalo, Messenger…). Người nhận mở app → Sổ giỗ gia đình → <b>Nhập mã</b>, dán tin nhắn là cùng được nhắc trước ngày giỗ và biết ai lo đồ cúng. Sửa xong thì gửi lại, máy nào nhập lại cũng được cập nhật.</p>`
     + (rows || `<div class="ev-empty">Chưa có sổ nào.</div>`);
@@ -1085,7 +1151,7 @@ function famGroup(id) {
     const when = [`${m.d}/${m.m} âm`, m.next ? `lần tới ${m.next}` : ""].filter(Boolean).join(" · ");
     const who = m.who ? `<br><span class="fam-who">Lo đồ cúng: ${esc(m.who)}</span>` : "";
     const left = m.daysLeft !== undefined ? `<span class="left">${m.daysLeft === 0 ? "hôm nay" : "còn " + m.daysLeft + " ngày"}</span>` : "";
-    return `<button class="ev fam-m" data-id="${esc(m.id)}"><div class="ic">🕯️</div><div class="b"><div class="t">${esc(m.title)}</div><div class="d">${esc(when)}${who}</div></div>${left}</button>`;
+    return `<button class="ev fam-m" data-id="${esc(m.id)}"><div class="ic t-gold">${ic("flame")}</div><div class="b"><div class="t">${esc(m.title)}</div><div class="d">${esc(when)}${who}</div></div>${left}</button>`;
   }).join("");
   const opts = [...new Set([0, 1, 3, 7, g.remind])].sort((a, b) => a - b).map(v => `<option value="${v}"${v === g.remind ? " selected" : ""}>${v === 0 ? "Đúng ngày" : v + " ngày"}</option>`).join("");
   $("famBody").innerHTML = (rows || `<div class="ev-empty">Chưa có ai. Bấm <b>+ Thêm người</b> để ghi ngày giỗ.</div>`)
