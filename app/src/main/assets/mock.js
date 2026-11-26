@@ -234,7 +234,14 @@
       { id: "2", name: "Ngày lễ ở Việt Nam", account: "ban@gmail.com", type: "com.google", sync: mockSync, color: "#0B8043", writable: false },
       { id: "3", name: "Lịch điện thoại", account: "Điện thoại", type: "LOCAL", color: "#E67C73", writable: true }]
       : [{ id: "3", name: "Lịch điện thoại", account: "Điện thoại", type: "LOCAL", color: "#E67C73", writable: true }]),
-    addGoogleAccount() { mockGoogle = true; setTimeout(push, 600); },
+    googleStatus: () => JSON.stringify({ adapter: mockAdapter, accounts: mockAcct ? [{ name: "ban@gmail.com", sync: mockSync }] : [] }),
+    chooseGoogleAccount() {   // xem trước: chọn tài khoản có sẵn, app bật đồng bộ, vài giây sau lịch về máy
+      mockAcct = true; mockSync = true;
+      setTimeout(() => window.onGoogleAccount && window.onGoogleAccount("ban@gmail.com"), 300);
+      setTimeout(() => { mockGoogle = mockAdapter; }, 3500);
+    },
+    installGoogleCalendar() { window.onStatus && window.onStatus("(xem trước) Mở CH Play: Lịch Google"); },
+    openAccountSettings() { window.onStatus && window.onStatus("(xem trước) Mở Cài đặt tài khoản"); },
     syncGoogle() { window.onStatus && window.onStatus("(xem trước) Đang đồng bộ lịch Google…"); },
     enableGoogleSync() { mockSync = true; window.onStatus && window.onStatus("(xem trước) Đã bật đồng bộ Lịch."); },
     setCalendarAuto(on, id) { prefs.gcalAuto = on; prefs.gcalCal = id; window.onStatus && window.onStatus(on ? "(xem trước) Đã bật tự lấy sự kiện." : "(xem trước) Đã tắt."); },
@@ -305,7 +312,7 @@
   const prefs = { city: "Hà Nội", spiritual: true, theme: "system", showAlmanac: true, showLucDieu: true, showHuong: true, showGoodDays: true,
     notifyEvents: true, notifyLunar: true, notifyHour: 7, notifyWeather: true, notifyWeatherHour: 20, bg: "none", bgVer: 0,
     lockNote: false, notifAllowed: true, wpText: true, wpActive: false, zenStart: false, zenPaper: "auto", gcalAuto: false, gcalCal: "-1" };
-  let mockGoogle = false, mockSync = false;   // xem trước: chưa đăng nhập Google; đăng nhập xong thì đồng bộ Lịch đang tắt
+  let mockGoogle = false, mockSync = false, mockAcct = false, mockAdapter = true;   // xem trước: chưa đăng nhập Google; đăng nhập xong thì đồng bộ Lịch đang tắt
   function push() {
     const n = new Date(), l = toLunar(today.getDate(), today.getMonth() + 1, today.getFullYear());
     const tet = toSolar(1, 1, l.y + 1), dark = prefs.theme === "dark" || (prefs.theme === "system" && matchMedia("(prefers-color-scheme: dark)").matches);

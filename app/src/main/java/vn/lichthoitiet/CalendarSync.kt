@@ -54,6 +54,13 @@ object CalendarSync {
         return out
     }
 
+    /** Máy có bộ đồng bộ Lịch cho tài khoản Google không (thường đi kèm ứng dụng Google Calendar); không đọc được thì coi như có. */
+    fun hasGoogleCalendarAdapter(): Boolean = try {
+        ContentResolver.getSyncAdapterTypes().any { it.accountType == GOOGLE && it.authority == CalendarContract.AUTHORITY }
+    } catch (e: Exception) {
+        true
+    }
+
     /** Lịch của tài khoản Google [account] có đang tự đồng bộ không; null nếu không đọc được. */
     fun syncOn(account: String): Boolean? = try {
         ContentResolver.getMasterSyncAutomatically() &&

@@ -938,22 +938,32 @@ function loadCalendars() {
   // Chưa tự chọn lịch nào: ưu tiên lịch Google (vừa đăng nhập xong thì chuyển sang lịch Google)
   if (calList.length && (!calList.some(c => c.id === calSel) || (!ls("calId") && google.length && !google.some(c => c.id === calSel))))
     calSel = (google.find(c => c.writable) || calList.find(c => c.writable) || calList[0]).id;
-  const accounts = [...new Set(google.map(c => c.account))];
-  let html = accounts.length ? "" : `<div class="gc-login">${ic("calendar-range")}<b>Đăng nhập Google để đồng bộ lịch</b>
-    <p>Mở màn hình đăng nhập chính thức của Google trên máy, app không thấy mật khẩu. Đăng nhập xong quay lại đây, chọn lịch rồi bấm Nhập vào app.</p>
-    <button class="btn" id="gcLogin">${ic("log-in")}Đăng nhập Google</button></div>`;
+  // Tài khoản Google: có lịch trên máy, đã chọn trong app, hoặc app được thấy (kể cả khi lịch chưa đồng bộ về máy)
+  const gs = JSON.parse(Android.googleStatus());
+  const accounts = [...new Set([...google.map(c => c.account), ...gs.accounts.map(a => a.name)])];
+  let html = accounts.length ? "" : `<div class="gc-login">${ic("calendar-range")}<b>Kết nối tài khoản Google</b>
+    <p>Chọn tài khoản Google đã có trên máy, hoặc thêm tài khoản mới bằng màn hình đăng nhập của Google (app không thấy mật khẩu).</p>
+    <button class="btn" id="gcLogin">${ic("log-in")}Chọn tài khoản Google</button></div>`;
   accounts.forEach(acc => {
-    const cals = google.filter(c => c.account === acc), sync = cals[0].sync;
+    const cals = google.filter(c => c.account === acc), st = gs.accounts.find(a => a.name === acc);
+    const sync = cals.length ? cals[0].sync : st ? st.sync : null, waiting = !cals.length, noAdapter = waiting && !gs.adapter;
+    const line = sync === false ? "Đồng bộ Lịch của tài khoản đang tắt" : noAdapter ? "Chưa lấy được lịch về máy"
+      : waiting ? "Đang lấy lịch về máy…" : sync ? "Đã kết nối · lịch tự đồng bộ" : "Đã kết nối";
     html += `<div class="gc-acc"><span class="av">${esc((acc[0] || "G").toUpperCase())}</span><span class="who"><b>${esc(acc)}</b>
-      <small class="${sync === false ? "off" : ""}">${sync === false ? "Đồng bộ Lịch của tài khoản đang tắt" : sync ? "Đã đăng nhập · lịch tự đồng bộ" : "Đã đăng nhập"}</small></span>
-      ${sync === false ? `<button class="pill" data-on="${esc(acc)}">Bật</button>` : `<button class="act-btn" data-sync="${esc(acc)}" aria-label="Đồng bộ ngay ${esc(acc)}">${ic("refresh-cw")}</button>`}</div>`
-      + cals.map(calBtn).join("");
+      <small class="${sync === false || noAdapter ? "off" : ""}">${line}</small></span>
+      ${sync === false ? `<button class="pill" data-on="${esc(acc)}">Bật</button>` : noAdapter ? "" : `<button class="act-btn" data-sync="${esc(acc)}" aria-label="Đồng bộ ngay ${esc(acc)}">${ic("refresh-cw")}</button>`}</div>`;
+    if (noAdapter) html += `<div class="gc-note">Máy chưa có phần đồng bộ Lịch Google (đi kèm ứng dụng <b>Lịch Google</b>). Cài ứng dụng từ CH Play, mở một lần cho lịch đồng bộ, rồi quay lại đây.
+      <div class="row"><button class="btn" data-gc="store">Cài Lịch Google</button><button class="btn ghost" data-gc="acct">Cài đặt tài khoản</button></div></div>`;
+    else if (waiting && sync !== false) html += `<div class="gc-note">Lịch của tài khoản đang được tải về máy, thường mất vài giây. Chờ lâu vẫn chưa thấy thì vào Cài đặt tài khoản → Google → bật <b>Lịch</b>.
+      <div class="row"><button class="btn ghost" data-gc="acct">Cài đặt tài khoản</button></div></div>`;
+    html += cals.map(calBtn).join("");
   });
   const other = calList.filter(c => c.type !== "com.google");
   if (other.length) html += `<div class="sub-h">Lịch khác trên máy</div>` + other.map(calBtn).join("");
   if (accounts.length) html += `<button class="gc-add" id="gcLogin">${ic("plus")}Thêm tài khoản Google khác</button>`;
   $("calList").innerHTML = html;
-  $("gcLogin").onclick = () => { toast("Đăng nhập xong thì quay lại app"); Android.addGoogleAccount(); };
+  $("gcLogin").onclick = () => Android.chooseGoogleAccount();
+  $("calList").querySelectorAll("[data-gc]").forEach(b => b.onclick = () => b.dataset.gc === "store" ? Android.installGoogleCalendar() : Android.openAccountSettings());
   $("calList").querySelectorAll(".cal").forEach(b => b.onclick = () => {
     if (b.dataset.id === calSel) return;
     calSel = b.dataset.id; lsSet("calId", calSel);
@@ -971,6 +981,19 @@ function loadCalendars() {
   const autoCal = state.prefs.gcalAuto && calList.find(c => c.id === state.prefs.gcalCal);
   $("calAutoWhere").textContent = autoCal ? `Đang tự lấy từ "${calName(autoCal)}", vài giờ một lần và mỗi lần mở app` : "Vài giờ một lần và mỗi lần mở app, từ lịch đang chọn";
 }
+/** Vừa chọn tài khoản Google: tải lại bảng vài lần cho tới khi lịch của tài khoản đồng bộ về máy. */
+let gcPoll = 0;
+window.onGoogleAccount = name => {
+  if ($("calSheet").hidden || !calPermOk) return;
+  loadCalendars();
+  let n = 0;
+  clearInterval(gcPoll);
+  gcPoll = setInterval(() => {
+    if ($("calSheet").hidden || ++n > 12) { clearInterval(gcPoll); return; }
+    loadCalendars();
+    if (calList.some(c => c.account === name)) clearInterval(gcPoll);
+  }, 3000);
+};
 window.onCalendarPermission = ok => {
   if (ok) { loadCalendars(); return; }
   $("calMain").hidden = true;

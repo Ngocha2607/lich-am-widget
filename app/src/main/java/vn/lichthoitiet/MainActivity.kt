@@ -118,6 +118,35 @@ class MainActivity : Activity() {
         if (pageReady) applyTarget()
     }
 
+    /** Màn hình thêm tài khoản Google của máy (dự phòng khi không mở được bảng chọn tài khoản). */
+    private fun openAddGoogleAccount() {
+        val add = Intent(android.provider.Settings.ACTION_ADD_ACCOUNT)
+            .putExtra(android.provider.Settings.EXTRA_ACCOUNT_TYPES, arrayOf(CalendarSync.GOOGLE))
+        try {
+            startActivity(add)
+        } catch (e: Exception) {
+            tryStart(Intent(android.provider.Settings.ACTION_SYNC_SETTINGS))
+        }
+    }
+
+    /** Vừa chọn tài khoản Google: nhớ tài khoản, bật đồng bộ Lịch nếu đang tắt (người dùng chủ động kết nối) rồi đồng bộ ngay. */
+    private fun connectGoogle(name: String) {
+        prefs.gcalAccount = name
+        Thread {
+            when {
+                !CalendarSync.hasGoogleCalendarAdapter() ->
+                    status("Máy chưa có phần đồng bộ Lịch Google. Cài ứng dụng Lịch Google rồi quay lại.")
+                CalendarSync.syncOn(name) == false && !CalendarSync.enableSync(name) ->
+                    status("Máy đang tắt tự đồng bộ dữ liệu. Bật lên để lấy lịch của $name.")
+                else -> {
+                    CalendarSync.requestSync(name)
+                    status("Đã kết nối $name, đang lấy lịch về máy…")
+                }
+            }
+            runOnUiThread { web.evaluateJavascript("window.onGoogleAccount && onGoogleAccount(${JSONObject.quote(name)})", null) }
+        }.start()
+    }
+
     /** Cuộn trang tới thẻ tương ứng với vùng vừa chạm trên widget. */
     private fun applyTarget() {
         val card = when (pendingTarget) {
@@ -144,6 +173,11 @@ class MainActivity : Activity() {
     @Deprecated("Deprecated in Java")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQ_ACCOUNT) {
+            val name = data?.getStringExtra(android.accounts.AccountManager.KEY_ACCOUNT_NAME)
+            if (resultCode == RESULT_OK && !name.isNullOrBlank()) connectGoogle(name)
+            return
+        }
         val uri = data?.data
         if (resultCode != RESULT_OK || uri == null) return
         when (requestCode) {
@@ -399,6 +433,7 @@ class MainActivity : Activity() {
         const val REQ_IMPORT = 12
         const val REQ_CAL = 13
         const val REQ_BG = 14
+        const val REQ_ACCOUNT = 15
         val BACKGROUNDS = setOf("none", "sen", "halong", "dao", "ruong", "cachep", "photo")
     }
 
@@ -572,19 +607,50 @@ class MainActivity : Activity() {
             }.start()
         }
 
-        /** Mở màn hình đăng nhập tài khoản Google của máy; đăng nhập xong lịch Google tự đồng bộ về máy để app đọc. */
+        /** Bảng chọn tài khoản Google của máy: tài khoản đã có trên máy và mục "Thêm tài khoản" (đăng nhập bằng màn hình của Google). */
         @JavascriptInterface
-        fun addGoogleAccount() = runOnUiThread {
-            val add = Intent(android.provider.Settings.ACTION_ADD_ACCOUNT)
-                .putExtra(android.provider.Settings.EXTRA_ACCOUNT_TYPES, arrayOf(CalendarSync.GOOGLE))
+        fun chooseGoogleAccount() = runOnUiThread {
+            val pick = android.accounts.AccountManager.newChooseAccountIntent(null, null, arrayOf(CalendarSync.GOOGLE), null, null, null, null)
             try {
-                startActivity(add)
+                @Suppress("DEPRECATION")
+                startActivityForResult(pick, REQ_ACCOUNT)
             } catch (e: Exception) {
-                try { startActivity(Intent(android.provider.Settings.ACTION_SYNC_SETTINGS)) } catch (e2: Exception) {
-                    status("Máy không mở được màn hình đăng nhập Google.")
-                }
+                openAddGoogleAccount()
             }
         }
+
+        /** Tài khoản Google đã biết (đã chọn trong app, app được thấy, hoặc có lịch trên máy), trạng thái đồng bộ Lịch, máy có bộ đồng bộ Lịch Google không. */
+        @JavascriptInterface
+        fun googleStatus(): String {
+            val names = LinkedHashSet<String>()
+            prefs.gcalAccount.takeIf { it.isNotBlank() }?.let { names += it }
+            try {
+                android.accounts.AccountManager.get(this@MainActivity).getAccountsByType(CalendarSync.GOOGLE).forEach { names += it.name }
+            } catch (e: Exception) { }
+            if (CalendarSync.hasPermission(this@MainActivity)) {
+                try {
+                    CalendarSync.calendars(this@MainActivity).filter { it.accountType == CalendarSync.GOOGLE }.forEach { names += it.account }
+                } catch (e: Exception) { }
+            }
+            val arr = JSONArray()
+            names.forEach { n -> arr.put(JSONObject().put("name", n).put("sync", CalendarSync.syncOn(n) ?: JSONObject.NULL)) }
+            return JSONObject().put("adapter", CalendarSync.hasGoogleCalendarAdapter()).put("accounts", arr).toString()
+        }
+
+        /** Mở trang ứng dụng Lịch Google trên CH Play (bộ đồng bộ Lịch Google đi kèm ứng dụng này). */
+        @JavascriptInterface
+        fun installGoogleCalendar() = runOnUiThread {
+            val id = "com.google.android.calendar"
+            try {
+                startActivity(Intent(Intent.ACTION_VIEW, Uri.parse("market://details?id=$id")))
+            } catch (e: Exception) {
+                tryStart(Intent(Intent.ACTION_VIEW, Uri.parse("https://play.google.com/store/apps/details?id=$id")))
+            }
+        }
+
+        /** Cài đặt tài khoản và đồng bộ của máy (bật Lịch cho tài khoản Google). */
+        @JavascriptInterface
+        fun openAccountSettings() = runOnUiThread { tryStart(Intent(android.provider.Settings.ACTION_SYNC_SETTINGS)) }
 
         /** Đồng bộ ngay lịch của tài khoản Google [account], đợi một lúc rồi lấy sự kiện mới nếu đang bật tự lấy. */
         @JavascriptInterface

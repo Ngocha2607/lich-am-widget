@@ -126,6 +126,11 @@ class Prefs(ctx: Context) {
         get() = sp.getBoolean("gcalAuto", false)
         set(v) = sp.edit().putBoolean("gcalAuto", v).apply()
 
+    /** Tài khoản Google người dùng đã chọn để đồng bộ Lịch (kể cả khi lịch chưa về máy). */
+    var gcalAccount: String
+        get() = sp.getString("gcalAccount", "") ?: ""
+        set(v) = sp.edit().putString("gcalAccount", v).apply()
+
     /** Lịch trên máy dùng để tự lấy sự kiện (id trong CalendarContract), -1 nếu chưa chọn. */
     var gcalCalId: Long
         get() = sp.getLong("gcalCalId", -1L)
