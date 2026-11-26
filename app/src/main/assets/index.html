@@ -593,6 +593,9 @@ html.dark { --violet: #A68BFF; --teal: #2DD4BF; --orange: #FF9F4A; }
 .gc-note b { color: var(--text); }
 .gc-note .row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
 .gc-note .btn { padding: 8px 10px; font-size: 13px; }
+.gc-note ol { margin: 6px 0 0; padding-left: 18px; }
+.gc-note .row > .btn:first-child:nth-last-child(3) { flex: 1 1 100%; }   /* ba nút: nút chính một hàng, hai nút phụ hàng dưới */
+.gc-note li + li { margin-top: 2px; }
 .gc-diag { margin: 0 0 10px; font-size: 13px; }
 .gc-diag summary { padding: 4px 2px 8px; color: var(--muted); font-weight: 600; cursor: pointer; }
 .gc-diag pre { margin: 0 0 8px; padding: 10px 12px; border-radius: 12px; background: var(--chip); color: var(--text); white-space: pre-wrap; word-break: break-word;

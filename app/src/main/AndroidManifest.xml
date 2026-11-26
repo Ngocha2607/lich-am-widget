@@ -10,6 +10,8 @@
     <!-- Xem / bật đồng bộ Lịch của tài khoản Google khi người dùng bấm (quyền thường, máy không hỏi) -->
     <uses-permission android:name="android.permission.READ_SYNC_SETTINGS" />
     <uses-permission android:name="android.permission.WRITE_SYNC_SETTINGS" />
+    <!-- Thông tin kiểm tra: lịch Google đang đồng bộ hay đang chờ (quyền thường) -->
+    <uses-permission android:name="android.permission.READ_SYNC_STATS" />
     <!-- La bàn phong thủy AR: khung hình camera sau; máy không có camera vẫn dùng la bàn phẳng -->
     <uses-permission android:name="android.permission.CAMERA" />
 

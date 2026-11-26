@@ -146,6 +146,9 @@ object CalendarSync {
                 ", đang chạy ${onOff(orNull { ContentResolver.isSyncActive(a, auth) })}" +
                 ", đang chờ ${onOff(orNull { ContentResolver.isSyncPending(a, auth) })}"
         }
+        @Suppress("DEPRECATION")
+        val running = orNull { ContentResolver.getCurrentSyncs() }
+        out += "Đang đồng bộ: ${running?.joinToString { "${it.authority} (${mask(it.account.name)})" }?.ifEmpty { "không" } ?: "?"}"
         if (!hasPermission(ctx)) {
             out += "Chưa có quyền đọc lịch"
             return out.joinToString("\n")

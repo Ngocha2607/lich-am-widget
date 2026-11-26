@@ -698,6 +698,12 @@ class MainActivity : Activity() {
         @JavascriptInterface
         fun openAccountSettings() = runOnUiThread { tryStart(Intent(android.provider.Settings.ACTION_SYNC_SETTINGS)) }
 
+        /** Trang thông tin ứng dụng Lịch Google (bật tự khởi chạy, cho chạy nền để hệ thống đồng bộ được lịch). */
+        @JavascriptInterface
+        fun openGoogleCalendarSettings() = runOnUiThread {
+            tryStart(Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.fromParts("package", CalendarSync.GCAL_APP, null)))
+        }
+
         /** Đồng bộ ngay lịch của tài khoản Google [account], đợi một lúc rồi lấy sự kiện mới nếu đang bật tự lấy. */
         @JavascriptInterface
         fun syncGoogle(account: String) {

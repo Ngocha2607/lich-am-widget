@@ -973,6 +973,7 @@ function loadCalendars() {
     const k = b.dataset.gc;
     if (k === "store") Android.installGoogleCalendar();
     else if (k === "open") Android.openGoogleCalendar();
+    else if (k === "gapp") Android.openGoogleCalendarSettings();
     else if (k === "resync") { Android.syncGoogleAll(); pollCalendars(); }
     else if (k === "copy") Android.copyText($("gcDiagText").textContent);
     else Android.openAccountSettings();
@@ -1004,6 +1005,11 @@ function gcHelp(gs) {
   if (!gs.adapter)
     return note(`Máy đã có ứng dụng <b>Lịch Google</b> nhưng chưa có <b>bộ đồng bộ Lịch Google</b> của hệ thống, nên lịch Google chưa được chép vào lịch của máy và app chưa đọc được. Mở Lịch Google, kéo xuống để làm mới, rồi quay lại đây.`,
       btn("open", "Mở Lịch Google") + btn("acct", "Cài đặt tài khoản", 1));
+  if (gs.app)   // bộ đồng bộ nằm trong ứng dụng Lịch Google: máy chặn ứng dụng chạy nền thì hệ thống không đồng bộ được
+    return note(`Lịch đang được tải về máy, thường mất vài giây. Lâu vẫn chưa thấy thì thường do máy chặn <b>Lịch Google</b> chạy nền (hay gặp trên OPPO, realme, OnePlus, Xiaomi):
+      <ol><li>Bấm <b>Cài đặt Lịch Google</b>, bật <b>Tự khởi chạy</b> và cho phép <b>hoạt động nền</b> (thường trong mục Pin).</li>
+      <li>Mở ứng dụng Lịch Google, kéo xuống để làm mới.</li><li>Quay lại đây, bấm <b>Đồng bộ lại</b>.</li></ol>`,
+      btn("gapp", "Cài đặt Lịch Google") + btn("resync", "Đồng bộ lại", 1) + btn("acct", "Cài đặt tài khoản", 1));
   return note(`Lịch đang được tải về máy, thường mất vài giây. Lâu vẫn chưa thấy: vào <b>Cài đặt tài khoản</b> → Google → bật <b>Lịch</b>. Máy OPPO, realme, Xiaomi cần cho <b>Lịch Google</b> chạy nền trong phần quản lý pin.`,
     btn("resync", "Đồng bộ lại") + btn("acct", "Cài đặt tài khoản", 1));
 }
